@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fbfaf9;
+  --foreground: #201d1a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-heading: var(--font-manrope), var(--font-georgian), sans-serif;
+  --font-sans: var(--font-inter), var(--font-georgian), sans-serif;
+
+  /* Brand amber — sampled from the AmberAutoBid logo (#c36624) */
+  --color-amber-50: #fdf4ea;
+  --color-amber-100: #fbe6cc;
+  --color-amber-200: #f5c896;
+  --color-amber-300: #eda661;
+  --color-amber-400: #dc8641;
+  --color-amber-500: #c36624;
+  --color-amber-600: #a8531b;
+  --color-amber-700: #874015;
+  --color-amber-800: #663010;
+  --color-amber-900: #45200a;
+
+  /* Brand charcoal — sampled from the AmberAutoBid logo (#434343) */
+  --color-char-50: #f7f6f5;
+  --color-char-100: #ececea;
+  --color-char-200: #d5d3d0;
+  --color-char-300: #b3afab;
+  --color-char-400: #8a8581;
+  --color-char-500: #666260;
+  --color-char-600: #504b48;
+  --color-char-700: #434343;
+  --color-char-800: #2c2a28;
+  --color-char-900: #1a1817;
+  --color-char-950: #100f0e;
+
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-fade-in: fade-in 0.6s ease-out forwards;
+  --animate-marquee: marquee 32s linear infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #15130f;
+    --foreground: #f2efec;
+  }
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+@keyframes text-scroll {
+  0%,
+  15% {
+    transform: translateX(0);
+  }
+  45%,
+  55% {
+    transform: translateX(var(--scroll-x));
+  }
+  85%,
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

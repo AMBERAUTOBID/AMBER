@@ -1,0 +1,230 @@
+{
+  "Metadata": {
+    "title": "AmberAutoBid — automobilių pirkimas ir pristatymas iš „Copart“ ir „IAAI“ į Europą",
+    "description": "AmberAutoBid jūsų vardu dalyvauja varžytynėse ir perka automobilius „Copart“ ir „IAAI“ aukcionuose JAV, sutvarko visus dokumentus ir organizuoja jūrų transportą iki jūsų durų Europoje."
+  },
+  "Nav": {
+    "home": "Pradžia",
+    "search": "Automobilių paieška",
+    "shipping": "Gabenimas ir procesas",
+    "about": "Apie mus",
+    "contact": "Kontaktai",
+    "cta": "Gauti nemokamą pasiūlymą"
+  },
+  "Footer": {
+    "tagline": "Nuo aukciono salės iki jūsų kiemo — dalyvaujame varžytynėse, perkame ir gabename automobilius iš JAV į Europą.",
+    "linksTitle": "Svetainė",
+    "contactTitle": "Susisiekite",
+    "languagesTitle": "Kalba",
+    "disclaimer": "AmberAutoBid yra nepriklausomas pirkimo ir logistikos agentas. Automobilius perkame klientų vardu viešuose „Copart“ ir „IAAI“ aukcionuose ir nesame susiję su „Copart“ ar „IAAI“, jų nepalaikome ir neatstovaujame.",
+    "rights": "Visos teisės saugomos."
+  },
+  "Home": {
+    "hero": {
+      "eyebrow": "Copart ir IAAI pirkimo agentai",
+      "title": "Jūsų tiltas nuo JAV aukcionų iki Europos kelių",
+      "subtitle": "AmberAutoBid suranda, dalyvauja varžytynėse ir pristato. Perkame jums automobilius „Copart“ ir „IAAI“ aukcionuose, sutvarkome visus dokumentus ir pristatome į uostą — arba tiesiai prie jūsų durų — bet kur Europoje.",
+      "ctaPrimary": "Ieškoti Copart ir IAAI",
+      "ctaSecondary": "Gauti nemokamą pasiūlymą",
+      "trustChips": [
+        "Tiesioginė prieiga prie Copart ir IAAI",
+        "Kalbos: EN · RU · LT · KA",
+        "Skaidrios, visą kainą atspindinčios sąnaudos",
+        "Asmeninis varžytynių valdymas"
+      ]
+    },
+    "trust": {
+      "title": "Dirbame su dviem didžiausiais JAV aukcionų tinklais",
+      "items": [
+        "Kasdienis dalyvavimas Copart aukcionuose visoje JAV",
+        "Kasdienis dalyvavimas IAAI aukcionuose visoje JAV",
+        "Eksporto dokumentų ir nuosavybės teisės tvarkymas",
+        "Jūrų gabenimas į Šiaurės Europą, Baltijos šalis ir Kaukazą"
+      ]
+    },
+    "makes": {
+      "eyebrow": "Ieškokite pagal markę",
+      "title": "Raskite bet kurią markę ir modelį",
+      "subtitle": "Pasirinkite markę ir iškart pereikite prie paieškos Copart arba IAAI."
+    },
+    "services": {
+      "eyebrow": "Ką mes darome",
+      "title": "Vienas partneris — nuo plaktuko smūgio iki jūsų garažo",
+      "subtitle": "Trys glaudžiai susijusios paslaugos, kad niekas nedingtų vertime — tiesiogine prasme.",
+      "items": [
+        {
+          "title": "Varžytynės ir pirkimas",
+          "desc": "Nurodykite markę, modelį ar loto numerį. Mūsų komanda jūsų vardu dalyvaus „Copart“ ir „IAAI“ varžytynėse, informuos realiu laiku ir niekada neviršys jūsų nustatytos ribos."
+        },
+        {
+          "title": "Apžiūra ir dokumentai",
+          "desc": "Patikriname būklės nuotraukas ir aukciono ataskaitas, sutvarkome nuosavybės teisę ir paruošiame visus jūsų šaliai reikalingus eksporto bei muitinės dokumentus."
+        },
+        {
+          "title": "Jūrų gabenimas ir pristatymas",
+          "desc": "Konteinerinis arba RoRo gabenimas iš didžiųjų JAV uostų į Šiaurės Europą, Baltijos šalis ar Kaukazą, su sekimu ir pagalba muitinės procedūrose atvykus."
+        }
+      ]
+    },
+    "howItWorks": {
+      "eyebrow": "Procesas",
+      "title": "Kaip tai veikia",
+      "subtitle": "Penki žingsniai iki automobilio jūsų kieme.",
+      "steps": [
+        { "title": "Pasakykite, ko ieškote", "desc": "Atsiųskite loto numerį arba nurodykite markę, modelį ir biudžetą." },
+        { "title": "Dalyvaujame Copart ir IAAI varžytynėse", "desc": "Mūsų pirkėjai jūsų vardu teikia pasiūlymus, neviršydami iš anksto suderintos ribos." },
+        { "title": "Sutvarkome dokumentus", "desc": "Nuosavybės teisės perleidimas, eksporto sertifikatas ir muitinės dokumentai, paruošti jūsų šaliai." },
+        { "title": "Gabename į Europą", "desc": "Sausumos transportas iki uosto, tuomet jūrų gabenimas konteineriu ar RoRo, su pilnu sekimu." },
+        { "title": "Atsiimate automobilį", "desc": "Atsiimkite uoste arba užsisakykite pristatymą iki jūsų adreso." }
+      ]
+    },
+    "why": {
+      "eyebrow": "Kodėl AmberAutoBid",
+      "title": "Sukurta pirkėjams, kurie negali būti aukciono aikštelėje",
+      "items": [
+        { "title": "Skaidrūs mokesčiai", "desc": "Vienas aiškus pasiūlymas, apimantis varžytynes, pirkimą ir gabenimą — jokių netikėtų papildomų mokesčių vėliau." },
+        { "title": "Atnaujinimai realiu laiku", "desc": "Varžytynių būsena, apžiūros nuotraukos ir gabenimo etapai — kai tik jie įvyksta." },
+        { "title": "Pagalba jūsų kalba", "desc": "Mūsų komanda dirba su klientais anglų, rusų, lietuvių ir gruzinų kalbomis." },
+        { "title": "Patikrinti gabenimo partneriai", "desc": "Apdrausti vežėjai ir jūrų linijos, atrinkti pagal patikimumą, o ne pigiausias variantas, kurį pavyko rasti." },
+        { "title": "Tiesioginė prieiga prie aukcionų", "desc": "Copart ir IAAI varžytynėse dalyvaujame per savo pačių paskyrą — jokio tarpininko, brangstančio jūsų pirkinio." },
+        { "title": "Sukurta būtent jums", "desc": "Esame nauja, įkūrėjų vadovaujama įmonė — kiekvienas klientas sulaukia asmeninio dėmesio, o ne bilieto numerio." }
+      ]
+    },
+    "cta": {
+      "title": "Pasiruošę parsivežti savo kitą automobilį?",
+      "subtitle": "Pasakykite, ko ieškote, ir per vieną darbo dieną atsakysime su nemokamu pasiūlymu.",
+      "button": "Gauti nemokamą pasiūlymą"
+    }
+  },
+  "Search": {
+    "hero": {
+      "eyebrow": "Automobilių paieška",
+      "title": "Ieškokite aktualių lotų Copart ir IAAI",
+      "subtitle": "„Copart“ ir „IAAI“ pilną prieigą prie savo bazių suteikia tik registruotiems nariams ir licencijuotiems brokeriams, todėl jūsų paiešką nukreipiame tiesiai į jų oficialius skelbimus — jie atsivers naujame lange."
+    },
+    "widget": {
+      "allMakes": "Visos markės",
+      "vinPlaceholder": "Įveskite VIN, loto arba stoko numerį",
+      "orDivider": "arba",
+      "copartToggle": "Copart",
+      "iaaiToggle": "IAAI",
+      "searchButton": "Ieškoti"
+    },
+    "copart": {
+      "name": "Copart",
+      "desc": "Ieškokite viešoje „Copart“ bazėje (avarinių ir švarių dokumentų lotų) pagal raktažodį, markę, modelį ar loto numerį.",
+      "placeholder": "pvz., BMW M4 arba loto numeris",
+      "button": "Ieškoti Copart"
+    },
+    "iaai": {
+      "name": "IAAI",
+      "desc": "Ieškokite viešoje „IAAI“ bazėje pagal raktažodį, markę, modelį ar stoko numerį.",
+      "placeholder": "pvz., Toyota 4Runner arba stoko numeris",
+      "button": "Ieškoti IAAI"
+    },
+    "helper": {
+      "title": "Nesate tikri, ko tiksliai ieškote?",
+      "desc": "Pasakykite biudžetą ir automobilio tipą — atrinksime tinkamus lotus iš abiejų aukcionų ir atsiųsime savo pasiūlymus.",
+      "button": "Paprašyti mūsų surasti"
+    },
+    "note": "Paieška atveria oficialią „Copart“ arba „IAAI“ svetainę naujame lange. AmberAutoBid nėra susijęs su nė viena iš šių bendrovių; klientų vardu dalyvaujame varžytynėse dėl paskelbtų lotų."
+  },
+  "Shipping": {
+    "hero": {
+      "eyebrow": "Gabenimas ir procesas",
+      "title": "Nuo aukciono iki Europos uosto",
+      "subtitle": "Kiekvienas mūsų nupirktas automobilis keliauja tuo pačiu kruopščiai suplanuotu maršrutu — sausumos transportas, eksporto įforminimas, jūrų gabenimas ir priėmimas atvykus."
+    },
+    "process": {
+      "title": "Žingsnis po žingsnio",
+      "steps": [
+        { "title": "Pirkimas aukcione", "desc": "Laimime varžytynes, apmokame aukcioną ir jūsų vardu perimame nuosavybės teisę." },
+        { "title": "Gabenimas iki uosto", "desc": "Automobilis vežamas iš aukciono aikštelės į mūsų eksporto terminalą JAV." },
+        { "title": "Eksporto muitinės įforminimas", "desc": "Nuosavybės teisė, važtaraštis ir eksporto deklaracija pateikiami JAV muitinei." },
+        { "title": "Jūrų gabenimas", "desc": "Konteinerinis arba RoRo gabenimas per Atlantą, su pilnu sekimu nuo durų iki uosto." },
+        { "title": "Atvykimas ir muitinės įforminimas", "desc": "Koordinuojame importo įforminimą su jūsų arba mūsų muitinės brokeriu paskirties vietoje." },
+        { "title": "Galutinis pristatymas", "desc": "Atsiimkite uoste arba užsisakykite pristatymą tiesiai iki jūsų adreso." }
+      ]
+    },
+    "ports": {
+      "title": "Kur gabename",
+      "subtitle": "Reguliarūs reisai iš didžiųjų JAV eksporto terminalų į šiuos Europos uostus — kiti uostai galimi pagal užklausą.",
+      "usLabel": "JAV eksporto terminalai",
+      "euLabel": "Europos atvykimo uostai",
+      "us": ["Savana, Džordžija", "Baltimorė, Merilendas", "Niuarkas, Naujasis Džersis", "Hjustonas, Teksasas"],
+      "eu": ["Bremerhafenas, Vokietija", "Klaipėda, Lietuva", "Poti, Gruzija", "Gdanskas, Lenkija"]
+    },
+    "estimate": {
+      "title": "Įvertinkite gabenimo kainą",
+      "subtitle": "Apytikslis diapazonas — tiksli kaina priklauso nuo automobilio dydžio, svorio ir paskirties uosto.",
+      "vehicleLabel": "Automobilio tipas",
+      "vehicleTypes": {
+        "sedan": "Sedanas / kupė",
+        "suv": "Visureigis / krosoveris",
+        "truck": "Pikapas",
+        "van": "Furgonas / didelis visureigis"
+      },
+      "portLabel": "Paskirties uostas",
+      "resultLabel": "Apytikslė jūrų gabenimo kaina",
+      "disclaimer": "Tik orientacinė. Neapima pirkimo aukcione kainos, sausumos transporto ir muitų — norėdami tikslių skaičių, užsisakykite pilną pasiūlymą.",
+      "cta": "Užsisakyti tikslų pasiūlymą"
+    }
+  },
+  "About": {
+    "hero": {
+      "eyebrow": "Apie AmberAutoBid",
+      "title": "Sukūrėme tiltą, kurio patys pasigedome",
+      "subtitle": "AmberAutoBid egzistuoja todėl, kad automobilio pirkimas JAV iš užsienio neturėtų reikalauti brokerio licencijos, muitinės teisės išsilavinimo ir pažįstamo Savanoje."
+    },
+    "story": {
+      "title": "Mūsų istorija",
+      "paragraphs": [
+        "AmberAutoBid prasidėjo nuo paprasto nusivylimo: kasdien „Copart“ ir „IAAI“ aukcionuose visoje JAV parduodami puikūs automobiliai, tačiau Europos pirkėjai neturi prieigos — nei dilerio licencijos, nei buvimo vietoje, nei galimybės apžiūrėti lotą asmeniškai.",
+        "Sukūrėme komandą, kuri gyvena būtent šioje spragoje. Pirkėjus, mokančius skaityti aukciono ataskaitas, logistikos skyrių, mintinai žinantį kiekvieną eksporto dokumentą, ir palaikymo komandą, kalbančią mūsų klientų kalbomis.",
+        "Šiandien randame, perkame ir gabename automobilius iš visos JAV į Šiaurės Europos, Baltijos šalių ir Kaukazo uostus — perimdami viską, apie ką mūsų klientai nenori galvoti du kartus."
+      ]
+    },
+    "values": {
+      "title": "Kuo vadovaujamės",
+      "items": [
+        { "title": "Kainą sakome vieną kartą", "desc": "Vienas aiškus pasiūlymas, apimantis varžytynių ribą, pirkimą ir gabenimą, dar prieš jums apsisprendžiant." },
+        { "title": "Niekada neviršijame ribos", "desc": "Ribą nustatote jūs. Mes ties ja sustojame, net jei automobilis parduodamas brangiau." },
+        { "title": "Dokumentuojame viską", "desc": "Kiekviena nuotrauka, sąskaita ir muitinės forma atsiunčiama iškart, kai tik ją gauname." },
+        { "title": "Atsakome jūsų kalba", "desc": "Palaikymas anglų, rusų, lietuvių ir gruzinų kalbomis — ne tik pardavimo etape." }
+      ]
+    },
+    "founding": {
+      "eyebrow": "Tik pradedame",
+      "title": "Nauja įmonė, sukurta asmeninio dėmesio principu",
+      "desc": "AmberAutoBid neseniai pradėjo veiklą — tai reiškia, kad kiekvienas klientas bendrauja tiesiogiai su mūsų įkūrėjų komanda, o ne skambučių centru. Jokių išpūstų skaičių — tik tiesioginė prieiga prie Copart ir IAAI bei žmonės, kurie atsako asmeniškai."
+    }
+  },
+  "Contact": {
+    "hero": {
+      "eyebrow": "Kontaktai",
+      "title": "Suraskime jūsų kitą automobilį",
+      "subtitle": "Atsiųskite loto numerį, markę ir modelį arba tiesiog biudžetą — atsakysime per vieną darbo dieną su tolesniais žingsniais."
+    },
+    "form": {
+      "name": "Vardas, pavardė",
+      "email": "El. paštas",
+      "phone": "Telefonas (nebūtina)",
+      "vehicle": "Ko ieškote?",
+      "vehiclePlaceholder": "pvz., loto numeris, markė / modelis arba biudžeto intervalas",
+      "message": "Žinutė",
+      "messagePlaceholder": "Papasakokite dar ką nors naudingo — paskirties šalį, terminus, biudžetą...",
+      "submit": "Siųsti žinutę",
+      "submitting": "Siunčiama...",
+      "success": "Ačiū — gavome jūsų žinutę ir atsakysime per vieną darbo dieną.",
+      "error": "Kažkas nepavyko. Bandykite dar kartą arba susisiekite su mumis tiesiogiai naudodami šiame puslapyje nurodytus kontaktus.",
+      "required": "Privaloma"
+    },
+    "channels": {
+      "title": "Tiesioginiai kanalai",
+      "phone": "Telefonas",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "email": "El. paštas"
+    }
+  }
+}

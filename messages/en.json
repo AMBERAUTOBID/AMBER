@@ -1,0 +1,263 @@
+{
+  "Metadata": {
+    "title": "AmberAutoBid — Bid, Buy & Ship Cars from Copart & IAAI to Europe",
+    "description": "AmberAutoBid bids and buys vehicles for you at Copart and IAAI auctions in the USA, then handles documentation and ocean freight all the way to your door in Europe."
+  },
+  "Nav": {
+    "home": "Home",
+    "search": "Search Inventory",
+    "shipping": "Shipping & Process",
+    "about": "About",
+    "contact": "Contact",
+    "cta": "Get a Free Quote"
+  },
+  "Footer": {
+    "tagline": "From the auction lane to your driveway — we bid, buy, and ship U.S. vehicles to Europe.",
+    "linksTitle": "Site",
+    "contactTitle": "Talk to us",
+    "languagesTitle": "Language",
+    "disclaimer": "AmberAutoBid is an independent buying and logistics agent. We purchase on our clients' behalf at Copart and IAAI public auctions and are not affiliated with, endorsed by, or acting as an official representative of Copart or IAAI.",
+    "rights": "All rights reserved."
+  },
+  "Home": {
+    "hero": {
+      "eyebrow": "Copart & IAAI Buying Agents",
+      "title": "Your bridge from U.S. auctions to European roads",
+      "subtitle": "AmberAutoBid finds it, bids on it, and ships it. We buy vehicles for you at Copart and IAAI, handle every document, and deliver to your port — or your door — anywhere in Europe.",
+      "ctaPrimary": "Search Copart & IAAI",
+      "ctaSecondary": "Get a Free Quote",
+      "trustChips": [
+        "Direct Copart & IAAI access",
+        "Multilingual: EN · RU · LT · KA",
+        "Transparent, all-in pricing",
+        "Personal bid management"
+      ]
+    },
+    "trust": {
+      "title": "Built around the two largest U.S. auction networks",
+      "items": [
+        "Daily bidding at Copart auctions nationwide",
+        "Daily bidding at IAAI auctions nationwide",
+        "Export documentation & title handling",
+        "Ocean freight to Northern Europe, the Baltics & the Caucasus"
+      ]
+    },
+    "makes": {
+      "eyebrow": "Browse by brand",
+      "title": "Search any make, any model",
+      "subtitle": "Pick a brand to jump straight into a live Copart or IAAI search."
+    },
+    "services": {
+      "eyebrow": "What we do",
+      "title": "One partner, from the gavel to your garage",
+      "subtitle": "Three services, tightly connected, so nothing gets lost in translation — literally.",
+      "items": [
+        {
+          "title": "Bid & Buy",
+          "desc": "Tell us the make, model, or lot number. Our team bids on your behalf at Copart and IAAI, keeping you updated in real time and never exceeding your limit."
+        },
+        {
+          "title": "Inspection & Paperwork",
+          "desc": "We verify condition photos and auction reports, secure the title, and prepare every export and customs document your destination country requires."
+        },
+        {
+          "title": "Ocean Freight & Delivery",
+          "desc": "Container or RoRo shipping from major U.S. ports to Northern Europe, the Baltics, or the Caucasus, with tracking and customs clearance support on arrival."
+        }
+      ]
+    },
+    "howItWorks": {
+      "eyebrow": "The process",
+      "title": "How it works",
+      "subtitle": "Five steps between you and a car in your driveway.",
+      "steps": [
+        {
+          "title": "Tell us what you're after",
+          "desc": "Send a lot number, or share the make, model, and budget you have in mind."
+        },
+        {
+          "title": "We bid at Copart & IAAI",
+          "desc": "Our buyers place bids on your behalf, with a hard cap you approve in advance."
+        },
+        {
+          "title": "We handle the paperwork",
+          "desc": "Title transfer, export certificate, and customs documentation, prepared for your country."
+        },
+        {
+          "title": "We ship it to Europe",
+          "desc": "Inland transport to port, then ocean freight by container or RoRo, fully tracked."
+        },
+        {
+          "title": "You take delivery",
+          "desc": "Pick up at port or arrange last-mile delivery to your address."
+        }
+      ]
+    },
+    "why": {
+      "eyebrow": "Why AmberAutoBid",
+      "title": "Built for buyers who can't be on the auction floor",
+      "items": [
+        {
+          "title": "Transparent fees",
+          "desc": "One clear quote covering bidding, purchase, and freight — no surprise line items after the fact."
+        },
+        {
+          "title": "Real-time updates",
+          "desc": "Bid status, inspection photos, and shipping milestones, shared as they happen."
+        },
+        {
+          "title": "Multilingual support",
+          "desc": "Our team works with clients in English, Russian, Lithuanian, and Georgian."
+        },
+        {
+          "title": "Vetted transport partners",
+          "desc": "Insured haulers and ocean carriers, chosen for reliability — not the cheapest bid we could find."
+        },
+        {
+          "title": "Direct auction access",
+          "desc": "We bid at Copart and IAAI under our own account — no middleman marking up your purchase."
+        },
+        {
+          "title": "Built around you",
+          "desc": "We're a new, founder-led company — every client gets hands-on attention, not a ticket number."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Ready to bring your next car home?",
+      "subtitle": "Tell us what you're looking for and we'll reply with a free quote within one business day.",
+      "button": "Get a Free Quote"
+    }
+  },
+  "Search": {
+    "hero": {
+      "eyebrow": "Vehicle Search",
+      "title": "Search live inventory at Copart and IAAI",
+      "subtitle": "Copart and IAAI restrict full inventory access to registered members and licensed brokers, so we route your search directly to their official listings — opened securely in a new tab."
+    },
+    "widget": {
+      "allMakes": "All makes",
+      "vinPlaceholder": "Enter VIN, lot, or stock number",
+      "orDivider": "or",
+      "copartToggle": "Copart",
+      "iaaiToggle": "IAAI",
+      "searchButton": "Search"
+    },
+    "copart": {
+      "name": "Copart",
+      "desc": "Search Copart's public salvage and clean-title inventory by keyword, make, model, or lot number.",
+      "placeholder": "e.g. BMW M4, or lot number",
+      "button": "Search Copart"
+    },
+    "iaai": {
+      "name": "IAAI",
+      "desc": "Search IAAI's public inventory by keyword, make, model, or stock number.",
+      "placeholder": "e.g. Toyota 4Runner, or stock number",
+      "button": "Search IAAI"
+    },
+    "helper": {
+      "title": "Not sure exactly what you want?",
+      "desc": "Tell us your budget and the type of vehicle you're after — we'll shortlist matching lots from both auctions and send you our picks.",
+      "button": "Ask us to find one"
+    },
+    "note": "Search opens the official Copart or IAAI website in a new tab. AmberAutoBid is not affiliated with either company; we bid on listed vehicles on our clients' behalf."
+  },
+  "Shipping": {
+    "hero": {
+      "eyebrow": "Shipping & Process",
+      "title": "From the auction lane to a European port",
+      "subtitle": "Every vehicle we buy travels the same carefully managed route — inland transport, export clearance, ocean freight, and arrival handling."
+    },
+    "process": {
+      "title": "Step by step",
+      "steps": [
+        { "title": "Purchase & auction win", "desc": "We win the bid, pay the auction, and take title on your behalf." },
+        { "title": "Inland transport to port", "desc": "The vehicle is trucked from the auction yard to our U.S. export terminal." },
+        { "title": "Export customs & documentation", "desc": "Title, bill of lading, and export declaration are filed with U.S. Customs." },
+        { "title": "Ocean freight", "desc": "Container or RoRo shipping across the Atlantic, fully tracked door-to-port." },
+        { "title": "Arrival & customs clearance", "desc": "We coordinate import clearance with your local broker or ours at destination." },
+        { "title": "Final delivery", "desc": "Collect at port, or arrange last-mile trucking straight to your address." }
+      ]
+    },
+    "ports": {
+      "title": "Where we ship",
+      "subtitle": "Regular sailings from major U.S. export terminals to these European hubs — additional ports available on request.",
+      "usLabel": "U.S. export terminals",
+      "euLabel": "European arrival ports",
+      "us": ["Savannah, GA", "Baltimore, MD", "Newark, NJ", "Houston, TX"],
+      "eu": ["Bremerhaven, Germany", "Klaipėda, Lithuania", "Poti, Georgia", "Gdańsk, Poland"]
+    },
+    "estimate": {
+      "title": "Estimate your shipping cost",
+      "subtitle": "A rough starting range — your exact quote depends on the vehicle's size, weight, and final port.",
+      "vehicleLabel": "Vehicle type",
+      "vehicleTypes": {
+        "sedan": "Sedan / Coupe",
+        "suv": "SUV / Crossover",
+        "truck": "Pickup Truck",
+        "van": "Van / Large SUV"
+      },
+      "portLabel": "Destination port",
+      "resultLabel": "Estimated ocean freight",
+      "disclaimer": "Illustrative only. Excludes auction purchase price, inland trucking, and customs duties — request a full quote for exact figures.",
+      "cta": "Request an exact quote"
+    }
+  },
+  "About": {
+    "hero": {
+      "eyebrow": "About AmberAutoBid",
+      "title": "We built the bridge we wished existed",
+      "subtitle": "AmberAutoBid exists because buying a U.S. vehicle from overseas shouldn't require a broker's license, a customs law degree, and a friend in Savannah."
+    },
+    "story": {
+      "title": "Our story",
+      "paragraphs": [
+        "AmberAutoBid started with a simple frustration: incredible vehicles sell every day at Copart and IAAI auctions across the U.S., but buyers in Europe are locked out — no dealer license, no local presence, no way to inspect a lot in person.",
+        "We built a team that lives inside that gap. Buyers who know how to read an auction report, a logistics desk that knows every export document by heart, and a support team that speaks the languages our clients do.",
+        "Today we source, buy, and ship vehicles from coast to coast in the U.S. to ports across Northern Europe, the Baltics, and the Caucasus — handling the parts our clients never want to think about twice."
+      ]
+    },
+    "values": {
+      "title": "What we hold to",
+      "items": [
+        { "title": "Say the price once", "desc": "One quote, covering bid limit, purchase, and freight, before you commit to anything." },
+        { "title": "Never bid past your limit", "desc": "You set the cap. We stop there, even if the vehicle sells for more." },
+        { "title": "Document everything", "desc": "Every photo, invoice, and customs form is shared as soon as we have it." },
+        { "title": "Answer in your language", "desc": "Support in English, Russian, Lithuanian, and Georgian, not just at the sale." }
+      ]
+    },
+    "founding": {
+      "eyebrow": "Just getting started",
+      "title": "A new company, built on hands-on service",
+      "desc": "AmberAutoBid is newly launched — which means every client works directly with our founding team, not a call center. No inflated numbers, just direct access to Copart and IAAI and people who answer personally."
+    }
+  },
+  "Contact": {
+    "hero": {
+      "eyebrow": "Contact",
+      "title": "Let's find your next car",
+      "subtitle": "Send us a lot number, a make and model, or just a budget — we'll reply within one business day with next steps."
+    },
+    "form": {
+      "name": "Full name",
+      "email": "Email address",
+      "phone": "Phone (optional)",
+      "vehicle": "What are you looking for?",
+      "vehiclePlaceholder": "e.g. lot number, make/model, or budget range",
+      "message": "Message",
+      "messagePlaceholder": "Tell us anything else that's useful — destination country, timeline, budget...",
+      "submit": "Send message",
+      "submitting": "Sending...",
+      "success": "Thanks — we've received your message and will reply within one business day.",
+      "error": "Something went wrong. Please try again, or reach us directly using the details on this page.",
+      "required": "Required"
+    },
+    "channels": {
+      "title": "Direct channels",
+      "phone": "Phone",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram",
+      "email": "Email"
+    }
+  }
+}
