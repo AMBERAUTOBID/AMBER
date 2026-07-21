@@ -5,8 +5,8 @@ import Reveal from "@/components/Reveal";
 import Button from "@/components/Button";
 import SectionHeading from "@/components/SectionHeading";
 import SearchWidget from "@/components/SearchWidget";
+import CostCalculator from "@/components/CostCalculator";
 import Marquee from "@/components/Marquee";
-import CarMakesGrid from "@/components/CarMakesGrid";
 import {
   Gavel,
   FileText,
@@ -78,13 +78,21 @@ export default async function HomePage({
             <SearchWidget
               variant="elevated"
               labels={{
-                makeLabel: "",
-                allMakes: tSearch("widget.allMakes"),
                 vinPlaceholder: tSearch("widget.vinPlaceholder"),
-                orDivider: tSearch("widget.orDivider"),
                 copartToggle: tSearch("widget.copartToggle"),
                 iaaiToggle: tSearch("widget.iaaiToggle"),
                 searchButton: tSearch("widget.searchButton"),
+                vehicleTypes: tSearch.raw("widget.vehicleTypes"),
+                yearFrom: tSearch("widget.yearFrom"),
+                yearTo: tSearch("widget.yearTo"),
+                buyNow: tSearch("widget.buyNow"),
+                browsePrompt: tSearch("widget.browsePrompt"),
+                makePlaceholder: tSearch("widget.makePlaceholder"),
+                typePlaceholder: tSearch("widget.typePlaceholder"),
+                modelPlaceholder: tSearch("widget.modelPlaceholder"),
+                searchFilterPlaceholder: tSearch("widget.searchFilterPlaceholder"),
+                odometer: tSearch("widget.odometer"),
+                odometerReset: tSearch("widget.odometerReset"),
               }}
             />
           </Reveal>
@@ -103,23 +111,11 @@ export default async function HomePage({
         </Container>
       </section>
 
+      {/* Cost calculator */}
+      <CostCalculator />
+
       {/* Marquee ticker */}
       <Marquee items={trustItems} />
-
-      {/* Car makes */}
-      <section className="py-20 sm:py-24">
-        <Container>
-          <SectionHeading
-            eyebrow={t("makes.eyebrow")}
-            title={t("makes.title")}
-            subtitle={t("makes.subtitle")}
-            align="center"
-          />
-          <Reveal delay={0.1} className="mt-10">
-            <CarMakesGrid />
-          </Reveal>
-        </Container>
-      </section>
 
       {/* Services */}
       <section className="bg-char-50 py-20 sm:py-28">

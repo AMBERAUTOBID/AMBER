@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import Container from "@/components/Container";
 import Reveal from "@/components/Reveal";
 import SectionHeading from "@/components/SectionHeading";
-import ShippingEstimator from "@/components/ShippingEstimator";
+import CostCalculator from "@/components/CostCalculator";
 import { Anchor, MapPin } from "@phosphor-icons/react/dist/ssr";
 
 export async function generateMetadata({
@@ -28,10 +28,6 @@ export default async function ShippingPage({
   const steps = t.raw("process.steps") as { title: string; desc: string }[];
   const usPorts = t.raw("ports.us") as string[];
   const euPorts = t.raw("ports.eu") as string[];
-  const vehicleTypes = t.raw("estimate.vehicleTypes") as Record<
-    "sedan" | "suv" | "truck" | "van",
-    string
-  >;
 
   return (
     <>
@@ -112,24 +108,7 @@ export default async function ShippingPage({
         </Container>
       </section>
 
-      <section className="py-16 sm:py-24">
-        <Container>
-          <Reveal>
-            <ShippingEstimator
-              labels={{
-                title: t("estimate.title"),
-                subtitle: t("estimate.subtitle"),
-                vehicleLabel: t("estimate.vehicleLabel"),
-                vehicleTypes,
-                portLabel: t("estimate.portLabel"),
-                resultLabel: t("estimate.resultLabel"),
-                disclaimer: t("estimate.disclaimer"),
-                cta: t("estimate.cta"),
-              }}
-            />
-          </Reveal>
-        </Container>
-      </section>
+      <CostCalculator />
     </>
   );
 }

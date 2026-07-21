@@ -18,13 +18,10 @@ export async function generateMetadata({
 
 export default async function SearchPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ make?: string }>;
 }) {
   const { locale } = await params;
-  const { make } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("Search");
 
@@ -46,16 +43,23 @@ export default async function SearchPage({
 
           <Reveal delay={0.1} className="mt-8">
             <SearchWidget
-              initialMake={make ?? ""}
               variant="elevated"
               labels={{
-                makeLabel: "",
-                allMakes: t("widget.allMakes"),
                 vinPlaceholder: t("widget.vinPlaceholder"),
-                orDivider: t("widget.orDivider"),
                 copartToggle: t("widget.copartToggle"),
                 iaaiToggle: t("widget.iaaiToggle"),
                 searchButton: t("widget.searchButton"),
+                vehicleTypes: t.raw("widget.vehicleTypes"),
+                yearFrom: t("widget.yearFrom"),
+                yearTo: t("widget.yearTo"),
+                buyNow: t("widget.buyNow"),
+                browsePrompt: t("widget.browsePrompt"),
+                makePlaceholder: t("widget.makePlaceholder"),
+                typePlaceholder: t("widget.typePlaceholder"),
+                modelPlaceholder: t("widget.modelPlaceholder"),
+                searchFilterPlaceholder: t("widget.searchFilterPlaceholder"),
+                odometer: t("widget.odometer"),
+                odometerReset: t("widget.odometerReset"),
               }}
             />
           </Reveal>

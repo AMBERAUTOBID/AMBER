@@ -19,6 +19,35 @@
     "disclaimer": "AmberAutoBid yra nepriklausomas pirkimo ir logistikos agentas. Automobilius perkame klientų vardu viešuose „Copart“ ir „IAAI“ aukcionuose ir nesame susiję su „Copart“ ar „IAAI“, jų nepalaikome ir neatstovaujame.",
     "rights": "Visos teisės saugomos."
   },
+  "Calculator": {
+    "eyebrow": "Kainos įvertinimas",
+    "title": "Apskaičiuokite apytikslę automobilio kainą",
+    "subtitle": "Pilna išlaidų suvestinė prieš dalyvaujant varžytynėse — aukciono mokestis, gabenimas iki uosto, jūrų frachtas ir muitai vienoje suvestinėje.",
+    "vehicleTypes": {
+      "car": "Automobilis",
+      "motorcycle": "Motociklas",
+      "suv": "Visureigis"
+    },
+    "auctionCopart": "Copart",
+    "auctionIaai": "IAAI",
+    "priceLabel": "Automobilio kaina (USD)",
+    "pickupPlaceholder": "Atsiėmimo vieta",
+    "portPlaceholder": "Paskirties uostas",
+    "emailPlaceholder": "El. paštas (nebūtina)",
+    "usaMade": "Automobilis pagamintas JAV",
+    "calculateButton": "Apskaičiuoti apytikslę kainą",
+    "searchPlaceholder": "Ieškoti...",
+    "results": {
+      "lotPrice": "Loto kaina",
+      "auctionFees": "Aukciono mokesčiai",
+      "trucking": "Gabenimas iki uosto",
+      "shipping": "Gabenimas iki {port}",
+      "customs": "Muito mokestis",
+      "total": "Apytikslė bendra suma"
+    },
+    "disclaimer": "Tik orientacinis skaičiavimas, ne įpareigojantis pasiūlymas. Galutinė kaina priklauso nuo galutinės varžytynių sumos, automobilio dydžio ir būklės bei paskirties šalies muitinės taisyklių — susisiekite su mumis dėl tikslaus skaičiavimo.",
+    "ctaPhone": "Skambinkite mums"
+  },
   "Home": {
     "hero": {
       "eyebrow": "Copart ir IAAI pirkimo agentai",
@@ -41,11 +70,6 @@
         "Eksporto dokumentų ir nuosavybės teisės tvarkymas",
         "Jūrų gabenimas į Šiaurės Europą, Baltijos šalis ir Kaukazą"
       ]
-    },
-    "makes": {
-      "eyebrow": "Ieškokite pagal markę",
-      "title": "Raskite bet kurią markę ir modelį",
-      "subtitle": "Pasirinkite markę ir iškart pereikite prie paieškos Copart arba IAAI."
     },
     "services": {
       "eyebrow": "Ką mes darome",
@@ -103,12 +127,26 @@
       "subtitle": "„Copart“ ir „IAAI“ pilną prieigą prie savo bazių suteikia tik registruotiems nariams ir licencijuotiems brokeriams, todėl jūsų paiešką nukreipiame tiesiai į jų oficialius skelbimus — jie atsivers naujame lange."
     },
     "widget": {
-      "allMakes": "Visos markės",
       "vinPlaceholder": "Įveskite VIN, loto arba stoko numerį",
-      "orDivider": "arba",
       "copartToggle": "Copart",
       "iaaiToggle": "IAAI",
-      "searchButton": "Ieškoti"
+      "searchButton": "Ieškoti",
+      "vehicleTypes": {
+        "automobile": "Automobilis",
+        "motorcycle": "Motociklas",
+        "truck": "Sunkvežimis",
+        "more": "Kita"
+      },
+      "yearFrom": "Metai nuo",
+      "yearTo": "Metai iki",
+      "buyNow": "Pirkti dabar",
+      "browsePrompt": "Arba naršykite pagal transporto tipą",
+      "makePlaceholder": "Pasirinkite markę",
+      "typePlaceholder": "Pasirinkite tipą",
+      "modelPlaceholder": "Pasirinkite modelį",
+      "searchFilterPlaceholder": "Ieškoti...",
+      "odometer": "Rida",
+      "odometerReset": "Atstatyti"
     },
     "copart": {
       "name": "Copart",
@@ -152,22 +190,7 @@
       "usLabel": "JAV eksporto terminalai",
       "euLabel": "Europos atvykimo uostai",
       "us": ["Savana, Džordžija", "Baltimorė, Merilendas", "Niuarkas, Naujasis Džersis", "Hjustonas, Teksasas"],
-      "eu": ["Bremerhafenas, Vokietija", "Klaipėda, Lietuva", "Poti, Gruzija", "Gdanskas, Lenkija"]
-    },
-    "estimate": {
-      "title": "Įvertinkite gabenimo kainą",
-      "subtitle": "Apytikslis diapazonas — tiksli kaina priklauso nuo automobilio dydžio, svorio ir paskirties uosto.",
-      "vehicleLabel": "Automobilio tipas",
-      "vehicleTypes": {
-        "sedan": "Sedanas / kupė",
-        "suv": "Visureigis / krosoveris",
-        "truck": "Pikapas",
-        "van": "Furgonas / didelis visureigis"
-      },
-      "portLabel": "Paskirties uostas",
-      "resultLabel": "Apytikslė jūrų gabenimo kaina",
-      "disclaimer": "Tik orientacinė. Neapima pirkimo aukcione kainos, sausumos transporto ir muitų — norėdami tikslių skaičių, užsisakykite pilną pasiūlymą.",
-      "cta": "Užsisakyti tikslų pasiūlymą"
+      "eu": ["Klaipėda, Lietuva", "Poti, Gruzija", "Roterdamas, Nyderlandai"]
     }
   },
   "About": {

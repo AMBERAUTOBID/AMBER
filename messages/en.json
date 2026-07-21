@@ -19,6 +19,35 @@
     "disclaimer": "AmberAutoBid is an independent buying and logistics agent. We purchase on our clients' behalf at Copart and IAAI public auctions and are not affiliated with, endorsed by, or acting as an official representative of Copart or IAAI.",
     "rights": "All rights reserved."
   },
+  "Calculator": {
+    "eyebrow": "Cost Estimate",
+    "title": "Calculate the approximate car price now",
+    "subtitle": "See a full cost breakdown before you bid — auction fees, trucking, ocean freight, and customs, all in one estimate.",
+    "vehicleTypes": {
+      "car": "Car",
+      "motorcycle": "Motorcycle",
+      "suv": "SUV"
+    },
+    "auctionCopart": "Copart",
+    "auctionIaai": "IAAI",
+    "priceLabel": "Car price (USD)",
+    "pickupPlaceholder": "Pickup location",
+    "portPlaceholder": "Destination port",
+    "emailPlaceholder": "Email (optional)",
+    "usaMade": "Vehicle manufactured in USA",
+    "calculateButton": "Calculate approximate price",
+    "searchPlaceholder": "Search...",
+    "results": {
+      "lotPrice": "Lot price",
+      "auctionFees": "Auction fees",
+      "trucking": "Trucking to port",
+      "shipping": "Shipping to {port}",
+      "customs": "Customs fee",
+      "total": "Approximate total amount"
+    },
+    "disclaimer": "Illustrative estimate only, not a binding quote. Actual costs depend on your final bid, the vehicle's size and condition, and your destination country's customs rules — contact us for an exact figure.",
+    "ctaPhone": "Call us"
+  },
   "Home": {
     "hero": {
       "eyebrow": "Copart & IAAI Buying Agents",
@@ -41,11 +70,6 @@
         "Export documentation & title handling",
         "Ocean freight to Northern Europe, the Baltics & the Caucasus"
       ]
-    },
-    "makes": {
-      "eyebrow": "Browse by brand",
-      "title": "Search any make, any model",
-      "subtitle": "Pick a brand to jump straight into a live Copart or IAAI search."
     },
     "services": {
       "eyebrow": "What we do",
@@ -136,12 +160,26 @@
       "subtitle": "Copart and IAAI restrict full inventory access to registered members and licensed brokers, so we route your search directly to their official listings — opened securely in a new tab."
     },
     "widget": {
-      "allMakes": "All makes",
       "vinPlaceholder": "Enter VIN, lot, or stock number",
-      "orDivider": "or",
       "copartToggle": "Copart",
       "iaaiToggle": "IAAI",
-      "searchButton": "Search"
+      "searchButton": "Search",
+      "vehicleTypes": {
+        "automobile": "Automobile",
+        "motorcycle": "Motorcycle",
+        "truck": "Truck",
+        "more": "More"
+      },
+      "yearFrom": "Year from",
+      "yearTo": "Year to",
+      "buyNow": "Buy Now",
+      "browsePrompt": "Or browse by vehicle type",
+      "makePlaceholder": "Choose make",
+      "typePlaceholder": "Choose type",
+      "modelPlaceholder": "Choose model",
+      "searchFilterPlaceholder": "Search...",
+      "odometer": "Odometer",
+      "odometerReset": "Reset"
     },
     "copart": {
       "name": "Copart",
@@ -185,22 +223,7 @@
       "usLabel": "U.S. export terminals",
       "euLabel": "European arrival ports",
       "us": ["Savannah, GA", "Baltimore, MD", "Newark, NJ", "Houston, TX"],
-      "eu": ["Bremerhaven, Germany", "Klaipėda, Lithuania", "Poti, Georgia", "Gdańsk, Poland"]
-    },
-    "estimate": {
-      "title": "Estimate your shipping cost",
-      "subtitle": "A rough starting range — your exact quote depends on the vehicle's size, weight, and final port.",
-      "vehicleLabel": "Vehicle type",
-      "vehicleTypes": {
-        "sedan": "Sedan / Coupe",
-        "suv": "SUV / Crossover",
-        "truck": "Pickup Truck",
-        "van": "Van / Large SUV"
-      },
-      "portLabel": "Destination port",
-      "resultLabel": "Estimated ocean freight",
-      "disclaimer": "Illustrative only. Excludes auction purchase price, inland trucking, and customs duties — request a full quote for exact figures.",
-      "cta": "Request an exact quote"
+      "eu": ["Klaipėda, Lithuania", "Poti, Georgia", "Rotterdam, Netherlands"]
     }
   },
   "About": {
