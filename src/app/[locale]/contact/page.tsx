@@ -3,6 +3,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import Container from "@/components/Container";
 import Reveal from "@/components/Reveal";
 import ContactForm from "@/components/ContactForm";
+import SectionHeading from "@/components/SectionHeading";
+import FAQAccordion from "@/components/FAQAccordion";
 import {
   Phone,
   WhatsappLogo,
@@ -12,8 +14,8 @@ import {
 
 const PHONE_DISPLAY = "+1 (912) 561-2347";
 const PHONE_E164 = "+19125612347";
-const TELEGRAM_HANDLE = "AmberAutoBid";
-const EMAIL = "info@amberautobid.com";
+const TELEGRAM_HANDLE = "SmartAutoBid";
+const EMAIL = "info@smartautobid.com";
 
 export async function generateMetadata({
   params,
@@ -34,6 +36,8 @@ export default async function ContactPage({
   setRequestLocale(locale);
   const t = await getTranslations("Contact");
   const tc = await getTranslations("Contact.channels");
+  const tf = await getTranslations("Contact.faq");
+  const faqItems = tf.raw("items") as { question: string; answer: string }[];
 
   const channels = [
     {
@@ -119,6 +123,17 @@ export default async function ContactPage({
                 ))}
               </ul>
             </div>
+          </Reveal>
+        </div>
+
+        <div className="mt-20">
+          <SectionHeading
+            eyebrow={tf("eyebrow")}
+            title={tf("title")}
+            subtitle={tf("subtitle")}
+          />
+          <Reveal delay={0.05} className="mx-auto mt-8 max-w-3xl">
+            <FAQAccordion items={faqItems} />
           </Reveal>
         </div>
       </Container>

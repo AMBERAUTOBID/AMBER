@@ -1,7 +1,7 @@
 {
   "Metadata": {
-    "title": "AmberAutoBid — automobilių pirkimas ir pristatymas iš „Copart“ ir „IAAI“ į Europą",
-    "description": "AmberAutoBid jūsų vardu dalyvauja varžytynėse ir perka automobilius „Copart“ ir „IAAI“ aukcionuose JAV, sutvarko visus dokumentus ir organizuoja jūrų transportą iki jūsų durų Europoje."
+    "title": "SmartAutoBid — automobilių pirkimas ir pristatymas iš „Copart“ ir „IAAI“ į Europą",
+    "description": "SmartAutoBid jūsų vardu dalyvauja varžytynėse ir perka automobilius „Copart“ ir „IAAI“ aukcionuose JAV, sutvarko visus dokumentus ir organizuoja jūrų transportą iki jūsų durų Europoje."
   },
   "Nav": {
     "home": "Pradžia",
@@ -16,8 +16,12 @@
     "linksTitle": "Svetainė",
     "contactTitle": "Susisiekite",
     "languagesTitle": "Kalba",
-    "disclaimer": "AmberAutoBid yra nepriklausomas pirkimo ir logistikos agentas. Automobilius perkame klientų vardu viešuose „Copart“ ir „IAAI“ aukcionuose ir nesame susiję su „Copart“ ar „IAAI“, jų nepalaikome ir neatstovaujame.",
-    "rights": "Visos teisės saugomos."
+    "disclaimer": "SmartAutoBid yra nepriklausomas pirkimo ir logistikos agentas. Automobilius perkame klientų vardu viešuose „Copart“ ir „IAAI“ aukcionuose ir nesame susiję su „Copart“ ar „IAAI“, jų nepalaikome ir neatstovaujame.",
+    "rights": "Visos teisės saugomos.",
+    "legal": {
+      "privacy": "Privatumo politika",
+      "terms": "Naudojimo sąlygos"
+    }
   },
   "Calculator": {
     "eyebrow": "Kainos įvertinimas",
@@ -25,8 +29,18 @@
     "subtitle": "Pilna išlaidų suvestinė prieš dalyvaujant varžytynėse — aukciono mokestis, gabenimas iki uosto, jūrų frachtas ir muitai vienoje suvestinėje.",
     "vehicleTypes": {
       "car": "Automobilis",
-      "motorcycle": "Motociklas",
-      "suv": "Visureigis"
+      "suv": "Visureigis",
+      "motorcycle": "Moto",
+      "more": "Daugiau",
+      "atv": "Keturratis",
+      "trike": "Triratis",
+      "bigMotorcycle": "Sunkusis motociklas",
+      "jetSki": "Vandens motociklas",
+      "jetSkiTrailer": "Vandens motociklas (su priekaba)",
+      "snowmobile": "Sniego motociklas",
+      "snowmobileTrailer": "Sniego motociklas (su priekaba)",
+      "boat": "Valtis",
+      "heavyEquipment": "Sunkioji technika"
     },
     "auctionCopart": "Copart",
     "auctionIaai": "IAAI",
@@ -36,23 +50,39 @@
     "emailPlaceholder": "El. paštas (nebūtina)",
     "usaMade": "Automobilis pagamintas JAV",
     "calculateButton": "Apskaičiuoti apytikslę kainą",
+    "requestQuoteButton": "Užklausti kainos",
+    "emailRequiredNote": "Įveskite el. paštą aukščiau, kad pamatytumėte šio tipo transporto įvertinimą.",
+    "portQuoteRequiredNote": "Įveskite el. paštą aukščiau, kad užklaustumėte kainos šiai paskirties vietai.",
     "searchPlaceholder": "Ieškoti...",
     "results": {
       "lotPrice": "Loto kaina",
       "auctionFees": "Aukciono mokesčiai",
-      "trucking": "Gabenimas iki uosto",
+      "brokerageFee": "Tarpininkavimo mokestis",
+      "trucking": "Vietinis transportavimas",
       "shipping": "Gabenimas iki {port}",
-      "customs": "Muito mokestis",
-      "total": "Apytikslė bendra suma"
+      "duty": "Muitas",
+      "vat": "PVM",
+      "total": "Apytikslė bendra suma",
+      "georgiaNote": "Gruzija taip pat taiko atskirą akcizo mokestį pagal variklio tūrį ir automobilio amžių — jis neįtrauktas į šį įvertinimą. Susisiekite su mumis dėl tikslaus skaičiavimo.",
+      "quoteOnlyNote": "Šiai paskirties vietai kol kas neturime automatinio įkainojimo — įveskite el. paštą aukščiau ir užklauskite kainos, o mes susisieksime su tiksliu įvertinimu.",
+      "quoteSent": "Ačiū — gavome jūsų užklausą ir susisieksime el. paštu su šio maršruto kainos pasiūlymu."
     },
     "disclaimer": "Tik orientacinis skaičiavimas, ne įpareigojantis pasiūlymas. Galutinė kaina priklauso nuo galutinės varžytynių sumos, automobilio dydžio ir būklės bei paskirties šalies muitinės taisyklių — susisiekite su mumis dėl tikslaus skaičiavimo.",
-    "ctaPhone": "Skambinkite mums"
+    "ctaPhone": "Skambinkite mums",
+    "map": {
+      "title": "Jūsų gabenimo maršrutas",
+      "subtitle": "Atsiėmimo vieta, artimiausias pakrovimo uostas ir jūrų frachto maršrutas iki pasirinkto paskirties uosto.",
+      "legendPorts": "Pakrovimo ir paskirties uostai",
+      "legendPickup": "Jūsų atsiėmimo vieta",
+      "legendTrucking": "Gabenimas iki uosto",
+      "legendOcean": "Jūrų frachto maršrutas"
+    }
   },
   "Home": {
     "hero": {
       "eyebrow": "Copart ir IAAI pirkimo agentai",
       "title": "Jūsų tiltas nuo JAV aukcionų iki Europos kelių",
-      "subtitle": "AmberAutoBid suranda, dalyvauja varžytynėse ir pristato. Perkame jums automobilius „Copart“ ir „IAAI“ aukcionuose, sutvarkome visus dokumentus ir pristatome į uostą — arba tiesiai prie jūsų durų — bet kur Europoje.",
+      "subtitle": "SmartAutoBid suranda, dalyvauja varžytynėse ir pristato. Perkame jums automobilius „Copart“ ir „IAAI“ aukcionuose, sutvarkome visus dokumentus ir pristatome į uostą — arba tiesiai prie jūsų durų — bet kur Europoje.",
       "ctaPrimary": "Ieškoti Copart ir IAAI",
       "ctaSecondary": "Gauti nemokamą pasiūlymą",
       "trustChips": [
@@ -103,7 +133,7 @@
       ]
     },
     "why": {
-      "eyebrow": "Kodėl AmberAutoBid",
+      "eyebrow": "Kodėl SmartAutoBid",
       "title": "Sukurta pirkėjams, kurie negali būti aukciono aikštelėje",
       "items": [
         { "title": "Skaidrūs mokesčiai", "desc": "Vienas aiškus pasiūlymas, apimantis varžytynes, pirkimą ir gabenimą — jokių netikėtų papildomų mokesčių vėliau." },
@@ -165,7 +195,7 @@
       "desc": "Pasakykite biudžetą ir automobilio tipą — atrinksime tinkamus lotus iš abiejų aukcionų ir atsiųsime savo pasiūlymus.",
       "button": "Paprašyti mūsų surasti"
     },
-    "note": "Paieška atveria oficialią „Copart“ arba „IAAI“ svetainę naujame lange. AmberAutoBid nėra susijęs su nė viena iš šių bendrovių; klientų vardu dalyvaujame varžytynėse dėl paskelbtų lotų."
+    "note": "Paieška atveria oficialią „Copart“ arba „IAAI“ svetainę naujame lange. SmartAutoBid nėra susijęs su nė viena iš šių bendrovių; klientų vardu dalyvaujame varžytynėse dėl paskelbtų lotų."
   },
   "Shipping": {
     "hero": {
@@ -195,14 +225,14 @@
   },
   "About": {
     "hero": {
-      "eyebrow": "Apie AmberAutoBid",
+      "eyebrow": "Apie SmartAutoBid",
       "title": "Sukūrėme tiltą, kurio patys pasigedome",
-      "subtitle": "AmberAutoBid egzistuoja todėl, kad automobilio pirkimas JAV iš užsienio neturėtų reikalauti brokerio licencijos, muitinės teisės išsilavinimo ir pažįstamo Savanoje."
+      "subtitle": "SmartAutoBid egzistuoja todėl, kad automobilio pirkimas JAV iš užsienio neturėtų reikalauti brokerio licencijos, muitinės teisės išsilavinimo ir pažįstamo Savanoje."
     },
     "story": {
       "title": "Mūsų istorija",
       "paragraphs": [
-        "AmberAutoBid prasidėjo nuo paprasto nusivylimo: kasdien „Copart“ ir „IAAI“ aukcionuose visoje JAV parduodami puikūs automobiliai, tačiau Europos pirkėjai neturi prieigos — nei dilerio licencijos, nei buvimo vietoje, nei galimybės apžiūrėti lotą asmeniškai.",
+        "SmartAutoBid prasidėjo nuo paprasto nusivylimo: kasdien „Copart“ ir „IAAI“ aukcionuose visoje JAV parduodami puikūs automobiliai, tačiau Europos pirkėjai neturi prieigos — nei dilerio licencijos, nei buvimo vietoje, nei galimybės apžiūrėti lotą asmeniškai.",
         "Sukūrėme komandą, kuri gyvena būtent šioje spragoje. Pirkėjus, mokančius skaityti aukciono ataskaitas, logistikos skyrių, mintinai žinantį kiekvieną eksporto dokumentą, ir palaikymo komandą, kalbančią mūsų klientų kalbomis.",
         "Šiandien randame, perkame ir gabename automobilius iš visos JAV į Šiaurės Europos, Baltijos šalių ir Kaukazo uostus — perimdami viską, apie ką mūsų klientai nenori galvoti du kartus."
       ]
@@ -219,7 +249,7 @@
     "founding": {
       "eyebrow": "Tik pradedame",
       "title": "Nauja įmonė, sukurta asmeninio dėmesio principu",
-      "desc": "AmberAutoBid neseniai pradėjo veiklą — tai reiškia, kad kiekvienas klientas bendrauja tiesiogiai su mūsų įkūrėjų komanda, o ne skambučių centru. Jokių išpūstų skaičių — tik tiesioginė prieiga prie Copart ir IAAI bei žmonės, kurie atsako asmeniškai."
+      "desc": "SmartAutoBid neseniai pradėjo veiklą — tai reiškia, kad kiekvienas klientas bendrauja tiesiogiai su mūsų įkūrėjų komanda, o ne skambučių centru. Jokių išpūstų skaičių — tik tiesioginė prieiga prie Copart ir IAAI bei žmonės, kurie atsako asmeniškai."
     }
   },
   "Contact": {
@@ -248,6 +278,250 @@
       "whatsapp": "WhatsApp",
       "telegram": "Telegram",
       "email": "El. paštas"
+    },
+    "faq": {
+      "eyebrow": "D.U.K.",
+      "title": "Dažniausiai užduodami klausimai",
+      "subtitle": "Klausimai, kuriuos girdime dažniausiai prieš žmogui pateikiant pirmą užklausą.",
+      "items": [
+        {
+          "question": "Kaip vyksta dalyvavimas varžytynėse?",
+          "answer": "Pasakykite mums loto numerį arba jus dominančią markę, modelį ir biudžetą. Peržiūrime lotą, raštu suderiname su jumis maksimalią statymo sumą ir statome jūsų vardu tiesiogiai Copart ar IAAI platformoje, naudodami savo paskyrą. Niekada nestatome daugiau, nei jūs patvirtinote."
+        },
+        {
+          "question": "Kas atsitinka, jei nelaimime varžytynių?",
+          "answer": "Jums tai nieko nekainuoja — mokestį imame tik po faktinio automobilio įsigijimo. Galite nustatyti naują limitą arba pabandyti su kitu lotu."
+        },
+        {
+          "question": "Kokios būklės yra automobiliai?",
+          "answer": "Dauguma automobilių iš Copart ir IAAI yra daužti, draudimo ar didmeniniai automobiliai, parduodami tokie, kokie yra. Sąžiningai peržiūrime būklės ataskaitą ir nuotraukas prieš statydami, tačiau automobilio asmeniškai neapžiūrime, nebent tai su jumis konkrečiai suderinta."
+        },
+        {
+          "question": "Kiek tai kainuoja?",
+          "answer": "Prieš atlikdami bet kokį statymą, raštu pateikiame savo tarpininkavimo mokestį ir aukciono, transportavimo bei gabenimo išlaidų įvertį, kad iš anksto matytumėte visą vaizdą — be netikėtų papildomų kaštų."
+        },
+        {
+          "question": "Kiek laiko trunka gabenimas?",
+          "answer": "Trukmė priklauso nuo vežėjo tvarkaraščio, uostų apkrovos ir muitinės procedūrų, todėl pateikiame įvertį, o ne fiksuotą datą, ir informuojame jus kiekviename gabenimo etape."
+        },
+        {
+          "question": "Į kur gabenate automobilius?",
+          "answer": "Reguliariai gabename į Klaipėdą (Lietuva), Poti (Gruzija) ir Roterdamą (Nyderlandai); kiti Europos uostai — pagal poreikį."
+        },
+        {
+          "question": "Kas tvarko muitinę ir importo mokesčius?",
+          "answer": "Mes parengiame eksporto dokumentaciją JAV pusėje. Importo muitai, PVM ir paskirties šalies reikalavimų laikymasis yra kliento atsakomybė, tačiau mielai padedame susiderinti su jūsų vietiniu muitinės tarpininku."
+        },
+        {
+          "question": "Kokiomis kalbomis dirbate?",
+          "answer": "Mūsų komanda dirba su klientais anglų, rusų, lietuvių ir gruzinų kalbomis."
+        }
+      ]
     }
+  },
+  "Privacy": {
+    "hero": {
+      "eyebrow": "Privatumo politika",
+      "title": "Privatumo politika",
+      "subtitle": "Kaip renkame, naudojame ir saugome jūsų informaciją, kai naudojatės SmartAutoBid."
+    },
+    "updated": "Paskutinį kartą atnaujinta: 2026 m. liepos 23 d.",
+    "sections": [
+      {
+        "title": "Kas mes esame",
+        "body": [
+          "Ši Privatumo politika paaiškina, kaip Smart Auto Bid LLC („SmartAutoBid“, „mes“) — Džordžijos valstijos, JAV, ribotos atsakomybės bendrovė, registruota adresu 289 Telfair Rd #I, Savannah, GA 31415, USA — renka, naudoja ir saugo informaciją, kai lankotės svetainėje smartautobid.com arba susisiekiate su mumis per ją."
+        ]
+      },
+      {
+        "title": "Kokią informaciją renkame",
+        "body": [
+          "Užklausos ir kainos paklausimai: kai pateikiate mūsų kontaktinę formą, renkame jūsų vardą, el. pašto adresą, telefono numerį (jei nurodytas), aprašytą automobilį ar biudžetą bei bet kokį jūsų parašytą pranešimą.",
+          "Kainos skaičiuoklė: jei prašote kainos įverčio maršrutui, kuriam neturime akimirksniu pateikiamos kainos, renkame jūsų nurodytą el. pašto adresą, kad galėtume vėliau pateikti pasiūlymą.",
+          "Techniniai duomenys: kaip ir dauguma svetainių, mūsų prieglobos infrastruktūra gali automatiškai registruoti standartinę techninę informaciją, pvz., jūsų IP adresą, naršyklės tipą ir aplankytus puslapius, saugumo ir veikimo tikslais.",
+          "Kalbos pasirinkimas: saugome nedidelį slapuką, kuriame įrašyta jūsų pasirinkta svetainės kalba (anglų, rusų, lietuvių ar gruzinų), kad svetainė ją prisimintų kitą kartą apsilankius."
+        ]
+      },
+      {
+        "title": "Kaip naudojame jūsų informaciją",
+        "body": [
+          "Kad atsakytume į jūsų užklausą ir pateiktume pasiūlymą dėl varžytynių, pirkimo ir gabenimo paslaugų.",
+          "Kad suteiktume jūsų prašomas paslaugas, jei tapsite klientu, įskaitant statymų valdymą, dokumentų tvarkymą ir siuntos koordinavimą.",
+          "Kad susisiektume su jumis dėl jūsų užklausos ar užsakymo, kai įmanoma — jūsų pasirinkta kalba.",
+          "Kad palaikytume ir tobulintume mūsų svetainės saugumą bei funkcionalumą.",
+          "Nenaudojame jūsų informacijos automatiniam reklaminiam profiliavimui ir neparduodame jūsų asmens duomenų trečiosioms šalims."
+        ]
+      },
+      {
+        "title": "Slapukai",
+        "body": [
+          "SmartAutoBid naudoja būtinuosius, funkcinius slapukus, kuriems sutikimas nereikalingas — pavyzdžiui, slapuką, kuris įsimena pasirinktą svetainės kalbą.",
+          "Gavus jūsų sutikimą, taip pat naudojame „Google Analytics“, kad suprastume, kaip lankytojai naudojasi mūsų svetaine, ir galėtume ją tobulinti. Šie analitikos slapukai įdiegiami tik po to, kai juos priimate pirmo apsilankymo metu rodomame slapukų pranešime — galite atsisakyti, ir tai neturės įtakos galimybei naudotis svetaine.",
+          "Nenaudojame reklaminių ar rinkodaros slapukų ir neparduodame jūsų duomenų trečiosioms šalims."
+        ]
+      },
+      {
+        "title": "Kaip dalinamės jūsų informacija",
+        "body": [
+          "El. pašto siuntimas: per mūsų kontaktinę formą pateikti pranešimai mūsų komandai pristatomi per standartinį el. pašto paslaugų teikėją, kuris pranešimą apdoroja tik tam, kad jį mums pristatytų.",
+          "Aukcionų platformos: jei paprašote mūsų statyti dėl konkretaus loto, veikiame jūsų vardu tiesiogiai su Copart ar IAAI naudodami savo paskyrą — jūsų asmeninių kontaktinių duomenų šioms platformoms neperduodame, nebent to reikia jūsų patvirtintam pirkimui ar siuntai užbaigti.",
+          "Gabenimo ir muitinės partneriai: kai tapsite klientu, dalinamės informacija, būtina organizuoti vidaus transportavimą, eksporto dokumentaciją, jūrų frachtą ir muitinės įforminimą, su patikrintais logistikos ir muitinės partneriais.",
+          "Teisiniai reikalavimai: informaciją galime atskleisti, jei to reikalauja įstatymai arba galiojantis teisinis procesas.",
+          "Neparduodame jūsų asmens duomenų."
+        ]
+      },
+      {
+        "title": "Duomenų saugojimas",
+        "body": [
+          "Užklausų ir klientų informaciją saugome tiek, kiek reikia jums atsakyti, paslaugoms teikti, teisiniams, mokestiniams ir apskaitos įsipareigojimams vykdyti bei ginčams spręsti — vėliau ją ištriname arba nuasmeniname."
+        ]
+      },
+      {
+        "title": "Jūsų teisės",
+        "body": [
+          "Jei esate Europos ekonominėje erdvėje, pagal BDAR turite teisę susipažinti su savo asmens duomenimis, juos ištaisyti, ištrinti ar apriboti jų naudojimą, prieštarauti tam tikram duomenų tvarkymui, gauti savo duomenų kopiją perkeliamu formatu ir pateikti skundą savo šalies duomenų apsaugos institucijai.",
+          "Nepriklausomai nuo to, kur esate, bet kada galite susisiekti su mumis žemiau nurodytais kontaktais, kad sužinotumėte, kokią informaciją apie jus saugome, arba paprašytumėte ją ištrinti, ir mes atsakysime per protingą laiką."
+        ]
+      },
+      {
+        "title": "Tarptautinis duomenų perdavimas",
+        "body": [
+          "SmartAutoBid veikia Jungtinėse Amerikos Valstijose, ir jūsų pateikta informacija ten apdorojama bei saugoma. Naudodamiesi mūsų svetaine ar paslaugomis, už JAV ribų, įskaitant ES/EEE, esantys klientai patvirtina, kad jų informacija bus perduota ir apdorota Jungtinėse Amerikos Valstijose."
+        ]
+      },
+      {
+        "title": "Duomenų saugumas",
+        "body": [
+          "Naudojame protingas administracines ir technines priemones jūsų pateiktai informacijai apsaugoti. Joks duomenų perdavimo ar saugojimo būdas nėra visiškai saugus, todėl negalime garantuoti absoliutaus saugumo."
+        ]
+      },
+      {
+        "title": "Vaikų privatumas",
+        "body": [
+          "Mūsų paslaugos skirtos suaugusiems. Sąmoningai nerenkame jaunesnių nei 18 metų asmenų duomenų."
+        ]
+      },
+      {
+        "title": "Šios politikos pakeitimai",
+        "body": [
+          "Kartais galime atnaujinti šią Privatumo politiką. Puslapio viršuje nurodyta „atnaujinta“ data atspindi naujausią redakciją."
+        ]
+      },
+      {
+        "title": "Susisiekite su mumis",
+        "body": [
+          "Klausimus dėl šios politikos ar jūsų informacijos galite siųsti adresu info@smartautobid.com, skambinti arba rašyti per WhatsApp +1 (912) 561-2347, arba paštu adresu Smart Auto Bid LLC, 289 Telfair Rd #I, Savannah, GA 31415, USA."
+        ]
+      }
+    ]
+  },
+  "Terms": {
+    "hero": {
+      "eyebrow": "Naudojimo sąlygos",
+      "title": "Naudojimo sąlygos",
+      "subtitle": "Sąlygos, reglamentuojančios naudojimąsi svetaine smartautobid.com bei mūsų automobilių pirkimo ir gabenimo paslaugomis."
+    },
+    "updated": "Paskutinį kartą atnaujinta: 2026 m. liepos 23 d.",
+    "sections": [
+      {
+        "title": "Šių sąlygų priėmimas",
+        "body": [
+          "Naudodamiesi svetaine smartautobid.com arba pasitelkdami Smart Auto Bid LLC („SmartAutoBid“, „mes“) automobilio statymui, pirkimui ar gabenimui, sutinkate su šiomis Naudojimo sąlygomis. Jei nesutinkate, prašome nesinaudoti mūsų paslaugomis."
+        ]
+      },
+      {
+        "title": "Kas mes esame",
+        "body": [
+          "SmartAutoBid yra automobilių pirkimo ir logistikos agentas, veikiantis per Smart Auto Bid LLC — Džordžijos valstijos, JAV, ribotos atsakomybės bendrovę. Ieškome, statome ir perkame automobilius klientų vardu viešuose Copart ir IAAI daužtų bei naudotų automobilių aukcionuose, taip pat organizuojame vidaus transportavimą, eksporto dokumentaciją, jūrų frachtą ir pristatymą į Europos uostus. Nesame Copart, IAAI ar aukciono namai ir nesame susiję, patvirtinti ar oficialiai atstovaujantys nė vienai iš šių bendrovių."
+        ]
+      },
+      {
+        "title": "Tinkamumas",
+        "body": [
+          "Turite būti bent 18 metų amžiaus ir turėti teisinę galią sudaryti privalomą sutartį, kad galėtumėte naudotis mūsų paslaugomis."
+        ]
+      },
+      {
+        "title": "Laimėjimas aukcione negarantuojamas",
+        "body": [
+          "Aukcionus visiškai vykdo Copart ir IAAI pagal savo pačių taisykles. Statome jūsų vardu iki maksimalios sumos, kurią patvirtinote raštu, tačiau negalime garantuoti, kad koks nors statymas laimės, o galutinę pardavimo kainą ir rezultatą lemia tik aukciono platforma."
+        ]
+      },
+      {
+        "title": "Automobilio būklė",
+        "body": [
+          "Dauguma per Copart ir IAAI parduodamų automobilių yra daužti, draudimo ar didmeniniai automobiliai, parduodami tokie, kokie yra, be garantijos. Būklės ataskaitas ir nuotraukas rengia aukciono platforma, o ne mes; nors sąžiningai peržiūrime turimą informaciją apie lotą prieš statydami, mes atskirai fiziškai automobilių netikriname, nebent tai konkrečiai su jumis suderinta, ir neatsakome už skirtumus tarp skelbimo ir faktinės automobilio būklės."
+        ]
+      },
+      {
+        "title": "Mokesčiai, depozitai ir apmokėjimas",
+        "body": [
+          "Prieš atlikdami bet kokį statymą jūsų vardu, raštu pateikiame savo tarpininkavimo mokestį bei aukciono, transportavimo ir gabenimo išlaidų įvertį, ir joks statymas neatliekamas be jūsų iš anksto raštu patvirtintos maksimalios statymo sumos. Depozito reikalavimai ir apmokėjimo sąlygos priklauso nuo automobilio ir maršruto bei nurodomi jūsų individualiame pasiūlyme ar pirkimo sutartyje."
+        ]
+      },
+      {
+        "title": "Gabenimo terminai",
+        "body": [
+          "Mūsų nurodomi gabenimo terminai yra tik įverčiai. Faktinė gabenimo trukmė priklauso nuo jūrų vežėjų tvarkaraščių, uostų apkrovos ir muitinės procedūrų kilmės bei paskirties šalyse, o tai nepriklauso nuo mūsų."
+        ]
+      },
+      {
+        "title": "Muitai, mokesčiai ir atitiktis",
+        "body": [
+          "Jūs esate atsakingi už paskirties šalies importo įstatymų laikymąsi. Jei raštu nesusitarta kitaip, importo muitai, PVM, akcizai ir bet kokie paskirties šalies atitikties reikalavimai yra jūsų atsakomybė."
+        ]
+      },
+      {
+        "title": "Atsakomybės apribojimas",
+        "body": [
+          "Mūsų paslaugos teikiamos tokios, kokios yra, ir priklausomai nuo prieinamumo. Įstatymų leidžiama maksimalia apimtimi SmartAutoBid neatsako už netiesioginius ar pasekminius nuostolius, trečiųjų šalių aukciono platformų klaidas, klaidingą informaciją ar neprieinamumą, taip pat už vėlavimus, kuriuos sukėlė vežėjai, muitinės institucijos ar kitos aplinkybės, kurių protingai negalime kontroliuoti. Kai atsakomybės negalima atmesti, ji ribojama suma, kurią sumokėjote SmartAutoBid už atitinkamą sandorį."
+        ]
+      },
+      {
+        "title": "Trečiųjų šalių aukciono platformos",
+        "body": [
+          "Mūsų paieškos įrankis nukreipia tiesiai į Copart ir IAAI svetaines, kurios turi savo naudojimo sąlygas ir privatumo praktiką. Neatsakome už šių trečiųjų šalių platformų turinį, prieinamumą ar tikslumą."
+        ]
+      },
+      {
+        "title": "Intelektinė nuosavybė",
+        "body": [
+          "SmartAutoBid pavadinimas, logotipas ir svetainės turinys priklauso Smart Auto Bid LLC ir negali būti naudojami be mūsų leidimo."
+        ]
+      },
+      {
+        "title": "Taikoma teisė",
+        "body": [
+          "Šioms Sąlygoms taikoma Džordžijos valstijos, JAV, teisė, neatsižvelgiant į kolizines teisės normas. Bet koks nesutarimas, neišspręstas neteismine tvarka, bus nagrinėjamas Chatham apygardos, Džordžijos valstijos, teismuose, išskyrus atvejus, kai jūsų šalies vartotojų apsaugos įstatymai reikalauja kitaip."
+        ]
+      },
+      {
+        "title": "Šių sąlygų pakeitimai",
+        "body": [
+          "Kartais galime atnaujinti šias Sąlygas. Tolesnis naudojimasis mūsų svetaine ar paslaugomis po pakeitimų įsigaliojimo reiškia sutikimą su atnaujintomis Sąlygomis."
+        ]
+      },
+      {
+        "title": "Susisiekite su mumis",
+        "body": [
+          "Klausimus dėl šių Sąlygų galite siųsti adresu info@smartautobid.com, skambinti arba rašyti per WhatsApp +1 (912) 561-2347, arba paštu adresu Smart Auto Bid LLC, 289 Telfair Rd #I, Savannah, GA 31415, USA."
+        ]
+      }
+    ]
+  },
+  "NotFound": {
+    "title": "Puslapis nerastas",
+    "subtitle": "Ieškomo puslapio nėra, jis galėjo būti perkeltas, arba nuoroda pasenusi.",
+    "homeCta": "Grįžti į pradžią",
+    "contactCta": "Susisiekite su mumis"
+  },
+  "WhatsAppButton": {
+    "label": "Rašykite per WhatsApp"
+  },
+  "CookieConsent": {
+    "message": "Norėtume naudoti slapukus, kad suprastume, kaip lankytojai naudojasi mūsų svetaine, ir galėtume ją tobulinti. Tai neprivaloma.",
+    "privacyLink": "Sužinoti daugiau",
+    "accept": "Sutinku",
+    "decline": "Atsisakyti"
   }
 }

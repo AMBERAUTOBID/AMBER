@@ -1,38 +1,114 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Car, Motorcycle, Jeep, Phone } from "@phosphor-icons/react/dist/ssr";
+import {
+  Car,
+  Motorcycle,
+  Jeep,
+  Phone,
+  CaretDown,
+  DotsThree,
+  SteeringWheel,
+  Waves,
+  TruckTrailer,
+  Snowflake,
+  Boat as BoatIcon,
+  Tractor,
+} from "@phosphor-icons/react/dist/ssr";
 import { clsx } from "clsx";
 import { PICKUP_LOCATIONS } from "@/lib/pickupLocations";
+import { localTransportRateUsd } from "@/lib/localTransportRates";
+import { QUOTE_ONLY_DESTINATION_PORTS } from "@/lib/mapGeo";
 import ScrollableSelect from "./ScrollableSelect";
 import Container from "./Container";
 import Reveal from "./Reveal";
+import RouteGlobe from "./ui/route-globe";
 
-type VehicleKind = "car" | "motorcycle" | "suv";
+type PrimaryVehicleKind = "car" | "suv" | "motorcycle";
+type MoreVehicleKind =
+  | "atv"
+  | "trike"
+  | "bigMotorcycle"
+  | "jetSki"
+  | "jetSkiTrailer"
+  | "snowmobile"
+  | "snowmobileTrailer"
+  | "boat"
+  | "heavyEquipment";
+type VehicleKind = PrimaryVehicleKind | MoreVehicleKind;
 type Auction = "copart" | "iaai";
 
-const VEHICLE_KINDS: VehicleKind[] = ["car", "motorcycle", "suv"];
+const PRIMARY_VEHICLE_KINDS: PrimaryVehicleKind[] = ["car", "suv", "motorcycle"];
+const MORE_VEHICLE_KINDS: MoreVehicleKind[] = [
+  "atv",
+  "trike",
+  "bigMotorcycle",
+  "jetSki",
+  "jetSkiTrailer",
+  "snowmobile",
+  "snowmobileTrailer",
+  "boat",
+  "heavyEquipment",
+];
+// These categories vary too widely in price/complexity for a formula-based
+// number, so the calculator withholds the estimate until a lead email is given.
+const EMAIL_REQUIRED_KINDS: VehicleKind[] = ["boat", "heavyEquipment"];
+
 const VEHICLE_ICONS: Record<VehicleKind, typeof Car> = {
   car: Car,
-  motorcycle: Motorcycle,
   suv: Jeep,
+  motorcycle: Motorcycle,
+  atv: SteeringWheel,
+  trike: Motorcycle,
+  bigMotorcycle: Motorcycle,
+  jetSki: Waves,
+  jetSkiTrailer: TruckTrailer,
+  snowmobile: Snowflake,
+  snowmobileTrailer: TruckTrailer,
+  boat: BoatIcon,
+  heavyEquipment: Tractor,
 };
 
 // Illustrative shipping base rates (USD) and destination-port multipliers —
-// same estimate model used site-wide, not a live freight-rate feed.
+// same estimate model used site-wide, not a live freight-rate feed. Rates for
+// the "More" categories are rough placeholders pending real freight numbers.
 const VEHICLE_BASE_SHIPPING: Record<VehicleKind, number> = {
   car: 950,
   suv: 1250,
   motorcycle: 500,
+  atv: 350,
+  trike: 550,
+  bigMotorcycle: 650,
+  jetSki: 400,
+  jetSkiTrailer: 500,
+  snowmobile: 400,
+  snowmobileTrailer: 500,
+  boat: 1800,
+  heavyEquipment: 2500,
 };
 const PORT_MULTIPLIER: Record<string, number> = {
   "Klaipėda, Lithuania": 1,
   "Poti, Georgia": 1.35,
   "Rotterdam, Netherlands": 0.95,
 };
-const PORT_OPTIONS = Object.keys(PORT_MULTIPLIER);
+// Destinations with a real customs/duty model (priced) plus destinations
+// that only offer a "request a quote by email" flow (no customs data yet).
+const PORT_OPTIONS = [...Object.keys(PORT_MULTIPLIER), ...QUOTE_ONLY_DESTINATION_PORTS];
+
+// Customs model per destination. Klaipėda/Rotterdam are EU: the 2026 EU-US
+// "Turnberry" trade deal dropped the EU's passenger-car import duty from 10%
+// to 0% specifically for US-manufactured vehicles. Georgia is not part of
+// that deal — its 5% customs duty applies regardless of origin, and Georgia
+// also levies a separate per-cm³ engine-size excise tax not modeled here.
+const PORT_CUSTOMS: Record<string, { vat: number; duty: number; dutyWaivedForUsaMade: boolean }> = {
+  "Klaipėda, Lithuania": { vat: 0.21, duty: 0.1, dutyWaivedForUsaMade: true },
+  "Rotterdam, Netherlands": { vat: 0.21, duty: 0.1, dutyWaivedForUsaMade: true },
+  "Poti, Georgia": { vat: 0.18, duty: 0.05, dutyWaivedForUsaMade: false },
+};
 const TRUCKING_FLAT_USD = 450;
+const BROKERAGE_FEE_USD = 350;
 const USD_TO_EUR = 0.92;
 const PHONE_E164 = "+19125612347";
 const PHONE_DISPLAY = "+1 (912) 561-2347";
@@ -40,9 +116,12 @@ const PHONE_DISPLAY = "+1 (912) 561-2347";
 type Result = {
   lotPrice: number;
   auctionFees: number;
+  brokerageFee: number;
   trucking: number;
   shipping: number;
-  customs: number;
+  duty: number;
+  vat: number;
+  isGeorgia: boolean;
   totalEur: number;
 };
 
@@ -57,6 +136,7 @@ export default function CostCalculator() {
   const t = useTranslations("Calculator");
 
   const [vehicleKind, setVehicleKind] = useState<VehicleKind>("car");
+  const [moreOpen, setMoreOpen] = useState(false);
   const [auction, setAuction] = useState<Auction>("copart");
   const [price, setPrice] = useState("");
   const [pickup, setPickup] = useState("");
@@ -65,22 +145,70 @@ export default function CostCalculator() {
   const [usaMade, setUsaMade] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [quoteRequested, setQuoteRequested] = useState(false);
+
+  const selectedMoreKind = MORE_VEHICLE_KINDS.includes(vehicleKind as MoreVehicleKind)
+    ? (vehicleKind as MoreVehicleKind)
+    : null;
+  const isQuoteOnlyPort = QUOTE_ONLY_DESTINATION_PORTS.includes(port);
+  const emailRequired = EMAIL_REQUIRED_KINDS.includes(vehicleKind) || isQuoteOnlyPort;
+  const canCalculate = !emailRequired || email.trim().length > 0;
+
+  function selectVehicleKind(kind: VehicleKind) {
+    setVehicleKind(kind);
+    setMoreOpen(false);
+  }
 
   function handleCalculate() {
+    if (!canCalculate) return;
+
+    if (isQuoteOnlyPort) {
+      setResult(null);
+      setSubmitting(true);
+      fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Price calculator quote request",
+          email: email.trim(),
+          vehicle: `${vehicleKind} via ${auction}${pickup ? ` from ${pickup}` : ""}`,
+          message: `Quote request — no instant pricing for destination: ${port}. Lot price: $${
+            Number(price) || 0
+          }, USA-made: ${usaMade}.`,
+        }),
+      })
+        .then(() => setQuoteRequested(true))
+        .catch(() => {})
+        .finally(() => setSubmitting(false));
+      return;
+    }
+
     const lotPrice = Number(price) || 0;
     const auctionFees = Math.max(200, lotPrice * 0.1);
-    const trucking = TRUCKING_FLAT_USD;
+    const brokerageFee = BROKERAGE_FEE_USD;
+    // Real per-location rates only cover Car/SUV/Motorcycle; every other
+    // vehicle kind (ATV, boat, etc.) keeps the flat placeholder rate.
+    const trucking =
+      vehicleKind === "car" || vehicleKind === "suv" || vehicleKind === "motorcycle"
+        ? localTransportRateUsd(pickup, auction, vehicleKind, TRUCKING_FLAT_USD)
+        : TRUCKING_FLAT_USD;
     const shipping = VEHICLE_BASE_SHIPPING[vehicleKind] * (PORT_MULTIPLIER[port] ?? 1);
-    const dutyRate = usaMade ? 0.075 : 0.1;
-    const customs = (lotPrice + shipping) * dutyRate;
-    const totalUsd = lotPrice + auctionFees + trucking + shipping + customs;
+    const customsInfo = PORT_CUSTOMS[port] ?? PORT_CUSTOMS["Klaipėda, Lithuania"];
+    const dutyBase = lotPrice + shipping;
+    const dutyRate = customsInfo.dutyWaivedForUsaMade && usaMade ? 0 : customsInfo.duty;
+    const duty = dutyBase * dutyRate;
+    const vat = (dutyBase + duty) * customsInfo.vat;
+    const totalUsd = lotPrice + auctionFees + brokerageFee + trucking + shipping + duty + vat;
 
     setResult({
       lotPrice,
       auctionFees,
+      brokerageFee,
       trucking,
       shipping,
-      customs,
+      duty,
+      vat,
+      isGeorgia: port === "Poti, Georgia",
       totalEur: totalUsd * USD_TO_EUR,
     });
 
@@ -107,18 +235,31 @@ export default function CostCalculator() {
 
   return (
     <section className="bg-char-50 py-20 sm:py-24">
-      <Container className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-        <Reveal>
+      <Container>
+        <Reveal className="mx-auto max-w-2xl text-center">
+          <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-700">
+            {t("eyebrow")}
+          </span>
+          <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-char-900 sm:text-4xl">
+            {t("title")}
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-char-600 sm:text-lg">
+            {t("subtitle")}
+          </p>
+        </Reveal>
+
+        <div className="mt-12 grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
+        <Reveal className="w-full max-w-xl justify-self-center lg:justify-self-auto">
           <div className="rounded-3xl border border-char-200 bg-white p-6 shadow-xl shadow-char-900/5 sm:p-7">
-            <div className="flex gap-1 border-b border-char-100">
-              {VEHICLE_KINDS.map((kind) => {
+            <div className="flex flex-wrap items-center gap-1 border-b border-char-100">
+              {PRIMARY_VEHICLE_KINDS.map((kind) => {
                 const Icon = VEHICLE_ICONS[kind];
                 const active = vehicleKind === kind;
                 return (
                   <button
                     key={kind}
                     type="button"
-                    onClick={() => setVehicleKind(kind)}
+                    onClick={() => selectVehicleKind(kind)}
                     className={clsx(
                       "flex items-center gap-1.5 border-b-2 px-3 pb-2.5 text-sm font-semibold transition-colors",
                       active
@@ -131,7 +272,67 @@ export default function CostCalculator() {
                   </button>
                 );
               })}
+              <button
+                type="button"
+                onClick={() => setMoreOpen((open) => !open)}
+                className={clsx(
+                  "flex items-center gap-1.5 border-b-2 px-3 pb-2.5 text-sm font-semibold transition-colors",
+                  selectedMoreKind || moreOpen
+                    ? "border-amber-500 text-amber-700"
+                    : "border-transparent text-char-500 hover:text-char-700"
+                )}
+              >
+                {selectedMoreKind ? (
+                  (() => {
+                    const Icon = VEHICLE_ICONS[selectedMoreKind];
+                    return <Icon size={17} weight="fill" />;
+                  })()
+                ) : (
+                  <DotsThree size={17} weight={moreOpen ? "fill" : "regular"} />
+                )}
+                {selectedMoreKind ? t(`vehicleTypes.${selectedMoreKind}`) : t("vehicleTypes.more")}
+                <CaretDown
+                  size={12}
+                  className={clsx("transition-transform duration-200", moreOpen && "rotate-180")}
+                />
+              </button>
             </div>
+
+            <AnimatePresence initial={false}>
+              {moreOpen && (
+                <motion.div
+                  key="more-panel"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="grid grid-cols-3 gap-2 border-b border-char-100 py-3">
+                    {MORE_VEHICLE_KINDS.map((kind) => {
+                      const Icon = VEHICLE_ICONS[kind];
+                      const active = vehicleKind === kind;
+                      return (
+                        <button
+                          key={kind}
+                          type="button"
+                          onClick={() => selectVehicleKind(kind)}
+                          className={clsx(
+                            "flex flex-col items-center gap-1 rounded-xl border px-2 py-2.5 text-center text-xs font-medium leading-tight transition-colors",
+                            active
+                              ? "border-amber-400 bg-amber-50 text-amber-700"
+                              : "border-char-200 text-char-600 hover:border-char-300 hover:bg-char-50"
+                          )}
+                        >
+                          <Icon size={18} weight={active ? "fill" : "regular"} />
+                          {t(`vehicleTypes.${kind}`)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="mt-4 flex flex-wrap gap-4">
               {(["copart", "iaai"] as Auction[]).map((a) => (
@@ -173,7 +374,11 @@ export default function CostCalculator() {
             <div className="mt-3">
               <ScrollableSelect
                 value={port}
-                onChange={(v) => setPort(v || PORT_OPTIONS[0])}
+                onChange={(v) => {
+                  setPort(v || PORT_OPTIONS[0]);
+                  setResult(null);
+                  setQuoteRequested(false);
+                }}
                 options={PORT_OPTIONS}
                 placeholder={t("portPlaceholder")}
                 searchPlaceholder={t("searchPlaceholder")}
@@ -201,12 +406,22 @@ export default function CostCalculator() {
             <button
               type="button"
               onClick={handleCalculate}
-              disabled={submitting}
+              disabled={submitting || !canCalculate}
               className="mt-5 w-full rounded-xl bg-char-900 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-char-800 disabled:opacity-60"
             >
-              {t("calculateButton")}
+              {isQuoteOnlyPort ? t("requestQuoteButton") : t("calculateButton")}
             </button>
+            {emailRequired && !canCalculate && (
+              <p className="mt-2 text-xs font-medium text-amber-700">
+                {isQuoteOnlyPort ? t("portQuoteRequiredNote") : t("emailRequiredNote")}
+              </p>
+            )}
 
+            {isQuoteOnlyPort ? (
+              <div className="mt-5 border-t border-char-100 pt-4 text-sm text-char-600">
+                <p>{quoteRequested ? t("results.quoteSent") : t("results.quoteOnlyNote")}</p>
+              </div>
+            ) : (
             <div className="mt-5 space-y-2 border-t border-char-100 pt-4 text-sm text-char-600">
               <div className="flex items-center justify-between">
                 <span>{t("results.lotPrice")}</span>
@@ -218,6 +433,12 @@ export default function CostCalculator() {
                 <span>{t("results.auctionFees")}</span>
                 <span className="font-medium text-char-900">
                   {result ? formatUsd(result.auctionFees) : "–"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>{t("results.brokerageFee")}</span>
+                <span className="font-medium text-char-900">
+                  {result ? formatUsd(result.brokerageFee) : "–"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -233,9 +454,15 @@ export default function CostCalculator() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span>{t("results.customs")}</span>
+                <span>{t("results.duty")}</span>
                 <span className="font-medium text-char-900">
-                  {result ? formatUsd(result.customs) : "–"}
+                  {result ? formatUsd(result.duty) : "–"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>{t("results.vat")}</span>
+                <span className="font-medium text-char-900">
+                  {result ? formatUsd(result.vat) : "–"}
                 </span>
               </div>
               <div className="flex items-center justify-between border-t border-char-200 pt-3 text-base font-bold text-char-900">
@@ -243,29 +470,52 @@ export default function CostCalculator() {
                 <span>{result ? formatEur(result.totalEur) : "0 €"}</span>
               </div>
             </div>
+            )}
+
+            {result?.isGeorgia && (
+              <p className="mt-3 text-xs leading-relaxed text-amber-700">{t("results.georgiaNote")}</p>
+            )}
 
             <p className="mt-4 text-xs leading-relaxed text-char-400">{t("disclaimer")}</p>
           </div>
         </Reveal>
 
-        <Reveal delay={0.1}>
-          <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-700">
-            {t("eyebrow")}
-          </span>
-          <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-char-900 sm:text-4xl">
-            {t("title")}
-          </h2>
-          <p className="mt-4 text-base leading-relaxed text-char-600 sm:text-lg">
-            {t("subtitle")}
-          </p>
-          <a
-            href={`tel:${PHONE_E164}`}
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-char-900 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-char-800"
-          >
-            <Phone size={16} weight="fill" className="text-amber-400" />
-            {t("ctaPhone")} {PHONE_DISPLAY}
-          </a>
+        <Reveal delay={0.1} className="w-full max-w-xl justify-self-center lg:justify-self-auto">
+          <p className="text-sm font-semibold text-char-900">{t("map.title")}</p>
+          <p className="mt-1 text-xs leading-relaxed text-char-500">{t("map.subtitle")}</p>
+
+          <RouteGlobe pickup={pickup} destinationPort={port} className="mt-2" />
+
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-char-500">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-char-400" />
+              {t("map.legendPorts")}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-amber-500" />
+              {t("map.legendPickup")}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-0.5 w-4 rounded-full bg-char-700" />
+              {t("map.legendTrucking")}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-0.5 w-4 rounded-full bg-amber-500" />
+              {t("map.legendOcean")}
+            </span>
+          </div>
+
+          <div className="mt-6">
+            <a
+              href={`tel:${PHONE_E164}`}
+              className="inline-flex items-center gap-2 rounded-full bg-char-900 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-char-800"
+            >
+              <Phone size={16} weight="fill" className="text-amber-400" />
+              {t("ctaPhone")} {PHONE_DISPLAY}
+            </a>
+          </div>
         </Reveal>
+        </div>
       </Container>
     </section>
   );

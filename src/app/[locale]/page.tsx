@@ -7,6 +7,7 @@ import SectionHeading from "@/components/SectionHeading";
 import SearchWidget from "@/components/SearchWidget";
 import CostCalculator from "@/components/CostCalculator";
 import Marquee from "@/components/Marquee";
+import HeroGallery from "@/components/HeroGallery";
 import {
   Gavel,
   FileText,
@@ -22,6 +23,16 @@ import {
 
 const SERVICE_ICONS = [Gavel, FileText, ShippingContainer];
 const WHY_ICONS = [ShieldCheck, ClockCountdown, Globe, Handshake, Key, HeartStraight];
+
+const HERO_IMAGES = [
+  "/images/hero-gallery-truck.jpg",
+  "/images/hero-gallery-mustang.jpg",
+  "/images/hero-gallery-yard.jpg",
+  "/images/hero-gallery-cybertruck.jpg",
+  "/images/hero-gallery-corvette.jpg",
+  "/images/hero-gallery-durango.jpg",
+  "/images/hero-gallery-rangerover.jpg",
+];
 
 export default async function HomePage({
   params,
@@ -44,18 +55,11 @@ export default async function HomePage({
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
-          <Image
-            src="/images/hero-bmw-m4.jpg"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-char-950/85 via-char-950/70 to-char-950/90" />
+          <HeroGallery images={HERO_IMAGES} />
+          <div className="absolute inset-0 bg-gradient-to-b from-char-950/60 via-char-950/40 to-char-950/70" />
         </div>
 
-        <Container className="relative py-20 sm:py-28">
+        <Container className="relative pt-20 pb-36 sm:pt-28 sm:pb-44">
           <Reveal className="mx-auto max-w-2xl text-center">
             <span className="inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-400">
               {t("hero.eyebrow")}
@@ -73,43 +77,46 @@ export default async function HomePage({
               </Button>
             </div>
           </Reveal>
-
-          <Reveal delay={0.15} className="mx-auto mt-12 max-w-3xl">
-            <SearchWidget
-              variant="elevated"
-              labels={{
-                vinPlaceholder: tSearch("widget.vinPlaceholder"),
-                copartToggle: tSearch("widget.copartToggle"),
-                iaaiToggle: tSearch("widget.iaaiToggle"),
-                searchButton: tSearch("widget.searchButton"),
-                vehicleTypes: tSearch.raw("widget.vehicleTypes"),
-                yearFrom: tSearch("widget.yearFrom"),
-                yearTo: tSearch("widget.yearTo"),
-                buyNow: tSearch("widget.buyNow"),
-                browsePrompt: tSearch("widget.browsePrompt"),
-                makePlaceholder: tSearch("widget.makePlaceholder"),
-                typePlaceholder: tSearch("widget.typePlaceholder"),
-                modelPlaceholder: tSearch("widget.modelPlaceholder"),
-                searchFilterPlaceholder: tSearch("widget.searchFilterPlaceholder"),
-                odometer: tSearch("widget.odometer"),
-                odometerReset: tSearch("widget.odometerReset"),
-              }}
-            />
-          </Reveal>
-
-          <Reveal delay={0.2} className="mx-auto mt-8 flex max-w-3xl flex-wrap justify-center gap-3">
-            {trustChips.map((chip) => (
-              <span
-                key={chip}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-char-200"
-              >
-                <CheckCircle size={14} weight="fill" className="text-amber-500" />
-                {chip}
-              </span>
-            ))}
-          </Reveal>
         </Container>
       </section>
+
+      {/* Search widget: floats over the hero's bottom edge instead of sitting mid-image, so most of the photo stays visible */}
+      <Container className="relative z-10 -mt-28 sm:-mt-32">
+        <Reveal delay={0.15} className="mx-auto max-w-3xl">
+          <SearchWidget
+            variant="elevated"
+            labels={{
+              vinPlaceholder: tSearch("widget.vinPlaceholder"),
+              copartToggle: tSearch("widget.copartToggle"),
+              iaaiToggle: tSearch("widget.iaaiToggle"),
+              searchButton: tSearch("widget.searchButton"),
+              vehicleTypes: tSearch.raw("widget.vehicleTypes"),
+              yearFrom: tSearch("widget.yearFrom"),
+              yearTo: tSearch("widget.yearTo"),
+              buyNow: tSearch("widget.buyNow"),
+              browsePrompt: tSearch("widget.browsePrompt"),
+              makePlaceholder: tSearch("widget.makePlaceholder"),
+              typePlaceholder: tSearch("widget.typePlaceholder"),
+              modelPlaceholder: tSearch("widget.modelPlaceholder"),
+              searchFilterPlaceholder: tSearch("widget.searchFilterPlaceholder"),
+              odometer: tSearch("widget.odometer"),
+              odometerReset: tSearch("widget.odometerReset"),
+            }}
+          />
+        </Reveal>
+
+        <Reveal delay={0.2} className="mx-auto mt-8 flex max-w-3xl flex-wrap justify-center gap-3">
+          {trustChips.map((chip) => (
+            <span
+              key={chip}
+              className="inline-flex items-center gap-2 rounded-full border border-char-200 bg-white px-3.5 py-1.5 text-xs font-medium text-char-600 shadow-sm"
+            >
+              <CheckCircle size={14} weight="fill" className="text-amber-500" />
+              {chip}
+            </span>
+          ))}
+        </Reveal>
+      </Container>
 
       {/* Cost calculator */}
       <CostCalculator />
@@ -197,7 +204,7 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* Why AmberAutoBid */}
+      {/* Why SmartAutoBid */}
       <section className="bg-char-900 py-20 sm:py-28">
         <Container>
           <SectionHeading

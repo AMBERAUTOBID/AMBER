@@ -11,8 +11,8 @@ import LanguageSwitcher from "./LanguageSwitcher";
 
 const PHONE_DISPLAY = "+1 (912) 561-2347";
 const PHONE_E164 = "+19125612347";
-const TELEGRAM_HANDLE = "AmberAutoBid";
-const EMAIL = "info@amberautobid.com";
+const TELEGRAM_HANDLE = "SmartAutoBid";
+const EMAIL = "info@smartautobid.com";
 
 export default async function Footer() {
   const tNav = await getTranslations("Nav");
@@ -60,7 +60,7 @@ export default async function Footer() {
       <Container className="grid grid-cols-1 gap-10 py-16 sm:grid-cols-2 lg:grid-cols-4">
         <div className="sm:col-span-2 lg:col-span-1">
           <span className="font-[family-name:var(--font-heading)] text-xl font-extrabold tracking-tight text-white">
-            Amber<span className="text-amber-500">AutoBid</span>
+            Smart<span className="text-amber-500">AutoBid</span>
           </span>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-char-300">
             {tFooter("tagline")}
@@ -121,11 +121,21 @@ export default async function Footer() {
       </Container>
 
       <div className="border-t border-white/10">
-        <Container className="flex flex-col gap-3 py-6 text-xs text-char-400 sm:flex-row sm:items-center sm:justify-between">
+        <Container className="flex flex-col gap-4 py-6 text-xs text-char-400">
           <p className="max-w-3xl leading-relaxed">{tFooter("disclaimer")}</p>
-          <p className="shrink-0 whitespace-nowrap">
-            © {year} AmberAutoBid. {tFooter("rights")}
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-x-5 gap-y-1">
+              <Link href="/privacy" className="transition-colors hover:text-amber-400">
+                {tFooter("legal.privacy")}
+              </Link>
+              <Link href="/terms" className="transition-colors hover:text-amber-400">
+                {tFooter("legal.terms")}
+              </Link>
+            </div>
+            <p className="shrink-0 whitespace-nowrap">
+              © {year} SmartAutoBid. {tFooter("rights")}
+            </p>
+          </div>
         </Container>
       </div>
     </footer>

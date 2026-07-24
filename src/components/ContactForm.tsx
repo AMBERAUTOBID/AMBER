@@ -1,10 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import Script from "next/script";
 import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 
 type Status = "idle" | "submitting" | "success" | "error";
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+
+declare global {
+  interface Window {
+    grecaptcha?: {
+      ready: (callback: () => void) => void;
+      execute: (siteKey: string, options: { action: string }) => Promise<string>;
+    };
+  }
+}
+
+async function getRecaptchaToken(): Promise<string> {
+  if (!RECAPTCHA_SITE_KEY || typeof window === "undefined" || !window.grecaptcha) {
+    return "";
+  }
+  return new Promise((resolve) => {
+    window.grecaptcha!.ready(() => {
+      window
+        .grecaptcha!.execute(RECAPTCHA_SITE_KEY, { action: "contact" })
+        .then(resolve)
+        .catch(() => resolve(""));
+    });
+  });
+}
 
 export default function ContactForm() {
   const t = useTranslations("Contact.form");
@@ -16,12 +42,13 @@ export default function ContactForm() {
     setStatus("submitting");
     const form = e.currentTarget;
     const data = Object.fromEntries(new FormData(form).entries());
+    const recaptchaToken = await getRecaptchaToken();
 
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, locale }),
+        body: JSON.stringify({ ...data, locale, recaptchaToken }),
       });
       if (!res.ok) throw new Error("Request failed");
       setStatus("success");
@@ -37,6 +64,12 @@ export default function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {RECAPTCHA_SITE_KEY && (
+        <Script
+          src={`https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`}
+          strategy="afterInteractive"
+        />
+      )}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="name" className={labelClass}>

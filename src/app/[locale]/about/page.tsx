@@ -72,7 +72,7 @@ export default async function AboutPage({
             <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-xl shadow-char-900/15">
               <Image
                 src="/images/hero-4runner.jpg"
-                alt="Vehicles sourced by AmberAutoBid"
+                alt="Vehicles sourced by SmartAutoBid"
                 fill
                 sizes="(min-width: 1024px) 560px, 90vw"
                 className="object-cover"
