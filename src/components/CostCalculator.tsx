@@ -8,6 +8,7 @@ import {
   Motorcycle,
   Jeep,
   Phone,
+  Package,
   CaretDown,
   DotsThree,
   SteeringWheel,
@@ -21,6 +22,15 @@ import { clsx } from "clsx";
 import { PICKUP_LOCATIONS } from "@/lib/pickupLocations";
 import { localTransportRateUsd } from "@/lib/localTransportRates";
 import { QUOTE_ONLY_DESTINATION_PORTS } from "@/lib/mapGeo";
+import {
+  PORT_MULTIPLIER,
+  TRUCKING_FLAT_USD,
+  BROKERAGE_FEE_USD,
+  USD_TO_EUR,
+  auctionFeesUsd,
+  customsBreakdown,
+} from "@/lib/costEstimate";
+import { Link } from "@/i18n/navigation";
 import ScrollableSelect from "./ScrollableSelect";
 import Container from "./Container";
 import Reveal from "./Reveal";
@@ -88,28 +98,9 @@ const VEHICLE_BASE_SHIPPING: Record<VehicleKind, number> = {
   boat: 1800,
   heavyEquipment: 2500,
 };
-const PORT_MULTIPLIER: Record<string, number> = {
-  "Klaipėda, Lithuania": 1,
-  "Poti, Georgia": 1.35,
-  "Rotterdam, Netherlands": 0.95,
-};
 // Destinations with a real customs/duty model (priced) plus destinations
 // that only offer a "request a quote by email" flow (no customs data yet).
 const PORT_OPTIONS = [...Object.keys(PORT_MULTIPLIER), ...QUOTE_ONLY_DESTINATION_PORTS];
-
-// Customs model per destination. Klaipėda/Rotterdam are EU: the 2026 EU-US
-// "Turnberry" trade deal dropped the EU's passenger-car import duty from 10%
-// to 0% specifically for US-manufactured vehicles. Georgia is not part of
-// that deal — its 5% customs duty applies regardless of origin, and Georgia
-// also levies a separate per-cm³ engine-size excise tax not modeled here.
-const PORT_CUSTOMS: Record<string, { vat: number; duty: number; dutyWaivedForUsaMade: boolean }> = {
-  "Klaipėda, Lithuania": { vat: 0.21, duty: 0.1, dutyWaivedForUsaMade: true },
-  "Rotterdam, Netherlands": { vat: 0.21, duty: 0.1, dutyWaivedForUsaMade: true },
-  "Poti, Georgia": { vat: 0.18, duty: 0.05, dutyWaivedForUsaMade: false },
-};
-const TRUCKING_FLAT_USD = 450;
-const BROKERAGE_FEE_USD = 350;
-const USD_TO_EUR = 0.92;
 const PHONE_E164 = "+19125612347";
 const PHONE_DISPLAY = "+1 (912) 561-2347";
 
@@ -184,7 +175,7 @@ export default function CostCalculator() {
     }
 
     const lotPrice = Number(price) || 0;
-    const auctionFees = Math.max(200, lotPrice * 0.1);
+    const auctionFees = auctionFeesUsd(lotPrice);
     const brokerageFee = BROKERAGE_FEE_USD;
     // Real per-location rates only cover Car/SUV/Motorcycle; every other
     // vehicle kind (ATV, boat, etc.) keeps the flat placeholder rate.
@@ -193,11 +184,12 @@ export default function CostCalculator() {
         ? localTransportRateUsd(pickup, auction, vehicleKind, TRUCKING_FLAT_USD)
         : TRUCKING_FLAT_USD;
     const shipping = VEHICLE_BASE_SHIPPING[vehicleKind] * (PORT_MULTIPLIER[port] ?? 1);
-    const customsInfo = PORT_CUSTOMS[port] ?? PORT_CUSTOMS["Klaipėda, Lithuania"];
-    const dutyBase = lotPrice + shipping;
-    const dutyRate = customsInfo.dutyWaivedForUsaMade && usaMade ? 0 : customsInfo.duty;
-    const duty = dutyBase * dutyRate;
-    const vat = (dutyBase + duty) * customsInfo.vat;
+    const { dutyUsd: duty, vatUsd: vat } = customsBreakdown({
+      lotPriceUsd: lotPrice,
+      shippingUsd: shipping,
+      destinationPort: port,
+      usaMade,
+    });
     const totalUsd = lotPrice + auctionFees + brokerageFee + trucking + shipping + duty + vat;
 
     setResult({
@@ -496,7 +488,7 @@ export default function CostCalculator() {
               {t("map.legendPickup")}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-0.5 w-4 rounded-full bg-char-700" />
+              <span className="h-0.5 w-4 rounded-full bg-char-900" />
               {t("map.legendTrucking")}
             </span>
             <span className="flex items-center gap-1.5">
@@ -505,7 +497,7 @@ export default function CostCalculator() {
             </span>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap gap-3">
             <a
               href={`tel:${PHONE_E164}`}
               className="inline-flex items-center gap-2 rounded-full bg-char-900 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-char-800"
@@ -513,6 +505,13 @@ export default function CostCalculator() {
               <Phone size={16} weight="fill" className="text-amber-400" />
               {t("ctaPhone")} {PHONE_DISPLAY}
             </a>
+            <Link
+              href="/shipping"
+              className="inline-flex items-center gap-2 rounded-full border border-char-200 bg-white px-6 py-3.5 text-sm font-semibold text-char-800 transition-colors hover:border-amber-400 hover:text-amber-700"
+            >
+              <Package size={16} weight="fill" className="text-amber-500" />
+              {t("ctaTrack")}
+            </Link>
           </div>
         </Reveal>
         </div>

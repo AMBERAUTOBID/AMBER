@@ -1,0 +1,46 @@
+name: Telegram inventory bot
+
+# Runs 4x/day (every 6 hours). Vercel's free Hobby plan only allows cron
+# jobs once/day, so this runs here via GitHub Actions instead - free, and
+# not tied to the site's hosting plan. Adjust the cron expression below to
+# change frequency; workflow_dispatch lets you (or an admin) trigger a run
+# manually from the Actions tab for testing.
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Run bot
+        env:
+          APIBARA_API_KEY: ${{ secrets.APIBARA_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+        run: npm run bot:run
+
+      # postedLots.json is the only state this bot has - committing it back
+      # is how "already posted" tracking survives between scheduled runs.
+      - name: Commit updated dedup store
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scripts/telegram-bot/postedLots.json
+          git diff --staged --quiet || git commit -m "chore: update telegram bot posted-lots store [skip ci]"
+          git push
