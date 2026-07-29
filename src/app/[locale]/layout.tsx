@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Manrope, Noto_Sans_Georgian } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -21,13 +21,6 @@ const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin", "latin-ext", "cyrillic", "cyrillic-ext"],
   weight: ["600", "700", "800"],
-  display: "swap",
-});
-
-const notoGeorgian = Noto_Sans_Georgian({
-  variable: "--font-georgian",
-  subsets: ["georgian", "latin"],
-  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -80,7 +73,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`${inter.variable} ${manrope.variable} ${notoGeorgian.variable} h-full antialiased`}
+      className={`${inter.variable} ${manrope.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <NextIntlClientProvider>

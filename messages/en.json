@@ -162,7 +162,7 @@
         },
         {
           "title": "Multilingual support",
-          "desc": "Our team works with clients in English, Russian, Lithuanian, and Georgian."
+          "desc": "Our team works with clients in English, Russian, and Lithuanian."
         },
         {
           "title": "Vetted transport partners",
@@ -511,7 +511,7 @@
         },
         {
           "title": "Answer in your language",
-          "desc": "Support in English, Russian, Lithuanian, and Georgian, not just at the sale."
+          "desc": "Support in English, Russian, and Lithuanian, not just at the sale."
         }
       ]
     },
@@ -583,7 +583,7 @@
         },
         {
           "question": "What languages do you support?",
-          "answer": "Our team works with clients in English, Russian, Lithuanian, and Georgian."
+          "answer": "Our team works with clients in English, Russian, and Lithuanian."
         }
       ]
     }
@@ -608,7 +608,7 @@
           "Contact and quote requests: when you submit our contact form, we collect your name, email address, phone number (if provided), the vehicle or budget details you describe, and any message you write.",
           "Cost calculator: if you request a price estimate for a route we don't have instant pricing for, we collect the email address you provide so we can follow up with a quote.",
           "Technical data: like most websites, our hosting infrastructure may automatically log standard technical information such as your IP address, browser type, and pages visited, for security and performance purposes.",
-          "Language preference: we store a small cookie recording which language (English, Russian, Lithuanian, or Georgian) you've selected, so the site remembers it on your next visit."
+          "Language preference: we store a small cookie recording which language (English, Russian, or Lithuanian) you've selected, so the site remembers it on your next visit."
         ]
       },
       {

@@ -162,7 +162,7 @@
         },
         {
           "title": "Pagalba jūsų kalba",
-          "desc": "Mūsų komanda dirba su klientais anglų, rusų, lietuvių ir gruzinų kalbomis."
+          "desc": "Mūsų komanda dirba su klientais anglų, rusų ir lietuvių kalbomis."
         },
         {
           "title": "Patikrinti gabenimo partneriai",
@@ -511,7 +511,7 @@
         },
         {
           "title": "Atsakome jūsų kalba",
-          "desc": "Palaikymas anglų, rusų, lietuvių ir gruzinų kalbomis — ne tik pardavimo etape."
+          "desc": "Palaikymas anglų, rusų ir lietuvių kalbomis — ne tik pardavimo etape."
         }
       ]
     },
@@ -583,7 +583,7 @@
         },
         {
           "question": "Kokiomis kalbomis dirbate?",
-          "answer": "Mūsų komanda dirba su klientais anglų, rusų, lietuvių ir gruzinų kalbomis."
+          "answer": "Mūsų komanda dirba su klientais anglų, rusų ir lietuvių kalbomis."
         }
       ]
     }
@@ -608,7 +608,7 @@
           "Užklausos ir kainos paklausimai: kai pateikiate mūsų kontaktinę formą, renkame jūsų vardą, el. pašto adresą, telefono numerį (jei nurodytas), aprašytą automobilį ar biudžetą bei bet kokį jūsų parašytą pranešimą.",
           "Kainos skaičiuoklė: jei prašote kainos įverčio maršrutui, kuriam neturime akimirksniu pateikiamos kainos, renkame jūsų nurodytą el. pašto adresą, kad galėtume vėliau pateikti pasiūlymą.",
           "Techniniai duomenys: kaip ir dauguma svetainių, mūsų prieglobos infrastruktūra gali automatiškai registruoti standartinę techninę informaciją, pvz., jūsų IP adresą, naršyklės tipą ir aplankytus puslapius, saugumo ir veikimo tikslais.",
-          "Kalbos pasirinkimas: saugome nedidelį slapuką, kuriame įrašyta jūsų pasirinkta svetainės kalba (anglų, rusų, lietuvių ar gruzinų), kad svetainė ją prisimintų kitą kartą apsilankius."
+          "Kalbos pasirinkimas: saugome nedidelį slapuką, kuriame įrašyta jūsų pasirinkta svetainės kalba (anglų, rusų ar lietuvių), kad svetainė ją prisimintų kitą kartą apsilankius."
         ]
       },
       {
