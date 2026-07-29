@@ -117,7 +117,7 @@
         },
         {
           "title": "Ocean Freight & Delivery",
-          "desc": "Container or RoRo shipping from major U.S. ports to Europe, the Caucasus, or the Middle East, with tracking and customs clearance support on arrival."
+          "desc": "Container shipping from major U.S. ports to Europe, the Caucasus, or the Middle East, with tracking and customs clearance support on arrival."
         }
       ]
     },
@@ -140,7 +140,7 @@
         },
         {
           "title": "We ship it overseas",
-          "desc": "Inland transport to port, then ocean freight by container or RoRo, fully tracked."
+          "desc": "Inland transport to port, then ocean freight by container, fully tracked."
         },
         {
           "title": "You take delivery",
@@ -169,8 +169,8 @@
           "desc": "Insured haulers and ocean carriers, chosen for reliability — not the cheapest bid we could find."
         },
         {
-          "title": "Direct auction access",
-          "desc": "We bid at Copart and IAAI under our own account — no middleman marking up your purchase."
+          "title": "We bid on your behalf",
+          "desc": "You pick the car, and we place the bids at Copart and IAAI under our own account — no middleman marking up your purchase."
         },
         {
           "title": "Built around you",
@@ -419,7 +419,7 @@
         },
         {
           "title": "Ocean freight",
-          "desc": "Container or RoRo shipping across the Atlantic, fully tracked door-to-port."
+          "desc": "Container shipping across the Atlantic, fully tracked door-to-port."
         },
         {
           "title": "Arrival & customs clearance",

@@ -69,28 +69,28 @@
     },
     "disclaimer": "Tik orientacinis skaičiavimas, ne įpareigojantis pasiūlymas. Galutinė kaina priklauso nuo galutinės varžytynių sumos, automobilio dydžio ir būklės bei paskirties šalies muitinės taisyklių — susisiekite su mumis dėl tikslaus skaičiavimo.",
     "ctaPhone": "Skambinkite mums",
-    "ctaTrack": "Sekti savo automobilį",
+    "ctaTrack": "Sekti Konteinerio Maršrutą",
     "map": {
       "title": "Jūsų gabenimo maršrutas",
-      "subtitle": "Atsiėmimo vieta, artimiausias pakrovimo uostas ir jūrų frachto maršrutas iki pasirinkto paskirties uosto.",
+      "subtitle": "Atsiėmimo vieta, artimiausias pakrovimo uostas ir jūrų maršrutas iki pasirinkto paskirties uosto.",
       "legendPorts": "Pakrovimo ir paskirties uostai",
       "legendPickup": "Jūsų atsiėmimo vieta",
       "legendTrucking": "Gabenimas iki uosto",
-      "legendOcean": "Jūrų frachto maršrutas"
+      "legendOcean": "Jūrų maršrutas"
     }
   },
   "Home": {
     "hero": {
       "eyebrow": "Copart ir IAAI pirkimo agentai",
-      "title": "Jūsų tiltas nuo JAV aukcionų iki jūsų kiemo",
-      "subtitle": "SmartAutoBid suranda, dalyvauja varžytynėse ir pristato. Perkame jums automobilius „Copart“ ir „IAAI“ aukcionuose, sutvarkome visus dokumentus ir pristatome į uostą — arba tiesiai prie jūsų durų — kad ir kur būtumėte.",
+      "title": "Jūsų partneris nuo JAV aukcionų iki jūsų kiemo",
+      "subtitle": "SmartAutoBid suranda, dalyvauja aukcionuose ir pristato. Perkame jums automobilius iš „Copart“ ir „IAAI“, sutvarkome visus dokumentus ir pristatome į uostą — arba tiesiai prie jūsų durų — kad ir kur būtumėte.",
       "ctaPrimary": "Ieškoti Copart ir IAAI",
       "ctaSecondary": "Gauti nemokamą pasiūlymą",
       "trustChips": [
         "Tiesioginė prieiga prie Copart ir IAAI",
         "Kalbos: EN · RU · LT · KA",
         "Skaidrios, visą kainą atspindinčios sąnaudos",
-        "Asmeninis varžytynių valdymas"
+        "Asmeninis statymų valdymas"
       ]
     },
     "trust": {
@@ -103,21 +103,21 @@
       ]
     },
     "services": {
-      "eyebrow": "Ką mes darome",
-      "title": "Vienas partneris — nuo plaktuko smūgio iki jūsų garažo",
+      "eyebrow": "Mūsų Paslaugos",
+      "title": "Vienas partneris — nuo laimėto aukciono iki jūsų garažo",
       "subtitle": "Trys glaudžiai susijusios paslaugos, kad niekas nedingtų vertime — tiesiogine prasme.",
       "items": [
         {
-          "title": "Varžytynės ir pirkimas",
+          "title": "Aukciono statymai ir pirkimas",
           "desc": "Nurodykite markę, modelį ar loto numerį. Mūsų komanda jūsų vardu dalyvaus „Copart“ ir „IAAI“ varžytynėse, informuos realiu laiku ir niekada neviršys jūsų nustatytos ribos."
         },
         {
           "title": "Apžiūra ir dokumentai",
-          "desc": "Patikriname būklės nuotraukas ir aukciono ataskaitas, sutvarkome nuosavybės teisę ir paruošiame visus jūsų šaliai reikalingus eksporto bei muitinės dokumentus."
+          "desc": "Patikriname mašinos būklės nuotraukas ir aukciono ataskaitas, sutvarkome nuosavybės teisę ir paruošiame visus jūsų šaliai reikalingus eksporto bei muitinės dokumentus."
         },
         {
           "title": "Jūrų gabenimas ir pristatymas",
-          "desc": "Konteinerinis arba RoRo gabenimas iš didžiųjų JAV uostų į Europą, Kaukazą ar Artimuosius Rytus, su sekimu ir pagalba muitinės procedūrose atvykus."
+          "desc": "Konteinerinis gabenimas iš didžiųjų JAV uostų į Europą, Kaukazą ar Artimuosius Rytus, su sekimu ir pagalba muitinės procedūrose atvykus."
         }
       ]
     },
@@ -131,7 +131,7 @@
           "desc": "Atsiųskite loto numerį arba nurodykite markę, modelį ir biudžetą."
         },
         {
-          "title": "Dalyvaujame Copart ir IAAI varžytynėse",
+          "title": "Dalyvaujame Copart ir IAAI aukcionuose",
           "desc": "Mūsų pirkėjai jūsų vardu teikia pasiūlymus, neviršydami iš anksto suderintos ribos."
         },
         {
@@ -140,7 +140,7 @@
         },
         {
           "title": "Išsiunčiame į užsienį",
-          "desc": "Sausumos transportas iki uosto, tuomet jūrų gabenimas konteineriu ar RoRo, su pilnu sekimu."
+          "desc": "Sausumos transportas iki uosto, tuomet jūrų gabenimas konteineriu, su pilnu sekimu."
         },
         {
           "title": "Atsiimate automobilį",
