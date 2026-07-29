@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "bot:run": "tsx scripts/telegram-bot/run.ts"
+    "bot:run": "tsx scripts/telegram-bot/run.ts",
+    "bot:local": "tsx --env-file=.env.local scripts/telegram-bot/run.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

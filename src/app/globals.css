@@ -37,9 +37,15 @@
   --color-char-900: #1a1817;
   --color-char-950: #100f0e;
 
+  /* Harbor teal — a single deliberate contrast accent, used only for the
+     destination marker in the shipment-route visual. Not a full scale on
+     purpose: this stays a one-off accent, not a second brand color. */
+  --color-harbor: #1f4a4d;
+
   --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-fade-in: fade-in 0.6s ease-out forwards;
   --animate-marquee: marquee 32s linear infinite;
+  --animate-route-travel: route-travel 5.5s ease-in-out infinite;
 
   @keyframes fade-up {
     from {
@@ -65,6 +71,19 @@
     }
     to {
       transform: translateX(-50%);
+    }
+  }
+  @keyframes route-travel {
+    0%,
+    8% {
+      left: 0%;
+    }
+    50% {
+      left: 50%;
+    }
+    92%,
+    100% {
+      left: 100%;
     }
   }
 }

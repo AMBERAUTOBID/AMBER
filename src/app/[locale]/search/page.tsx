@@ -4,7 +4,17 @@ import Container from "@/components/Container";
 import Reveal from "@/components/Reveal";
 import Button from "@/components/Button";
 import SearchWidget from "@/components/SearchWidget";
-import { Info, ChatCircleDots, Gavel, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
+import LotCard from "@/components/LotCard";
+import { Link } from "@/i18n/navigation";
+import { searchVehicles, searchVehiclesAcrossTypes, type AuctionPlatform } from "@/lib/apibara";
+import { parseFreeTextQuery, CATEGORY_TYPE_GROUPS } from "@/lib/searchQuery";
+import {
+  Info,
+  ChatCircleDots,
+  MagnifyingGlass,
+  ArrowLeft,
+  ArrowRight,
+} from "@phosphor-icons/react/dist/ssr";
 
 export async function generateMetadata({
   params,
@@ -16,14 +26,97 @@ export async function generateMetadata({
   return { title: t("hero.title") };
 }
 
+function str(v: string | string[] | undefined): string | undefined {
+  return typeof v === "string" && v.length > 0 ? v : undefined;
+}
+
+function num(v: string | string[] | undefined): number | undefined {
+  const s = str(v);
+  if (!s) return undefined;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+
 export default async function SearchPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Search");
+  const sp = await searchParams;
+
+  const q = str(sp.q) ?? "";
+  const make = str(sp.make);
+  const model = str(sp.model);
+  const type = str(sp.type);
+  const category = str(sp.category) as "automobile" | "truck" | "motorcycle" | undefined;
+  const platform = str(sp.platform) as AuctionPlatform | undefined;
+  const cursor = str(sp.cursor);
+
+  // Structured filters from the category picker take priority; a plain
+  // typed query only gets the make/model-guessing treatment when nothing
+  // more specific came through.
+  let effectiveMake = make;
+  let effectiveModel = model;
+  let s: string | undefined;
+  if (!make && !model && !type && q) {
+    const parsed = parseFreeTextQuery(q);
+    effectiveMake = parsed.make;
+    effectiveModel = parsed.model;
+    s = parsed.s;
+  }
+
+  const baseSearchParams = {
+    s,
+    make: effectiveMake,
+    model: effectiveModel,
+    type,
+    platform,
+    year_from: num(sp.yearFrom),
+    year_to: num(sp.yearTo),
+    odometer_from: num(sp.odoMin),
+    odometer_to: num(sp.odoMax),
+    lot_status: sp.buyNow === "1" ? ("Buy Now" as const) : undefined,
+    cursor,
+    per_page: 20,
+  };
+
+  // Automobile/Truck/Motorcycle share real make names (Honda and BMW both
+  // make cars and motorcycles; several makes span cars and trucks too), so a
+  // `make`-only filter can't distinguish them - this is exactly what caused
+  // "Motorcycle > Honda" to surface Civics and Ridgelines. Once a specific
+  // model is chosen there's no ambiguity left (no motorcycle is named
+  // "Civic"), so the type fan-out is only needed for a broad, model-less
+  // browse.
+  const needsTypeFanOut = category && !model && !type;
+
+  let results: Awaited<ReturnType<typeof searchVehicles>> | null = null;
+  let error: string | null = null;
+  try {
+    results = needsTypeFanOut
+      ? await searchVehiclesAcrossTypes(baseSearchParams, CATEGORY_TYPE_GROUPS[category])
+      : await searchVehicles(baseSearchParams);
+  } catch (e) {
+    error = e instanceof Error ? e.message : "Unknown error";
+  }
+
+  const basePageQuery: Record<string, string> = {};
+  if (q) basePageQuery.q = q;
+  if (make) basePageQuery.make = make;
+  if (model) basePageQuery.model = model;
+  if (type) basePageQuery.type = type;
+  if (category) basePageQuery.category = category;
+  if (platform) basePageQuery.platform = platform;
+  if (str(sp.yearFrom)) basePageQuery.yearFrom = str(sp.yearFrom)!;
+  if (str(sp.yearTo)) basePageQuery.yearTo = str(sp.yearTo)!;
+  if (str(sp.odoMin)) basePageQuery.odoMin = str(sp.odoMin)!;
+  if (str(sp.odoMax)) basePageQuery.odoMax = str(sp.odoMax)!;
+  if (sp.buyNow === "1") basePageQuery.buyNow = "1";
 
   return (
     <>
@@ -68,37 +161,62 @@ export default async function SearchPage({
 
       <section className="pb-20">
         <Container>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Reveal className="flex gap-4 rounded-2xl border border-char-200 bg-white p-7">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-600">
-                <Gavel size={22} weight="duotone" />
-              </div>
-              <div>
-                <h3 className="font-bold text-char-900">{t("copart.name")}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-char-600">
-                  {t("copart.desc")}
-                </p>
-              </div>
+          {error && (
+            <Reveal className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+              {t("results.error", { error })}
             </Reveal>
-            <Reveal
-              delay={0.08}
-              className="flex gap-4 rounded-2xl border border-char-200 bg-white p-7"
-            >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-char-100 text-char-700">
-                <ShieldCheck size={22} weight="duotone" />
-              </div>
-              <div>
-                <h3 className="font-bold text-char-900">{t("iaai.name")}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-char-600">
-                  {t("iaai.desc")}
-                </p>
-              </div>
+          )}
+
+          {results && results.data.length === 0 && (
+            <Reveal className="flex flex-col items-center gap-3 rounded-2xl border border-char-200 bg-char-50 py-16 text-center">
+              <MagnifyingGlass size={28} className="text-char-300" />
+              <p className="text-char-600">{t("results.empty")}</p>
             </Reveal>
-          </div>
+          )}
+
+          {results && results.data.length > 0 && (
+            <Reveal className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Shares LotCard with the vehicle page's similar-lots grid, so
+                  the "no bids yet" and "odometer not reported" cases can't be
+                  handled correctly in one grid and wrongly in the other. */}
+              {results.data.map((v) => (
+                <LotCard
+                  key={`${v.platform}-${v.vin}`}
+                  vehicle={v}
+                  labels={{
+                    noPhoto: t("results.noPhoto"),
+                    priceNA: t("results.priceNA"),
+                    damagePrefix: t("results.damagePrefix"),
+                  }}
+                />
+              ))}
+            </Reveal>
+          )}
+
+          {results && (results.meta.prev_cursor || results.meta.next_cursor) && (
+            <div className="mt-8 flex justify-center gap-3">
+              {results.meta.prev_cursor && (
+                <Link
+                  href={{ pathname: "/search", query: { ...basePageQuery, cursor: results.meta.prev_cursor } }}
+                  className="inline-flex items-center gap-2 rounded-full border border-char-200 bg-white px-6 py-3 text-sm font-semibold text-char-700 hover:border-amber-400"
+                >
+                  <ArrowLeft size={16} /> {t("results.previous")}
+                </Link>
+              )}
+              {results.meta.next_cursor && (
+                <Link
+                  href={{ pathname: "/search", query: { ...basePageQuery, cursor: results.meta.next_cursor } }}
+                  className="inline-flex items-center gap-2 rounded-full border border-char-200 bg-white px-6 py-3 text-sm font-semibold text-char-700 hover:border-amber-400"
+                >
+                  {t("results.next")} <ArrowRight size={16} />
+                </Link>
+              )}
+            </div>
+          )}
 
           <Reveal
             delay={0.15}
-            className="mt-6 flex flex-col items-start gap-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-7 sm:flex-row sm:items-center sm:justify-between"
+            className="mt-10 flex flex-col items-start gap-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-7 sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="flex gap-4">
               <ChatCircleDots

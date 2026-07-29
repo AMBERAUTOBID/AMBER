@@ -12,6 +12,7 @@ import {
   Lightning,
 } from "@phosphor-icons/react/dist/ssr";
 import { clsx } from "clsx";
+import { useRouter } from "@/i18n/navigation";
 import {
   VEHICLE_CATEGORIES,
   MAKES_BY_CATEGORY,
@@ -19,6 +20,7 @@ import {
   YEAR_OPTIONS,
   type VehicleCategory,
 } from "@/lib/vehicleData";
+import { MORE_TYPE_TO_APIBARA_TYPE } from "@/lib/searchQuery";
 import ScrollingPlaceholder from "./ScrollingPlaceholder";
 import ScrollableSelect from "./ScrollableSelect";
 import OdometerRange, { ODO_MIN, ODO_MAX } from "./OdometerRange";
@@ -29,68 +31,6 @@ const CATEGORY_ICONS: Record<VehicleCategory, typeof Car> = {
   truck: Truck,
   more: DotsThreeCircle,
 };
-
-/**
- * Copart's real search URL (confirmed via multiple independently
- * reverse-engineered scraper/API projects, not guessed): filters live in a
- * `searchCriteria` JSON object — `YEAR`/`ODM` take Solr-style range strings,
- * `MISC` carries a `#MakeCode:X OR #MakeDesc:X` clause for make, and a
- * separate `featuredChips=["buyItNow"]` param restricts results to listings
- * with an active Buy It Now price. Model and vehicle-type stay as free-text
- * query terms — no verified structured param for those.
- *
- * IAAI has no equivalent public documentation we could find, so it stays on
- * a plain keyword search — its Buy Now / year / odometer filtering is
- * best-effort text matching, not a guaranteed structural filter.
- */
-function buildCopartUrl({
-  text,
-  make,
-  yearFrom,
-  yearTo,
-  odoMin,
-  odoMax,
-  buyNowOnly,
-}: {
-  text: string;
-  make: string;
-  yearFrom: string;
-  yearTo: string;
-  odoMin: number;
-  odoMax: number;
-  buyNowOnly: boolean;
-}) {
-  const filter: Record<string, string[]> = {};
-
-  if (yearFrom || yearTo) {
-    filter.YEAR = [`lot_year:[${yearFrom || "1920"} TO ${yearTo || "2027"}]`];
-  }
-  if (odoMin > ODO_MIN || odoMax < ODO_MAX) {
-    filter.ODM = [`odometer_reading_received:[${odoMin} TO ${odoMax}]`];
-  }
-  if (make) {
-    filter.MISC = [`#MakeCode:${make.toUpperCase()} OR #MakeDesc:${make}`];
-  }
-
-  const searchCriteria = {
-    query: [text.trim() || "*"],
-    filter,
-    searchName: "",
-    watchListOnly: false,
-    freeFormSearch: false,
-  };
-
-  const params = new URLSearchParams();
-  params.set("free", "false");
-  params.set("searchCriteria", JSON.stringify(searchCriteria));
-  if (buyNowOnly) params.set("featuredChips", JSON.stringify(["buyItNow"]));
-
-  return `https://www.copart.com/lotSearchResults?${params.toString()}`;
-}
-
-function buildIaaiUrl(term: string) {
-  return `https://www.iaai.com/Search?Keyword=${encodeURIComponent(term)}`;
-}
 
 function AuctionToggle({
   checked,
@@ -158,54 +98,74 @@ export default function SearchWidget({
   const [copartOn, setCopartOn] = useState(true);
   const [iaaiOn, setIaaiOn] = useState(true);
 
-  function openAuctions(copartUrl: string, iaaiTerm: string) {
-    if (!copartOn && !iaaiOn) return;
-    if (copartOn) window.open(copartUrl, "_blank", "noopener,noreferrer");
-    if (iaaiOn) window.open(buildIaaiUrl(iaaiTerm), "_blank", "noopener,noreferrer");
+  const router = useRouter();
+  const hasOdometer = category !== null && category !== "more";
+
+  /**
+   * True for a 17-character VIN (the standard excludes I, O and Q so they
+   * can't be confused with 1 and 0) or a bare 6-10 digit auction lot number.
+   * Anything else is treated as free-text and goes to the keyword search.
+   */
+  function isLotIdentifier(term: string): boolean {
+    const t = term.replace(/\s+/g, "");
+    return /^[A-HJ-NPR-Z0-9]{17}$/i.test(t) || /^\d{6,10}$/.test(t);
+  }
+
+  function platformParam(): string | undefined {
+    if (copartOn && !iaaiOn) return "copart";
+    if (iaaiOn && !copartOn) return "iaai";
+    return undefined;
   }
 
   function handleQuickSearch(e: React.FormEvent) {
     e.preventDefault();
     const term = quickQuery.trim();
-    if (!term) return;
-    openAuctions(buildCopartUrl({
-      text: term,
-      make: "",
-      yearFrom: "",
-      yearTo: "",
-      odoMin: ODO_MIN,
-      odoMax: ODO_MAX,
-      buyNowOnly: false,
-    }), term);
+    if (!term || (!copartOn && !iaaiOn)) return;
+
+    // A VIN or lot number identifies exactly one lot, so it goes straight to
+    // that lot's page rather than through the keyword search. This is also
+    // the only way to reach an already-sold car: Apibara's search endpoint
+    // returns live lots only, while the per-lot endpoint resolves both VINs
+    // and lot numbers and keeps working after the sale has run.
+    if (isLotIdentifier(term)) {
+      router.push(`/vehicle/${encodeURIComponent(term.toUpperCase())}`);
+      return;
+    }
+
+    const platform = platformParam();
+    router.push({
+      pathname: "/search",
+      query: { q: term, ...(platform ? { platform } : {}) },
+    });
   }
 
   function handleCategorySearch() {
-    if (!category) return;
-    const freeText = [model, category !== "automobile" ? labels.vehicleTypes[category] : ""]
-      .filter(Boolean)
-      .join(" ");
+    if (!category || (!copartOn && !iaaiOn)) return;
 
-    const copartUrl = buildCopartUrl({
-      text: freeText,
-      make,
-      yearFrom,
-      yearTo,
-      odoMin,
-      odoMax,
-      buyNowOnly,
-    });
+    const query: Record<string, string> = {};
+    const platform = platformParam();
+    if (platform) query.platform = platform;
 
-    const iaaiParts = [make, model];
-    if (category !== "automobile") iaaiParts.push(labels.vehicleTypes[category]);
-    if (yearFrom && yearTo) iaaiParts.push(`${yearFrom}-${yearTo}`);
-    else if (yearFrom) iaaiParts.push(yearFrom);
-    else if (yearTo) iaaiParts.push(yearTo);
-    if (odoMin > ODO_MIN || odoMax < ODO_MAX) {
-      iaaiParts.push(`${odoMin}-${odoMax}mi`);
+    if (category === "more") {
+      if (make) query.type = MORE_TYPE_TO_APIBARA_TYPE[make] ?? make;
+    } else {
+      // Automobile/Truck/Motorcycle share real make names (Honda, Ford...),
+      // so the category itself is passed through - the search page uses it
+      // to filter by the right vehicle type(s) when no specific model
+      // narrows things down already.
+      query.category = category;
+      if (make) query.make = make;
+      if (model) query.model = model;
     }
-    if (buyNowOnly) iaaiParts.push("Buy It Now");
+    if (yearFrom) query.yearFrom = yearFrom;
+    if (yearTo) query.yearTo = yearTo;
+    if (hasOdometer && (odoMin > ODO_MIN || odoMax < ODO_MAX)) {
+      query.odoMin = String(odoMin);
+      query.odoMax = String(odoMax);
+    }
+    if (buyNowOnly) query.buyNow = "1";
 
-    openAuctions(copartUrl, iaaiParts.filter(Boolean).join(" "));
+    router.push({ pathname: "/search", query });
   }
 
   function selectCategory(cat: VehicleCategory) {
@@ -220,7 +180,6 @@ export default function SearchWidget({
   }
 
   const hasModelData = category ? Object.keys(MODELS_BY_CATEGORY[category]).length > 0 : false;
-  const hasOdometer = category !== null && category !== "more";
   const modelOptions =
     category && make ? (MODELS_BY_CATEGORY[category][make] ?? []) : [];
 

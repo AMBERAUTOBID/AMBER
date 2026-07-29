@@ -5,7 +5,12 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: "/api/",
+      // /search itself is a legitimate landing page worth indexing, but
+      // /vehicle/[vin] pages are individual auction lots that expire and
+      // change constantly (bad for SEO anyway) - a crawler discovering and
+      // following every result-card link would be exactly the kind of
+      // single client that could drain the Apibara request quota.
+      disallow: ["/api/", "/vehicle/"],
     },
     sitemap: "https://smartautobid.com/sitemap.xml",
   };

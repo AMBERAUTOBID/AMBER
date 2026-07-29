@@ -44,7 +44,7 @@ export default function OpengraphImage() {
             maxWidth: 920,
           }}
         >
-          Bid, buy &amp; ship cars from Copart and IAAI auctions to Europe.
+          Bid, buy &amp; ship cars from Copart and IAAI auctions to Europe, the Middle East &amp; beyond.
         </div>
         <div
           style={{

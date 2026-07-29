@@ -17,9 +17,12 @@ type CobeMarker = { location: [number, number]; size: number; color?: Vec3; id?:
 type CobeArc = { from: [number, number]; to: [number, number]; color?: Vec3 };
 type TimedArc = { arc: CobeArc; revealAt: number };
 
-// Brand palette in cobe's normalized RGB.
-const AMBER: Vec3 = [0.765, 0.4, 0.141]; // amber-500 #c36624
-const TRUCK: Vec3 = [0.263, 0.263, 0.263]; // char-700 #434343
+// Brand palette in cobe's normalized RGB. The two route legs use
+// deliberately high-contrast colors (near-black vs. bright amber) since
+// cobe can't vary line width or add a dash pattern per-arc — color is the
+// only lever available to tell the legs apart at a glance.
+const AMBER: Vec3 = [0.765, 0.4, 0.141]; // amber-500 #c36624 — ocean freight leg
+const TRUCK: Vec3 = [0.102, 0.094, 0.09]; // char-900 #1a1817 — domestic trucking leg
 
 // CSS-ident-safe ids for cobe's anchor-name labels.
 const PORT_IDS: Record<string, string> = {
@@ -57,6 +60,7 @@ const EASE = 0.07;
 const ZOOM_STEP = 0.2;
 const ZOOM_MIN = 0.7;
 const ZOOM_MAX = 2.6;
+const ZOOM_EASE = 0.12;
 
 const subscribeNever = () => () => {};
 
@@ -171,10 +175,14 @@ export default function RouteGlobe({
   const sceneRef = useRef(scene);
   const animStartRef = useRef(0);
   const interactedRef = useRef(false);
+  // scaleRef is the value actually rendered each frame; scaleTargetRef is
+  // what the zoom buttons set. frame() eases the former toward the latter
+  // every tick, so a click produces a smooth zoom rather than an instant jump.
   const scaleRef = useRef(1);
+  const scaleTargetRef = useRef(1);
 
   function zoomBy(delta: number) {
-    scaleRef.current = clamp(scaleRef.current + delta, ZOOM_MIN, ZOOM_MAX);
+    scaleTargetRef.current = clamp(scaleTargetRef.current + delta, ZOOM_MIN, ZOOM_MAX);
     interactedRef.current = true;
   }
 
@@ -254,6 +262,10 @@ export default function RouteGlobe({
         if (timed.revealAt <= elapsed) arcs.push(timed.arc);
       }
 
+      scaleRef.current += reducedMotion
+        ? scaleTargetRef.current - scaleRef.current
+        : (scaleTargetRef.current - scaleRef.current) * ZOOM_EASE;
+
       const update: Record<string, unknown> = {
         phi: phiRef.current,
         theta: thetaRef.current,
@@ -292,7 +304,7 @@ export default function RouteGlobe({
         markers: [],
         arcs: [],
         arcColor: AMBER,
-        arcWidth: 0.4,
+        arcWidth: 0.55,
         arcHeight: 0.02,
         markerElevation: 0.012,
       });

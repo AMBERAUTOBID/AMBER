@@ -22,6 +22,24 @@ export const CORE_VEHICLE_BASE_SHIPPING: Record<CoreVehicleKind, number> = {
   motorcycle: 500,
 };
 
+/**
+ * Maps an auction listing's body-style string onto the three kinds the
+ * shipping table prices. Auction feeds spell the same category several ways
+ * ("SUV", "SPORT UTILITY", "CROSSOVER"), and Copart often sends nothing at
+ * all - "car" is the safe default since it's the cheapest of the three to
+ * ship and won't overstate a quote.
+ */
+export function inferCoreVehicleKind(bodyStyle?: string | null): CoreVehicleKind {
+  const body = bodyStyle?.toUpperCase() ?? "";
+  if (body.includes("SUV") || body.includes("SPORT UTILITY") || body.includes("CROSSOVER")) {
+    return "suv";
+  }
+  if (body.includes("MOTORCYCLE") || body.includes("MOPED") || body.includes("SCOOTER")) {
+    return "motorcycle";
+  }
+  return "car";
+}
+
 export const PORT_MULTIPLIER: Record<string, number> = {
   "Klaipėda, Lithuania": 1,
   "Poti, Georgia": 1.35,
@@ -42,6 +60,21 @@ export const PORT_CUSTOMS: Record<string, { vat: number; duty: number; dutyWaive
 export const TRUCKING_FLAT_USD = 450;
 export const BROKERAGE_FEE_USD = 350;
 export const USD_TO_EUR = 0.92;
+
+/**
+ * Line items that only the per-lot vehicle-page calculator itemises. They're
+ * deliberately NOT folded into estimateVehicleCost() below, because that
+ * function's output is already live in the Telegram bot's captions - adding
+ * charges there would silently change numbers readers have been quoted.
+ *
+ * PLACEHOLDER AMOUNTS: these are round illustrative figures, not confirmed
+ * SmartAutoBid pricing. Replace them with the real tariff once it exists;
+ * every surface that shows them is labelled as an estimate.
+ */
+export const TITLE_FEE_USD = 20;
+export const CUSTOMS_CLEARANCE_FEE_USD = 250;
+export const SERVICE_FEE_HAZMAT_USD = 200;
+export const SERVICE_FEE_OVERSIZE_USD = 200;
 
 export function auctionFeesUsd(lotPriceUsd: number): number {
   return Math.max(200, lotPriceUsd * 0.1);
@@ -103,6 +136,112 @@ export function estimateVehicleCost(input: VehicleCostEstimateInput): VehicleCos
     shippingUsd: shipping,
     dutyUsd,
     vatUsd,
+    totalUsd,
+    totalEur: totalUsd * USD_TO_EUR,
+  };
+}
+
+export interface LandedCostInput {
+  vehicleKind: CoreVehicleKind;
+  /** The bid the buyer is modelling - not necessarily the lot's current bid. */
+  lotPriceUsd: number;
+  pickupLocation: string;
+  auctionNetwork: AuctionNetwork;
+  destinationPort: string;
+  usaMade: boolean;
+  hazmat?: boolean;
+  oversize?: boolean;
+}
+
+/**
+ * Same underlying model as estimateVehicleCost(), but itemised and split the
+ * way a buyer actually pays: one bill settled in the USA before the car
+ * sails, a second one due at the destination port. Keeping the split explicit
+ * matters because the destination half is the part that varies by country and
+ * catches people out.
+ */
+export interface LandedCostResult {
+  /** Paid to the US side before the vehicle ships. */
+  usSide: {
+    lotPriceUsd: number;
+    auctionFeesUsd: number;
+    titleFeeUsd: number;
+    brokerageFeeUsd: number;
+    oceanFreightUsd: number;
+    truckingUsd: number;
+    optionalServicesUsd: number;
+    subtotalUsd: number;
+  };
+  /** Due on arrival at the destination port. */
+  destinationSide: {
+    vatUsd: number;
+    dutyUsd: number;
+    clearanceUsd: number;
+    subtotalUsd: number;
+  };
+  totalUsd: number;
+  totalEur: number;
+}
+
+export function estimateLandedCost(input: LandedCostInput): LandedCostResult {
+  const {
+    vehicleKind,
+    lotPriceUsd,
+    pickupLocation,
+    auctionNetwork,
+    destinationPort,
+    usaMade,
+    hazmat = false,
+    oversize = false,
+  } = input;
+
+  const oceanFreightUsd =
+    CORE_VEHICLE_BASE_SHIPPING[vehicleKind] * (PORT_MULTIPLIER[destinationPort] ?? 1);
+  const truckingUsd = localTransportRateUsd(
+    pickupLocation,
+    auctionNetwork,
+    vehicleKind,
+    TRUCKING_FLAT_USD
+  );
+  const optionalServicesUsd =
+    (hazmat ? SERVICE_FEE_HAZMAT_USD : 0) + (oversize ? SERVICE_FEE_OVERSIZE_USD : 0);
+  const auctionFees = auctionFeesUsd(lotPriceUsd);
+
+  const usSubtotal =
+    lotPriceUsd +
+    auctionFees +
+    TITLE_FEE_USD +
+    BROKERAGE_FEE_USD +
+    oceanFreightUsd +
+    truckingUsd +
+    optionalServicesUsd;
+
+  const { dutyUsd, vatUsd } = customsBreakdown({
+    lotPriceUsd,
+    shippingUsd: oceanFreightUsd,
+    destinationPort,
+    usaMade,
+  });
+  const destinationSubtotal = dutyUsd + vatUsd + CUSTOMS_CLEARANCE_FEE_USD;
+  const totalUsd = usSubtotal + destinationSubtotal;
+
+  return {
+    usSide: {
+      lotPriceUsd,
+      auctionFeesUsd: auctionFees,
+      titleFeeUsd: TITLE_FEE_USD,
+      brokerageFeeUsd: BROKERAGE_FEE_USD,
+      oceanFreightUsd,
+      truckingUsd,
+      optionalServicesUsd,
+      subtotalUsd: usSubtotal,
+    },
+    destinationSide: {
+      vatUsd,
+      dutyUsd,
+      clearanceUsd: CUSTOMS_CLEARANCE_FEE_USD,
+      subtotalUsd: destinationSubtotal,
+    },
     totalUsd,
     totalEur: totalUsd * USD_TO_EUR,
   };

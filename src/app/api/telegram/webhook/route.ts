@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import { kvGetJson } from "@/lib/upstashKv";
-import { editMessageText, answerCallbackQuery, languageKeyboard } from "@/lib/telegramApi";
+import {
+  editMessageText,
+  answerCallbackQuery,
+  languageKeyboard,
+  isPostLang,
+  type PostLang,
+} from "@/lib/telegramApi";
 
-type PostLang = "en" | "ru" | "lt";
 type CachedCaptions = Record<PostLang, string>;
 
 interface TelegramUpdate {
@@ -35,7 +40,7 @@ export async function POST(request: Request) {
   }
 
   const [prefix, vin, lang] = query.data.split(":");
-  if (prefix !== "lang" || !vin || (lang !== "en" && lang !== "ru" && lang !== "lt")) {
+  if (prefix !== "lang" || !vin || !isPostLang(lang)) {
     await answerCallbackQuery(query.id).catch(() => {});
     return NextResponse.json({ ok: true });
   }
@@ -51,7 +56,7 @@ export async function POST(request: Request) {
       query.message.chat.id,
       query.message.message_id,
       captions[lang],
-      languageKeyboard(vin)
+      languageKeyboard(vin, lang)
     );
     await answerCallbackQuery(query.id);
   } catch (e) {

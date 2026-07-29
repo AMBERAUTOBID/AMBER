@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Car,
   Motorcycle,
@@ -101,6 +101,15 @@ const VEHICLE_BASE_SHIPPING: Record<VehicleKind, number> = {
 // Destinations with a real customs/duty model (priced) plus destinations
 // that only offer a "request a quote by email" flow (no customs data yet).
 const PORT_OPTIONS = [...Object.keys(PORT_MULTIPLIER), ...QUOTE_ONLY_DESTINATION_PORTS];
+// Port keys double as pricing/customs lookup keys shared across all locales,
+// so they can't just be translated in messages/*.json — this overrides the
+// displayed label per locale without touching the underlying key.
+const PORT_DISPLAY_NAMES: Record<string, Partial<Record<string, string>>> = {
+  "Klaipėda, Lithuania": { lt: "Klaipėdos, Lithuania" },
+};
+function portLabel(port: string, locale: string) {
+  return PORT_DISPLAY_NAMES[port]?.[locale] ?? port;
+}
 const PHONE_E164 = "+19125612347";
 const PHONE_DISPLAY = "+1 (912) 561-2347";
 
@@ -125,6 +134,7 @@ function formatEur(v: number) {
 
 export default function CostCalculator() {
   const t = useTranslations("Calculator");
+  const locale = useLocale();
 
   const [vehicleKind, setVehicleKind] = useState<VehicleKind>("car");
   const [moreOpen, setMoreOpen] = useState(false);
@@ -223,7 +233,7 @@ export default function CostCalculator() {
     }
   }
 
-  const portCity = port.split(",")[0];
+  const portCity = portLabel(port, locale).split(",")[0];
 
   return (
     <section className="bg-char-50 py-20 sm:py-24">

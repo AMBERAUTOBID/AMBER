@@ -1,4 +1,37 @@
-import type { AuctionPlatform } from "./apibaraClient";
+import type { AuctionPlatform, LotStatus } from "./apibaraClient";
+
+/**
+ * The channel's two feeds. Modelled on how bidauto.online runs theirs: one
+ * Telegram forum supergroup, one topic per feed, so a reader can follow just
+ * the one they care about.
+ *
+ * - "live"   - lots with no Buy Now price, i.e. you have to bid to get them.
+ * - "buynow" - lots carrying a fixed Buy Now price, purchasable immediately.
+ *
+ * The two are split by Apibara's lot_status filter plus a client-side check
+ * on buy_now_usd in run.ts, and the asymmetry below is deliberate:
+ *
+ * - "buynow" uses lot_status="Buy Now", which is exact on both platforms
+ *   (20/20 results carried a buy_now_usd on each).
+ * - "live" does NOT use lot_status="Timed", even though that reads like the
+ *   obvious opposite. "Timed" is IAAI's own term and Copart returns *zero*
+ *   results for it - measured, not assumed - so using it would have made the
+ *   LIVE feed quietly IAAI-only and dropped half the market. Instead it
+ *   searches "All" and run.ts drops anything carrying a Buy Now price.
+ *
+ * Cost of that choice: on Copart roughly 12 of every 20 "All" results are
+ * Buy Now lots that get filtered out, so a LIVE search yields fewer usable
+ * lots per API call than a Buy Now one. That's the right trade against
+ * excluding an entire auction house.
+ */
+export type ChannelSection = "live" | "buynow";
+
+export const CHANNEL_SECTIONS: ChannelSection[] = ["live", "buynow"];
+
+export const SECTION_LOT_STATUS: Record<ChannelSection, LotStatus> = {
+  live: "All",
+  buynow: "Buy Now",
+};
 
 /**
  * Edit this list to control what the bot looks for. Each entry is one
@@ -41,23 +74,61 @@ export interface SavedSearchFilter {
   // defaults to Klaipėda, Lithuania if omitted. Must be one of
   // costEstimate.ts's PORT_MULTIPLIER keys.
   destinationPort?: string;
+  // Which channel feeds this search should fill. Omit for both, which is
+  // usually what you want: the same car criteria are just as interesting
+  // whether the lot is bid-only or buy-it-now. Each section is searched
+  // separately (one Apibara call each), so restricting this to one section
+  // halves that search's API usage.
+  sections?: ChannelSection[];
+  // Several model names treated as one search, for families Apibara has no
+  // single name for. It lists BMW's 3 Series per trim ("330I", "328I",
+  // "320I", ...) and returns nothing at all for model="3 Series", so a
+  // family search has to fan out across the trims and merge the results.
+  // Costs one API call per model name; `model` above is the single-name form.
+  models?: string[];
+  // Caps how many lots this search posts per section per run, overriding
+  // MAX_POSTS_PER_SEARCH_PER_RUN in run.ts. Mainly useful for keeping a test
+  // profile down to a single post.
+  maxPostsPerRun?: number;
 }
+
+// TEMPORARY - these four exist only to put one Copart and one IAAI post in
+// each section so the channel's look can be reviewed. They are not real
+// buying criteria and should be replaced wholesale with the actual makes,
+// models, year ranges and price caps before the bot runs on a schedule.
+const BMW_3_SERIES_TRIMS = ["330I", "328I", "320I", "335I", "340I", "325I", "318I"];
 
 export const SAVED_SEARCHES: SavedSearchFilter[] = [
   {
-    name: "Honda Civic 2016-2021 under $8k",
-    make: "Honda",
-    model: "Civic",
-    yearFrom: 2016,
-    yearTo: 2021,
-    priceMaxUsd: 8000,
-    runCondition: "RUNS AND DRIVES",
+    name: "TEST BMW 3 Series (Copart)",
+    platform: "copart",
+    make: "BMW",
+    models: BMW_3_SERIES_TRIMS,
+    sections: ["live"],
+    maxPostsPerRun: 1,
   },
   {
-    name: "BMW X5 2018+ under $15k",
+    name: "TEST BMW 3 Series (IAAI)",
+    platform: "iaai",
     make: "BMW",
-    model: "X5",
-    yearFrom: 2018,
-    priceMaxUsd: 15000,
+    models: BMW_3_SERIES_TRIMS,
+    sections: ["live"],
+    maxPostsPerRun: 1,
+  },
+  {
+    name: "TEST Jeep Cherokee (Copart)",
+    platform: "copart",
+    make: "Jeep",
+    model: "Cherokee",
+    sections: ["buynow"],
+    maxPostsPerRun: 1,
+  },
+  {
+    name: "TEST Jeep Cherokee (IAAI)",
+    platform: "iaai",
+    make: "Jeep",
+    model: "Cherokee",
+    sections: ["buynow"],
+    maxPostsPerRun: 1,
   },
 ];

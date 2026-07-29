@@ -45,7 +45,13 @@ export interface VehicleListItem {
   make: string;
   model: string;
   auction?: { state?: string; auction_at?: string | null; formatted?: string };
-  pricing?: { current_bid_usd?: number | null; buy_now_usd?: number | null };
+  pricing?: {
+    current_bid_usd?: number | null;
+    buy_now_usd?: number | null;
+    // Only populated on lots that have already sold - i.e. the `past`
+    // entries from /related, never the live listings we post.
+    last_sold_price_usd?: number | null;
+  };
   location?: { display?: string };
   seller?: { name?: string; type?: string };
   condition?: {
@@ -68,8 +74,42 @@ export interface VehicleListItem {
   };
 }
 
+/**
+ * Confirmed against the live /vehicles/filters endpoint, which advertises
+ * lot_status as All | "Buy Now" | Timed (and a separate lot_sub_status of
+ * Open | Live | Ended, defaulting to Open - i.e. we already only ever see
+ * lots that are still biddable).
+ *
+ * Spot-checked on real results: "Buy Now" returned 20/20 lots carrying a
+ * buy_now_usd price, "Timed" returned 0/20 - so the two are disjoint, which
+ * is exactly what keeps the channel's two sections from overlapping.
+ */
+export type LotStatus = "All" | "Buy Now" | "Timed";
+
+/**
+ * Real comparable sales for a lot. The endpoint's shape is a nested object,
+ * NOT the flat array Apibara's OpenAPI schema advertises (same discrepancy
+ * noted in src/lib/apibara.ts).
+ *
+ * Beware what `past` actually is: it's matched at make/model level only, so
+ * the same twelve Honda Civic sales come back for a 2010 VP, a 2014 EX and a
+ * 2020 Sport Touring alike, spanning 2010-2026 and everything from a burnt
+ * shell at $150 to a clean car at $17,000. Averaging it raw produces a
+ * confident-looking number that means nothing - see marketStats.ts for the
+ * comparability filtering that makes it safe to quote.
+ */
+export interface RelatedVehiclesResponse {
+  ok: boolean;
+  data: { source: VehicleListItem; past: VehicleListItem[]; upcoming: VehicleListItem[] };
+}
+
+export async function getRelatedVehicles(vinOrLot: string): Promise<RelatedVehiclesResponse> {
+  return apibaraGet(`/vehicles/${encodeURIComponent(vinOrLot)}/related`);
+}
+
 export interface SearchVehiclesParams {
   platform?: AuctionPlatform;
+  lot_status?: LotStatus;
   make?: string;
   model?: string;
   year_from?: number;
@@ -88,6 +128,7 @@ export async function searchVehicles(
 ): Promise<{ ok: boolean; data: VehicleListItem[] }> {
   return apibaraGet("/vehicles", {
     platform: params.platform,
+    lot_status: params.lot_status,
     make: params.make,
     model: params.model,
     year_from: params.year_from,

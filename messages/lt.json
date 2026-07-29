@@ -1,18 +1,18 @@
 {
   "Metadata": {
-    "title": "SmartAutoBid — automobilių pirkimas ir pristatymas iš „Copart“ ir „IAAI“ į Europą",
-    "description": "SmartAutoBid jūsų vardu dalyvauja varžytynėse ir perka automobilius „Copart“ ir „IAAI“ aukcionuose JAV, sutvarko visus dokumentus ir organizuoja jūrų transportą iki jūsų durų Europoje."
+    "title": "SmartAutoBid — automobilių pirkimas ir pristatymas iš „Copart“ ir „IAAI“ į Europą, Artimuosius Rytus ir kitas šalis",
+    "description": "SmartAutoBid jūsų vardu dalyvauja varžytynėse ir perka automobilius „Copart“ ir „IAAI“ aukcionuose JAV, sutvarko visus dokumentus ir organizuoja jūrų transportą iki jūsų durų — į Europą, Artimuosius Rytus ir kitas šalis."
   },
   "Nav": {
     "home": "Pradžia",
     "search": "Automobilių paieška",
-    "shipping": "Gabenimas ir procesas",
+    "shipping": "Gabenimas ir sekimas",
     "about": "Apie mus",
     "contact": "Kontaktai",
     "cta": "Gauti nemokamą pasiūlymą"
   },
   "Footer": {
-    "tagline": "Nuo aukciono salės iki jūsų kiemo — dalyvaujame varžytynėse, perkame ir gabename automobilius iš JAV į Europą.",
+    "tagline": "Nuo aukciono salės iki jūsų kiemo — dalyvaujame varžytynėse, perkame ir gabename automobilius iš JAV į Europą, Artimuosius Rytus ir kitas šalis.",
     "linksTitle": "Svetainė",
     "contactTitle": "Susisiekite",
     "languagesTitle": "Kalba",
@@ -26,7 +26,7 @@
   "Calculator": {
     "eyebrow": "Kainos įvertinimas",
     "title": "Apskaičiuokite apytikslę automobilio kainą",
-    "subtitle": "Pilna išlaidų suvestinė prieš dalyvaujant varžytynėse — aukciono mokestis, gabenimas iki uosto, jūrų frachtas ir muitai vienoje suvestinėje.",
+    "subtitle": "Pilna apytikslė išlaidų suvestinė prieš dalyvaujant aukciono statymuose — aukciono mokestis, krovimas/gabenimas iki uosto, jūrinis gabenimas ir muitai vienoje suvestinėje.",
     "vehicleTypes": {
       "car": "Automobilis",
       "suv": "Visureigis",
@@ -69,6 +69,7 @@
     },
     "disclaimer": "Tik orientacinis skaičiavimas, ne įpareigojantis pasiūlymas. Galutinė kaina priklauso nuo galutinės varžytynių sumos, automobilio dydžio ir būklės bei paskirties šalies muitinės taisyklių — susisiekite su mumis dėl tikslaus skaičiavimo.",
     "ctaPhone": "Skambinkite mums",
+    "ctaTrack": "Sekti savo automobilį",
     "map": {
       "title": "Jūsų gabenimo maršrutas",
       "subtitle": "Atsiėmimo vieta, artimiausias pakrovimo uostas ir jūrų frachto maršrutas iki pasirinkto paskirties uosto.",
@@ -81,8 +82,8 @@
   "Home": {
     "hero": {
       "eyebrow": "Copart ir IAAI pirkimo agentai",
-      "title": "Jūsų tiltas nuo JAV aukcionų iki Europos kelių",
-      "subtitle": "SmartAutoBid suranda, dalyvauja varžytynėse ir pristato. Perkame jums automobilius „Copart“ ir „IAAI“ aukcionuose, sutvarkome visus dokumentus ir pristatome į uostą — arba tiesiai prie jūsų durų — bet kur Europoje.",
+      "title": "Jūsų tiltas nuo JAV aukcionų iki jūsų kiemo",
+      "subtitle": "SmartAutoBid suranda, dalyvauja varžytynėse ir pristato. Perkame jums automobilius „Copart“ ir „IAAI“ aukcionuose, sutvarkome visus dokumentus ir pristatome į uostą — arba tiesiai prie jūsų durų — kad ir kur būtumėte.",
       "ctaPrimary": "Ieškoti Copart ir IAAI",
       "ctaSecondary": "Gauti nemokamą pasiūlymą",
       "trustChips": [
@@ -98,7 +99,7 @@
         "Kasdienis dalyvavimas Copart aukcionuose visoje JAV",
         "Kasdienis dalyvavimas IAAI aukcionuose visoje JAV",
         "Eksporto dokumentų ir nuosavybės teisės tvarkymas",
-        "Jūrų gabenimas į Šiaurės Europą, Baltijos šalis ir Kaukazą"
+        "Jūrų gabenimas į Europą, Kaukazą ir Artimuosius Rytus"
       ]
     },
     "services": {
@@ -116,7 +117,7 @@
         },
         {
           "title": "Jūrų gabenimas ir pristatymas",
-          "desc": "Konteinerinis arba RoRo gabenimas iš didžiųjų JAV uostų į Šiaurės Europą, Baltijos šalis ar Kaukazą, su sekimu ir pagalba muitinės procedūrose atvykus."
+          "desc": "Konteinerinis arba RoRo gabenimas iš didžiųjų JAV uostų į Europą, Kaukazą ar Artimuosius Rytus, su sekimu ir pagalba muitinės procedūrose atvykus."
         }
       ]
     },
@@ -125,23 +126,56 @@
       "title": "Kaip tai veikia",
       "subtitle": "Penki žingsniai iki automobilio jūsų kieme.",
       "steps": [
-        { "title": "Pasakykite, ko ieškote", "desc": "Atsiųskite loto numerį arba nurodykite markę, modelį ir biudžetą." },
-        { "title": "Dalyvaujame Copart ir IAAI varžytynėse", "desc": "Mūsų pirkėjai jūsų vardu teikia pasiūlymus, neviršydami iš anksto suderintos ribos." },
-        { "title": "Sutvarkome dokumentus", "desc": "Nuosavybės teisės perleidimas, eksporto sertifikatas ir muitinės dokumentai, paruošti jūsų šaliai." },
-        { "title": "Gabename į Europą", "desc": "Sausumos transportas iki uosto, tuomet jūrų gabenimas konteineriu ar RoRo, su pilnu sekimu." },
-        { "title": "Atsiimate automobilį", "desc": "Atsiimkite uoste arba užsisakykite pristatymą iki jūsų adreso." }
+        {
+          "title": "Pasakykite, ko ieškote",
+          "desc": "Atsiųskite loto numerį arba nurodykite markę, modelį ir biudžetą."
+        },
+        {
+          "title": "Dalyvaujame Copart ir IAAI varžytynėse",
+          "desc": "Mūsų pirkėjai jūsų vardu teikia pasiūlymus, neviršydami iš anksto suderintos ribos."
+        },
+        {
+          "title": "Sutvarkome dokumentus",
+          "desc": "Nuosavybės teisės perleidimas, eksporto sertifikatas ir muitinės dokumentai, paruošti jūsų šaliai."
+        },
+        {
+          "title": "Išsiunčiame į užsienį",
+          "desc": "Sausumos transportas iki uosto, tuomet jūrų gabenimas konteineriu ar RoRo, su pilnu sekimu."
+        },
+        {
+          "title": "Atsiimate automobilį",
+          "desc": "Atsiimkite uoste arba užsisakykite pristatymą iki jūsų adreso."
+        }
       ]
     },
     "why": {
       "eyebrow": "Kodėl SmartAutoBid",
       "title": "Sukurta pirkėjams, kurie negali būti aukciono aikštelėje",
       "items": [
-        { "title": "Skaidrūs mokesčiai", "desc": "Vienas aiškus pasiūlymas, apimantis varžytynes, pirkimą ir gabenimą — jokių netikėtų papildomų mokesčių vėliau." },
-        { "title": "Atnaujinimai realiu laiku", "desc": "Varžytynių būsena, apžiūros nuotraukos ir gabenimo etapai — kai tik jie įvyksta." },
-        { "title": "Pagalba jūsų kalba", "desc": "Mūsų komanda dirba su klientais anglų, rusų, lietuvių ir gruzinų kalbomis." },
-        { "title": "Patikrinti gabenimo partneriai", "desc": "Apdrausti vežėjai ir jūrų linijos, atrinkti pagal patikimumą, o ne pigiausias variantas, kurį pavyko rasti." },
-        { "title": "Tiesioginė prieiga prie aukcionų", "desc": "Copart ir IAAI varžytynėse dalyvaujame per savo pačių paskyrą — jokio tarpininko, brangstančio jūsų pirkinio." },
-        { "title": "Sukurta būtent jums", "desc": "Esame nauja, įkūrėjų vadovaujama įmonė — kiekvienas klientas sulaukia asmeninio dėmesio, o ne bilieto numerio." }
+        {
+          "title": "Skaidrūs mokesčiai",
+          "desc": "Vienas aiškus pasiūlymas, apimantis varžytynes, pirkimą ir gabenimą — jokių netikėtų papildomų mokesčių vėliau."
+        },
+        {
+          "title": "Atnaujinimai realiu laiku",
+          "desc": "Varžytynių būsena, apžiūros nuotraukos ir gabenimo etapai — kai tik jie įvyksta."
+        },
+        {
+          "title": "Pagalba jūsų kalba",
+          "desc": "Mūsų komanda dirba su klientais anglų, rusų, lietuvių ir gruzinų kalbomis."
+        },
+        {
+          "title": "Patikrinti gabenimo partneriai",
+          "desc": "Apdrausti vežėjai ir jūrų linijos, atrinkti pagal patikimumą, o ne pigiausias variantas, kurį pavyko rasti."
+        },
+        {
+          "title": "Statome jūsų vardu",
+          "desc": "Jūs pasirenkate automobilį, o mes atliekame statymus ir pirkimus „Copart“ ir „IAAI“ aukcionuose."
+        },
+        {
+          "title": "Sukurta būtent jums",
+          "desc": "Esame nauja, įkūrėjų vadovaujama įmonė — kiekvienas klientas sulaukia asmeninio dėmesio, o ne bilieto numerio."
+        }
       ]
     },
     "cta": {
@@ -154,7 +188,7 @@
     "hero": {
       "eyebrow": "Automobilių paieška",
       "title": "Ieškokite aktualių lotų Copart ir IAAI",
-      "subtitle": "„Copart“ ir „IAAI“ pilną prieigą prie savo bazių suteikia tik registruotiems nariams ir licencijuotiems brokeriams, todėl jūsų paiešką nukreipiame tiesiai į jų oficialius skelbimus — jie atsivers naujame lange."
+      "subtitle": "Naršykite tikrus „Copart“ ir „IAAI“ skelbimus tiesiai čia — nuotraukos, VIN, pažeidimai ir kainos, be papildomų langų ar paskyrų."
     },
     "widget": {
       "vinPlaceholder": "Įveskite VIN, loto arba stoko numerį",
@@ -170,7 +204,7 @@
       "yearFrom": "Metai nuo",
       "yearTo": "Metai iki",
       "buyNow": "Pirkti dabar",
-      "browsePrompt": "Arba naršykite pagal transporto tipą",
+      "browsePrompt": "Arba ieškokite pagal transporto tipą",
       "makePlaceholder": "Pasirinkite markę",
       "typePlaceholder": "Pasirinkite tipą",
       "modelPlaceholder": "Pasirinkite modelį",
@@ -178,49 +212,272 @@
       "odometer": "Rida",
       "odometerReset": "Atstatyti"
     },
-    "copart": {
-      "name": "Copart",
-      "desc": "Ieškokite viešoje „Copart“ bazėje (avarinių ir švarių dokumentų lotų) pagal raktažodį, markę, modelį ar loto numerį.",
-      "placeholder": "pvz., BMW M4 arba loto numeris",
-      "button": "Ieškoti Copart"
-    },
-    "iaai": {
-      "name": "IAAI",
-      "desc": "Ieškokite viešoje „IAAI“ bazėje pagal raktažodį, markę, modelį ar stoko numerį.",
-      "placeholder": "pvz., Toyota 4Runner arba stoko numeris",
-      "button": "Ieškoti IAAI"
-    },
     "helper": {
       "title": "Nesate tikri, ko tiksliai ieškote?",
       "desc": "Pasakykite biudžetą ir automobilio tipą — atrinksime tinkamus lotus iš abiejų aukcionų ir atsiųsime savo pasiūlymus.",
       "button": "Paprašyti mūsų surasti"
     },
-    "note": "Paieška atveria oficialią „Copart“ arba „IAAI“ svetainę naujame lange. SmartAutoBid nėra susijęs su nė viena iš šių bendrovių; klientų vardu dalyvaujame varžytynėse dėl paskelbtų lotų."
+    "note": "Skelbimai renkami iš „Copart“ ir „IAAI“ ir atnaujinami periodiškai — visada patikrinkite galutinę informaciją aukciono dieną. SmartAutoBid nėra susijęs su nė viena iš šių bendrovių; klientų vardu dalyvaujame varžytynėse dėl paskelbtų lotų.",
+    "results": {
+      "noPhoto": "Nuotraukos nėra",
+      "damagePrefix": "Pažeidimas:",
+      "priceNA": "Kaina nenurodyta",
+      "empty": "Šiuo metu atitinkančių automobilių nėra — pabandykite išplėsti filtrus.",
+      "error": "Paieška laikinai nepasiekiama ({error}). Bandykite vėliau.",
+      "previous": "Atgal",
+      "next": "Toliau"
+    }
+  },
+  "VehicleDetail": {
+    "lot": "Lotas Nr. {number}",
+    "noPhotos": "Nuotraukų nėra",
+    "photoAlt": "{title} — {index} nuotrauka iš {total}",
+    "disclaimer": "Loto duomenys gaunami per trečiosios šalies aukcionų duomenų agregatorių ir atnaujinami periodiškai — galutinę informaciją visada pasitikrinkite aukciono dieną. SmartAutoBid kol kas nepriima statymų tiesiogiai svetainėje: susisiekite ir mes pateiksime pasiūlymą jūsų vardu.",
+    "auction": {
+      "endsIn": "Aukcionas baigsis po",
+      "saleDate": "Pardavimo data",
+      "closed": "Aukcionas baigtas",
+      "dayShort": "d",
+      "hourShort": "val",
+      "minuteShort": "min",
+      "secondShort": "s",
+      "buyNowBadge": "Pirkti dabar",
+      "timedBadge": "Terminuotas aukcionas"
+    },
+    "media": {
+      "view360": "360° apžvalga",
+      "engineStart": "Variklio užvedimas",
+      "previousPhoto": "Ankstesnė nuotrauka",
+      "nextPhoto": "Kita nuotrauka",
+      "close": "Uždaryti",
+      "openVideoExternally": "Vaizdo įrašas negroja? Atidarykite naujame skirtuke"
+    },
+    "pricing": {
+      "title": "Dabartinė kaina",
+      "currentBid": "Dabartinis pasiūlymas",
+      "buyNow": "Pirkti dabar",
+      "lastSold": "Parduota už",
+      "notAvailable": "Nėra duomenų",
+      "finalBid": "Galutinis pasiūlymas"
+    },
+    "market": {
+      "title": "Už kiek parduodami panašūs automobiliai",
+      "min": "Mažiausia",
+      "avg": "Vidutinė",
+      "max": "Didžiausia",
+      "basis": "Remiantis {count} panašiais jau parduotais lotais. Žymeklis rodo, kurioje šio diapazono vietoje šiuo metu yra šio loto kaina.",
+      "actualCashValue": "Rinkos vertė (iki pažeidimų)",
+      "estimatedRepairCost": "Numatoma remonto kaina"
+    },
+    "condition": {
+      "title": "Būklė",
+      "runCondition": "Važiavimo būklė",
+      "primaryDamage": "Pagrindinis pažeidimas",
+      "secondaryDamage": "Antrinis pažeidimas",
+      "unknown": "Nežinoma",
+      "lossType": "Nuostolio tipas",
+      "keys": "Raktai",
+      "keyFob": "Pultelis",
+      "yes": "Taip",
+      "no": "Ne",
+      "odometer": "Rida",
+      "airbags": "Oro pagalvės",
+      "vehicleGrade": "Būklės įvertis",
+      "catalyticConverter": "Katalizatorius"
+    },
+    "vehicle": {
+      "title": "Transporto priemonė",
+      "year": "Metai",
+      "make": "Markė",
+      "model": "Modelis",
+      "series": "Komplektacija",
+      "bodyStyle": "Kėbulo tipas",
+      "engine": "Variklis",
+      "cylinders": "Cilindrai",
+      "transmission": "Pavarų dėžė",
+      "driveType": "Pavaros tipas",
+      "fuelType": "Kuras",
+      "color": "Kėbulo spalva",
+      "interiorColor": "Salono spalva",
+      "countryOfOrigin": "Pagaminta",
+      "navigation": "Navigacija",
+      "options": "Įranga"
+    },
+    "sale": {
+      "title": "Pardavimas ir dokumentai",
+      "lotNumber": "Loto numeris",
+      "seller": "Pardavėjas",
+      "saleDocument": "Pardavimo dokumentas",
+      "titleState": "Dokumentą išdavusi valstija",
+      "titleBrand": "Dokumento žyma",
+      "auctionDate": "Aukciono data",
+      "branch": "Aukciono filialas",
+      "departurePort": "Išvykimo uostas JAV",
+      "bidIncrement": "Pasiūlymo žingsnis",
+      "exportable": "Galima eksportuoti",
+      "notExportable": "Eksportas negalimas",
+      "registrable": "Galima registruoti",
+      "notRegistrable": "Registracija ribojama"
+    },
+    "calculator": {
+      "title": "Kiek kainuos su pristatymu",
+      "yourBid": "Jūsų maksimalus pasiūlymas",
+      "decreaseBid": "Sumažinti pasiūlymą",
+      "increaseBid": "Padidinti pasiūlymą",
+      "bidStepKnown": "Šiame aukcione pasiūlymo žingsnis — {step}.",
+      "bidStepHint": "Įveskite didžiausią sumą, kurią sutiktumėte mokėti už lotą.",
+      "terminal": "Pristatymo terminalas",
+      "terminalPlaceholder": "Pasirinkite uostą",
+      "searchPlaceholder": "Ieškoti…",
+      "extras": "Papildomos paslaugos",
+      "hazmat": "Pavojingas krovinys (elektromobilis, hibridas)",
+      "oversize": "Didelių gabaritų transporto priemonė (didelis visureigis, furgonas)",
+      "usSide": {
+        "title": "Mokama JAV, prieš išsiuntimą",
+        "lotPrice": "Loto kaina",
+        "auctionFees": "Aukciono mokesčiai",
+        "titleFee": "Dokumento siuntimo mokestis",
+        "brokerFee": "Brokerio mokestis",
+        "trucking": "Vietinis transportavimas iki uosto",
+        "oceanFreight": "Jūrų frachtas: {port}",
+        "extras": "Papildomos paslaugos",
+        "subtotal": "Iš viso"
+      },
+      "destinationSide": {
+        "title": "Mokama atvykus į uostą: {port}",
+        "vat": "PVM ({rate}%)",
+        "duty": "Importo muitas ({rate}%)",
+        "dutyWaived": "Importo muitas (0% — pagaminta JAV)",
+        "clearance": "Muitinės agentūra ir iškrovimas",
+        "subtotal": "Iš viso"
+      },
+      "usaMade": "Automobilis pagamintas JAV",
+      "usaMadeDetected": "(nustatyta iš loto duomenų)",
+      "georgiaNote": "Gruzijoje papildomai taikomas akcizas, priklausantis nuo variklio tūrio ir automobilio amžiaus — jis į skaičiavimą neįtrauktas. Kreipkitės į mus dėl tikslios sumos.",
+      "grandTotal": "Numatoma galutinė kaina",
+      "ctaWhatsapp": "Atsiųsti šį lotą mums per WhatsApp",
+      "ctaContact": "Paprašyti pateikti pasiūlymą",
+      "disclaimer": "Orientacinis skaičiavimas, ne įpareigojantis pasiūlymas. Aukciono mokesčiai, frachto įkainiai ir muitai priklauso nuo loto ir pardavimo dienos.",
+      "otherPorts": "Reikia kito uosto?",
+      "whatsappMessage": "Sveiki, SmartAutoBid! Mane domina šis lotas: {title} (lotas {lot}, VIN {vin}). Mano maksimalus pasiūlymas būtų {bid}, pristatymas į {port}. Ar galėtumėte pateikti pasiūlymą už mane?",
+      "usaMadeFromData": "— pagal loto duomenis: {country}"
+    },
+    "pastSales": {
+      "title": "Neseniai parduoti panašūs automobiliai",
+      "count": "{count} panašūs lotai jau parduoti",
+      "vehicle": "Transporto priemonė",
+      "sold": "Parduota",
+      "odometer": "Rida",
+      "damage": "Pažeidimas",
+      "price": "Pardavimo kaina"
+    },
+    "similar": {
+      "title": "Panašūs lotai artimiausiuose aukcionuose",
+      "subtitle": "Panašūs automobiliai, kurie netrukus bus parduodami.",
+      "noPhoto": "Nuotraukos nėra",
+      "damagePrefix": "Pažeidimas:"
+    },
+    "delivery": {
+      "title": "Pristatysime jūsų automobilį iš JAV",
+      "body": "Statome už jus Copart ir IAAI aukcionuose, sutvarkome dokumentus ir pristatome į Klaipėdą, Roterdamą arba Potį — su tolesniu pristatymu po Europą, Kaukazą ir Artimuosius Rytus.",
+      "cta": "Pasikalbėkime apie šį lotą",
+      "ctaSecondary": "Kaip vyksta pristatymas",
+      "ctaGeneric": "Pasikalbėkime apie automobilio paiešką"
+    },
+    "disclaimerArchived": "Archyvinis įrašas apie jau įvykusį pardavimą, gautas per trečiosios šalies aukcionų duomenų agregatorių. Nurodytos kainos yra istorinės ir naudingos kaip orientyras, už kiek parduodami panašūs automobiliai.",
+    "archived": {
+      "soldBadge": "Parduota",
+      "endedBadge": "Aukcionas baigtas",
+      "titleSold": "Šis lotas jau parduotas",
+      "titleEnded": "Šis aukcionas jau baigėsi",
+      "soldFor": "Pardavimo kaina",
+      "soldOn": "Parduota {date}",
+      "note": "Pateikti pasiūlymo šiam lotui nebegalima — puslapis išsaugotas kaip kainos orientyras. Galime paieškoti panašaus automobilio artimiausiuose aukcionuose.",
+      "ctaSearch": "Rasti panašių automobilių"
+    }
   },
   "Shipping": {
     "hero": {
-      "eyebrow": "Gabenimas ir procesas",
-      "title": "Nuo aukciono iki Europos uosto",
+      "eyebrow": "Gabenimas ir sekimas",
+      "title": "Nuo aukciono iki jūsų durų",
       "subtitle": "Kiekvienas mūsų nupirktas automobilis keliauja tuo pačiu kruopščiai suplanuotu maršrutu — sausumos transportas, eksporto įforminimas, jūrų gabenimas ir priėmimas atvykus."
     },
     "process": {
       "title": "Žingsnis po žingsnio",
       "steps": [
-        { "title": "Pirkimas aukcione", "desc": "Laimime varžytynes, apmokame aukcioną ir jūsų vardu perimame nuosavybės teisę." },
-        { "title": "Gabenimas iki uosto", "desc": "Automobilis vežamas iš aukciono aikštelės į mūsų eksporto terminalą JAV." },
-        { "title": "Eksporto muitinės įforminimas", "desc": "Nuosavybės teisė, važtaraštis ir eksporto deklaracija pateikiami JAV muitinei." },
-        { "title": "Jūrų gabenimas", "desc": "Konteinerinis arba RoRo gabenimas per Atlantą, su pilnu sekimu nuo durų iki uosto." },
-        { "title": "Atvykimas ir muitinės įforminimas", "desc": "Koordinuojame importo įforminimą su jūsų arba mūsų muitinės brokeriu paskirties vietoje." },
-        { "title": "Galutinis pristatymas", "desc": "Atsiimkite uoste arba užsisakykite pristatymą tiesiai iki jūsų adreso." }
+        {
+          "title": "Pirkimas aukcione",
+          "desc": "Laimime varžytynes, apmokame aukcioną ir jūsų vardu perimame nuosavybės teisę."
+        },
+        {
+          "title": "Gabenimas iki uosto",
+          "desc": "Automobilis vežamas iš aukciono aikštelės į mūsų eksporto terminalą JAV."
+        },
+        {
+          "title": "Eksporto muitinės įforminimas",
+          "desc": "Nuosavybės teisė, važtaraštis ir eksporto deklaracija pateikiami JAV muitinei."
+        },
+        {
+          "title": "Jūrų gabenimas",
+          "desc": "Konteinerinis gabenimas per Atlantą, su pilnu sekimu nuo durų iki uosto."
+        },
+        {
+          "title": "Atvykimas ir muitinės įforminimas",
+          "desc": "Koordinuojame importo įforminimą su jūsų arba mūsų muitinės brokeriu paskirties vietoje."
+        },
+        {
+          "title": "Galutinis pristatymas",
+          "desc": "Atsiimkite uoste arba užsisakykite pristatymą tiesiai iki jūsų adreso."
+        }
       ]
     },
     "ports": {
       "title": "Kur gabename",
-      "subtitle": "Reguliarūs reisai iš didžiųjų JAV eksporto terminalų į šiuos Europos uostus — kiti uostai galimi pagal užklausą.",
+      "subtitle": "Reguliarūs reisai iš didžiųjų JAV eksporto terminalų į šiuos uostus — kiti uostai galimi pagal užklausą.",
       "usLabel": "JAV eksporto terminalai",
-      "euLabel": "Europos atvykimo uostai",
-      "us": ["Savana, Džordžija", "Baltimorė, Merilendas", "Niuarkas, Naujasis Džersis", "Hjustonas, Teksasas"],
-      "eu": ["Klaipėda, Lietuva", "Poti, Gruzija", "Roterdamas, Nyderlandai"]
+      "arrivalLabel": "Atvykimo uostai",
+      "instantLabel": "Galimas akimirksniu apskaičiuoti įvertis",
+      "requestLabel": "Prieinama pagal užklausą",
+      "us": [
+        "Los Andželas, Kalifornija",
+        "Sietlas, Vašingtonas",
+        "Niuarkas, Naujasis Džersis",
+        "Hjustonas, Teksasas",
+        "Savana, Džordžija",
+        "Čikaga, Ilinojus"
+      ],
+      "euInstant": [
+        "Klaipėda, Lietuva",
+        "Poti, Gruzija",
+        "Roterdamas, Nyderlandai"
+      ],
+      "euRequest": [
+        "Bremerhavenas, Vokietija",
+        "Gdanskas, Lenkija",
+        "Batumis, Gruzija",
+        "Konstanca, Rumunija",
+        "Varna, Bulgarija",
+        "Mersinas, Turkija",
+        "Beirutas, Libanas",
+        "Akaba, Jordanija",
+        "Dubajus, JAE",
+        "Damamas, Saudo Arabija",
+        "Doha, Kataras",
+        "Salala, Omanas"
+      ]
+    },
+    "tracking": {
+      "eyebrow": "Siuntos sekimas",
+      "title": "Kaip atrodo siunta",
+      "subtitle": "Realus lotas, nuo aikštelės iki uosto — tai, ką sekame kiekvienam gabenamam automobiliui.",
+      "sampleLot": "LOTAS 048231",
+      "sampleVehicle": "2019 Toyota 4Runner",
+      "sampleAuction": "Copart",
+      "sampleOrigin": "Savana, Džordžija",
+      "sampleDestination": "Poti, Gruzija",
+      "routeLabel": "Aktyvus maršrutas · nuo aikštelės iki uosto",
+      "contactPrompt": "Norite sužinoti tikrąją siuntos būseną?",
+      "contactCta": "Susisiekite dėl siuntos statuso"
     }
   },
   "About": {
@@ -232,18 +489,30 @@
     "story": {
       "title": "Mūsų istorija",
       "paragraphs": [
-        "SmartAutoBid prasidėjo nuo paprasto nusivylimo: kasdien „Copart“ ir „IAAI“ aukcionuose visoje JAV parduodami puikūs automobiliai, tačiau Europos pirkėjai neturi prieigos — nei dilerio licencijos, nei buvimo vietoje, nei galimybės apžiūrėti lotą asmeniškai.",
+        "SmartAutoBid prasidėjo nuo paprasto nusivylimo: kasdien „Copart“ ir „IAAI“ aukcionuose visoje JAV parduodami puikūs automobiliai, tačiau pirkėjai užsienyje neturi prieigos — nei dilerio licencijos, nei buvimo vietoje, nei galimybės apžiūrėti lotą asmeniškai.",
         "Sukūrėme komandą, kuri gyvena būtent šioje spragoje. Pirkėjus, mokančius skaityti aukciono ataskaitas, logistikos skyrių, mintinai žinantį kiekvieną eksporto dokumentą, ir palaikymo komandą, kalbančią mūsų klientų kalbomis.",
-        "Šiandien randame, perkame ir gabename automobilius iš visos JAV į Šiaurės Europos, Baltijos šalių ir Kaukazo uostus — perimdami viską, apie ką mūsų klientai nenori galvoti du kartus."
+        "Šiandien randame, perkame ir gabename automobilius iš visos JAV į Europos, Kaukazo ir Artimųjų Rytų uostus — perimdami viską, apie ką mūsų klientai nenori galvoti du kartus."
       ]
     },
     "values": {
       "title": "Kuo vadovaujamės",
       "items": [
-        { "title": "Kainą sakome vieną kartą", "desc": "Vienas aiškus pasiūlymas, apimantis varžytynių ribą, pirkimą ir gabenimą, dar prieš jums apsisprendžiant." },
-        { "title": "Niekada neviršijame ribos", "desc": "Ribą nustatote jūs. Mes ties ja sustojame, net jei automobilis parduodamas brangiau." },
-        { "title": "Dokumentuojame viską", "desc": "Kiekviena nuotrauka, sąskaita ir muitinės forma atsiunčiama iškart, kai tik ją gauname." },
-        { "title": "Atsakome jūsų kalba", "desc": "Palaikymas anglų, rusų, lietuvių ir gruzinų kalbomis — ne tik pardavimo etape." }
+        {
+          "title": "Kainą sakome vieną kartą",
+          "desc": "Vienas aiškus pasiūlymas, apimantis varžytynių ribą, pirkimą ir gabenimą, dar prieš jums apsisprendžiant."
+        },
+        {
+          "title": "Niekada neviršijame ribos",
+          "desc": "Ribą nustatote jūs. Mes ties ja sustojame, net jei automobilis parduodamas brangiau."
+        },
+        {
+          "title": "Dokumentuojame viską",
+          "desc": "Kiekviena nuotrauka, sąskaita ir muitinės forma atsiunčiama iškart, kai tik ją gauname."
+        },
+        {
+          "title": "Atsakome jūsų kalba",
+          "desc": "Palaikymas anglų, rusų, lietuvių ir gruzinų kalbomis — ne tik pardavimo etape."
+        }
       ]
     },
     "founding": {
@@ -306,7 +575,7 @@
         },
         {
           "question": "Į kur gabenate automobilius?",
-          "answer": "Reguliariai gabename į Klaipėdą (Lietuva), Poti (Gruzija) ir Roterdamą (Nyderlandai); kiti Europos uostai — pagal poreikį."
+          "answer": "Reguliariai gabename į Klaipėdą (Lietuva), Poti (Gruzija) ir Roterdamą (Nyderlandai); papildomi uostai Europoje, Kaukaze ir Artimuosiuose Rytuose — pagal poreikį."
         },
         {
           "question": "Kas tvarko muitinę ir importo mokesčius?",
@@ -432,7 +701,7 @@
       {
         "title": "Kas mes esame",
         "body": [
-          "SmartAutoBid yra automobilių pirkimo ir logistikos agentas, veikiantis per Smart Auto Bid LLC — Džordžijos valstijos, JAV, ribotos atsakomybės bendrovę. Ieškome, statome ir perkame automobilius klientų vardu viešuose Copart ir IAAI daužtų bei naudotų automobilių aukcionuose, taip pat organizuojame vidaus transportavimą, eksporto dokumentaciją, jūrų frachtą ir pristatymą į Europos uostus. Nesame Copart, IAAI ar aukciono namai ir nesame susiję, patvirtinti ar oficialiai atstovaujantys nė vienai iš šių bendrovių."
+          "SmartAutoBid yra automobilių pirkimo ir logistikos agentas, veikiantis per Smart Auto Bid LLC — Džordžijos valstijos, JAV, ribotos atsakomybės bendrovę. Ieškome, statome ir perkame automobilius klientų vardu viešuose Copart ir IAAI daužtų bei naudotų automobilių aukcionuose, taip pat organizuojame vidaus transportavimą, eksporto dokumentaciją, jūrų frachtą ir pristatymą į Europos, Kaukazo ir Artimųjų Rytų uostus. Nesame Copart, IAAI ar aukciono namai ir nesame susiję, patvirtinti ar oficialiai atstovaujantys nė vienai iš šių bendrovių."
         ]
       },
       {

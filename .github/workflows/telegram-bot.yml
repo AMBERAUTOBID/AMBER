@@ -31,6 +31,13 @@ jobs:
           APIBARA_API_KEY: ${{ secrets.APIBARA_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          # Which topic of that group each feed posts into. Leave both unset
+          # to post everything into one plain channel instead - see
+          # scripts/telegram-bot/telegram.ts for the two supported setups.
+          TELEGRAM_LIVE_THREAD_ID: ${{ secrets.TELEGRAM_LIVE_THREAD_ID }}
+          TELEGRAM_BUYNOW_THREAD_ID: ${{ secrets.TELEGRAM_BUYNOW_THREAD_ID }}
+          TELEGRAM_LIVE_CHAT_ID: ${{ secrets.TELEGRAM_LIVE_CHAT_ID }}
+          TELEGRAM_BUYNOW_CHAT_ID: ${{ secrets.TELEGRAM_BUYNOW_CHAT_ID }}
           KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
           KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
         run: npm run bot:run

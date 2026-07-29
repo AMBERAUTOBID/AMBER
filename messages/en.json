@@ -1,18 +1,18 @@
 {
   "Metadata": {
-    "title": "SmartAutoBid — Bid, Buy & Ship Cars from Copart & IAAI to Europe",
-    "description": "SmartAutoBid bids and buys vehicles for you at Copart and IAAI auctions in the USA, then handles documentation and ocean freight all the way to your door in Europe."
+    "title": "SmartAutoBid — Bid, Buy & Ship Cars from Copart & IAAI to Europe, the Middle East & Beyond",
+    "description": "SmartAutoBid bids and buys vehicles for you at Copart and IAAI auctions in the USA, then handles documentation and ocean freight all the way to your door — in Europe, the Middle East, and beyond."
   },
   "Nav": {
     "home": "Home",
     "search": "Search Inventory",
-    "shipping": "Shipping & Process",
+    "shipping": "Shipping & Tracking",
     "about": "About",
     "contact": "Contact",
     "cta": "Get a Free Quote"
   },
   "Footer": {
-    "tagline": "From the auction lane to your driveway — we bid, buy, and ship U.S. vehicles to Europe.",
+    "tagline": "From the auction lane to your driveway — we bid, buy, and ship U.S. vehicles to Europe, the Middle East, and beyond.",
     "linksTitle": "Site",
     "contactTitle": "Talk to us",
     "languagesTitle": "Language",
@@ -69,6 +69,7 @@
     },
     "disclaimer": "Illustrative estimate only, not a binding quote. Actual costs depend on your final bid, the vehicle's size and condition, and your destination country's customs rules — contact us for an exact figure.",
     "ctaPhone": "Call us",
+    "ctaTrack": "Track my vehicle",
     "map": {
       "title": "Your shipping route",
       "subtitle": "Pickup, nearest loading port, and ocean freight lane to your chosen destination port.",
@@ -81,8 +82,8 @@
   "Home": {
     "hero": {
       "eyebrow": "Copart & IAAI Buying Agents",
-      "title": "Your bridge from U.S. auctions to European roads",
-      "subtitle": "SmartAutoBid finds it, bids on it, and ships it. We buy vehicles for you at Copart and IAAI, handle every document, and deliver to your port — or your door — anywhere in Europe.",
+      "title": "Your bridge from U.S. auctions to your driveway",
+      "subtitle": "SmartAutoBid finds it, bids on it, and ships it. We buy vehicles for you at Copart and IAAI, handle every document, and deliver to your port — or your door — wherever you are.",
       "ctaPrimary": "Search Copart & IAAI",
       "ctaSecondary": "Get a Free Quote",
       "trustChips": [
@@ -98,7 +99,7 @@
         "Daily bidding at Copart auctions nationwide",
         "Daily bidding at IAAI auctions nationwide",
         "Export documentation & title handling",
-        "Ocean freight to Northern Europe, the Baltics & the Caucasus"
+        "Ocean freight to Europe, the Caucasus & the Middle East"
       ]
     },
     "services": {
@@ -116,7 +117,7 @@
         },
         {
           "title": "Ocean Freight & Delivery",
-          "desc": "Container or RoRo shipping from major U.S. ports to Northern Europe, the Baltics, or the Caucasus, with tracking and customs clearance support on arrival."
+          "desc": "Container or RoRo shipping from major U.S. ports to Europe, the Caucasus, or the Middle East, with tracking and customs clearance support on arrival."
         }
       ]
     },
@@ -138,7 +139,7 @@
           "desc": "Title transfer, export certificate, and customs documentation, prepared for your country."
         },
         {
-          "title": "We ship it to Europe",
+          "title": "We ship it overseas",
           "desc": "Inland transport to port, then ocean freight by container or RoRo, fully tracked."
         },
         {
@@ -187,7 +188,7 @@
     "hero": {
       "eyebrow": "Vehicle Search",
       "title": "Search live inventory at Copart and IAAI",
-      "subtitle": "Copart and IAAI restrict full inventory access to registered members and licensed brokers, so we route your search directly to their official listings — opened securely in a new tab."
+      "subtitle": "Browse real Copart and IAAI listings right here — photos, VIN, damage, and pricing, no extra tabs or accounts needed."
     },
     "widget": {
       "vinPlaceholder": "Enter VIN, lot, or stock number",
@@ -211,49 +212,272 @@
       "odometer": "Odometer",
       "odometerReset": "Reset"
     },
-    "copart": {
-      "name": "Copart",
-      "desc": "Search Copart's public salvage and clean-title inventory by keyword, make, model, or lot number.",
-      "placeholder": "e.g. BMW M4, or lot number",
-      "button": "Search Copart"
-    },
-    "iaai": {
-      "name": "IAAI",
-      "desc": "Search IAAI's public inventory by keyword, make, model, or stock number.",
-      "placeholder": "e.g. Toyota 4Runner, or stock number",
-      "button": "Search IAAI"
-    },
     "helper": {
       "title": "Not sure exactly what you want?",
       "desc": "Tell us your budget and the type of vehicle you're after — we'll shortlist matching lots from both auctions and send you our picks.",
       "button": "Ask us to find one"
     },
-    "note": "Search opens the official Copart or IAAI website in a new tab. SmartAutoBid is not affiliated with either company; we bid on listed vehicles on our clients' behalf."
+    "note": "Listings are aggregated from Copart and IAAI and refresh periodically — always confirm final details on auction day. SmartAutoBid is not affiliated with either company; we bid on listed vehicles on our clients' behalf.",
+    "results": {
+      "noPhoto": "No photo",
+      "damagePrefix": "Damage:",
+      "priceNA": "Price N/A",
+      "empty": "No matching vehicles right now — try widening your filters.",
+      "error": "Search is temporarily unavailable ({error}). Please try again shortly.",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "VehicleDetail": {
+    "lot": "Lot #{number}",
+    "noPhotos": "No photos available",
+    "photoAlt": "{title} — photo {index} of {total}",
+    "disclaimer": "Lot data is sourced via a third-party auction data aggregator and refreshed periodically — always confirm final details on auction day. SmartAutoBid doesn't take live bids through the site yet; contact us and we'll bid on your behalf.",
+    "auction": {
+      "endsIn": "Auction ends in",
+      "saleDate": "Sale date",
+      "closed": "Auction closed",
+      "dayShort": "d",
+      "hourShort": "h",
+      "minuteShort": "m",
+      "secondShort": "s",
+      "buyNowBadge": "Buy now",
+      "timedBadge": "Timed auction"
+    },
+    "media": {
+      "view360": "360° view",
+      "engineStart": "Engine start",
+      "previousPhoto": "Previous photo",
+      "nextPhoto": "Next photo",
+      "close": "Close",
+      "openVideoExternally": "Video not playing? Open it in a new tab"
+    },
+    "pricing": {
+      "title": "Current pricing",
+      "currentBid": "Current bid",
+      "buyNow": "Buy now",
+      "lastSold": "Last sold for",
+      "notAvailable": "N/A",
+      "finalBid": "Final bid"
+    },
+    "market": {
+      "title": "What comparable cars sell for",
+      "min": "Lowest",
+      "avg": "Average",
+      "max": "Highest",
+      "basis": "Based on {count} comparable lots that have already sold. The marker shows where this lot's price currently sits in that range.",
+      "actualCashValue": "Actual cash value (pre-damage)",
+      "estimatedRepairCost": "Estimated repair cost"
+    },
+    "condition": {
+      "title": "Condition",
+      "runCondition": "Run condition",
+      "primaryDamage": "Primary damage",
+      "secondaryDamage": "Secondary damage",
+      "unknown": "Unknown",
+      "lossType": "Loss type",
+      "keys": "Keys",
+      "keyFob": "Key fob",
+      "yes": "Yes",
+      "no": "No",
+      "odometer": "Odometer",
+      "airbags": "Airbags",
+      "vehicleGrade": "Condition score",
+      "catalyticConverter": "Catalytic converter"
+    },
+    "vehicle": {
+      "title": "Vehicle",
+      "year": "Year",
+      "make": "Make",
+      "model": "Model",
+      "series": "Trim",
+      "bodyStyle": "Body style",
+      "engine": "Engine",
+      "cylinders": "Cylinders",
+      "transmission": "Transmission",
+      "driveType": "Drive type",
+      "fuelType": "Fuel type",
+      "color": "Exterior colour",
+      "interiorColor": "Interior colour",
+      "countryOfOrigin": "Manufactured in",
+      "navigation": "Navigation",
+      "options": "Options"
+    },
+    "sale": {
+      "title": "Sale & paperwork",
+      "lotNumber": "Lot number",
+      "seller": "Seller",
+      "saleDocument": "Sale document",
+      "titleState": "Title state",
+      "titleBrand": "Title brand",
+      "auctionDate": "Auction date",
+      "branch": "Auction branch",
+      "departurePort": "US departure port",
+      "bidIncrement": "Bid increment",
+      "exportable": "Exportable",
+      "notExportable": "Not exportable",
+      "registrable": "Can be registered",
+      "notRegistrable": "Registration restricted"
+    },
+    "calculator": {
+      "title": "What it costs you, delivered",
+      "yourBid": "Your maximum bid",
+      "decreaseBid": "Lower the bid",
+      "increaseBid": "Raise the bid",
+      "bidStepKnown": "This auction bids in {step} steps.",
+      "bidStepHint": "Enter the highest amount you'd be willing to pay for the lot.",
+      "terminal": "Delivery terminal",
+      "terminalPlaceholder": "Choose a port",
+      "searchPlaceholder": "Search…",
+      "extras": "Additional services",
+      "hazmat": "Hazardous Cargo (EV, Hybrid)",
+      "oversize": "Oversized Vehicle (Big SUV, Van)",
+      "usSide": {
+        "title": "Paid in the USA, before it ships",
+        "lotPrice": "Lot price",
+        "auctionFees": "Auction fees",
+        "titleFee": "Title sending fee",
+        "brokerFee": "Broker fee",
+        "trucking": "Local transport to port",
+        "oceanFreight": "Ocean freight to {port}",
+        "extras": "Additional services",
+        "subtotal": "Subtotal"
+      },
+      "destinationSide": {
+        "title": "Due on arrival in {port}",
+        "vat": "VAT ({rate}%)",
+        "duty": "Import duty ({rate}%)",
+        "dutyWaived": "Import duty (0% — US-built)",
+        "clearance": "Customs agency + unloading",
+        "subtotal": "Subtotal"
+      },
+      "usaMade": "Vehicle was manufactured in the USA",
+      "usaMadeDetected": "(detected from the lot data)",
+      "georgiaNote": "Georgia also charges a separate excise tax based on engine size and vehicle age, which isn't included above — ask us for the exact figure.",
+      "grandTotal": "Estimated total, delivered",
+      "ctaWhatsapp": "Send this lot to us on WhatsApp",
+      "ctaContact": "Ask us to bid on this",
+      "disclaimer": "An illustrative estimate, not a binding quote. Auction fees, freight rates and duty vary by lot and sale day.",
+      "otherPorts": "Need a different port?",
+      "whatsappMessage": "Hi SmartAutoBid! I'm interested in this lot: {title} (lot {lot}, VIN {vin}). My maximum bid would be {bid}, delivered to {port}. Can you bid on it for me?",
+      "usaMadeFromData": "— set from the lot data: {country}"
+    },
+    "pastSales": {
+      "title": "Recent sales of comparable cars",
+      "count": "{count} similar lots that already sold",
+      "vehicle": "Vehicle",
+      "sold": "Sold",
+      "odometer": "Odometer",
+      "damage": "Damage",
+      "price": "Sold for"
+    },
+    "similar": {
+      "title": "Similar lots coming up",
+      "subtitle": "Comparable vehicles heading to auction soon.",
+      "noPhoto": "No photo",
+      "damagePrefix": "Damage:"
+    },
+    "delivery": {
+      "title": "Let us deliver your car from the USA",
+      "body": "We bid for you at Copart and IAAI, handle the paperwork, and ship to Klaipėda, Rotterdam or Poti — with onward delivery across Europe, the Caucasus, and the Middle East.",
+      "cta": "Talk to us about this lot",
+      "ctaSecondary": "How shipping works",
+      "ctaGeneric": "Talk to us about finding a car"
+    },
+    "disclaimerArchived": "An archived record of a sale that has already taken place, sourced via a third-party auction data aggregator. Prices shown are historical and are useful as a guide to what comparable cars fetch.",
+    "archived": {
+      "soldBadge": "Sold",
+      "endedBadge": "Auction ended",
+      "titleSold": "This lot has already been sold",
+      "titleEnded": "This auction has already ended",
+      "soldFor": "Sold for",
+      "soldOn": "Sold on {date}",
+      "note": "It is no longer possible to bid on this lot — the page is kept as a price reference. We can look for a similar car in the upcoming auctions.",
+      "ctaSearch": "Find similar cars"
+    }
   },
   "Shipping": {
     "hero": {
-      "eyebrow": "Shipping & Process",
-      "title": "From the auction lane to a European port",
+      "eyebrow": "Shipping & Tracking",
+      "title": "From the auction lane to your door",
       "subtitle": "Every vehicle we buy travels the same carefully managed route — inland transport, export clearance, ocean freight, and arrival handling."
     },
     "process": {
       "title": "Step by step",
       "steps": [
-        { "title": "Purchase & auction win", "desc": "We win the bid, pay the auction, and take title on your behalf." },
-        { "title": "Inland transport to port", "desc": "The vehicle is trucked from the auction yard to our U.S. export terminal." },
-        { "title": "Export customs & documentation", "desc": "Title, bill of lading, and export declaration are filed with U.S. Customs." },
-        { "title": "Ocean freight", "desc": "Container or RoRo shipping across the Atlantic, fully tracked door-to-port." },
-        { "title": "Arrival & customs clearance", "desc": "We coordinate import clearance with your local broker or ours at destination." },
-        { "title": "Final delivery", "desc": "Collect at port, or arrange last-mile trucking straight to your address." }
+        {
+          "title": "Purchase & auction win",
+          "desc": "We win the bid, pay the auction, and take title on your behalf."
+        },
+        {
+          "title": "Inland transport to port",
+          "desc": "The vehicle is trucked from the auction yard to our U.S. export terminal."
+        },
+        {
+          "title": "Export customs & documentation",
+          "desc": "Title, bill of lading, and export declaration are filed with U.S. Customs."
+        },
+        {
+          "title": "Ocean freight",
+          "desc": "Container or RoRo shipping across the Atlantic, fully tracked door-to-port."
+        },
+        {
+          "title": "Arrival & customs clearance",
+          "desc": "We coordinate import clearance with your local broker or ours at destination."
+        },
+        {
+          "title": "Final delivery",
+          "desc": "Collect at port, or arrange last-mile trucking straight to your address."
+        }
       ]
     },
     "ports": {
       "title": "Where we ship",
-      "subtitle": "Regular sailings from major U.S. export terminals to these European hubs — additional ports available on request.",
+      "subtitle": "Regular sailings from major U.S. export terminals to these hubs — additional ports available on request.",
       "usLabel": "U.S. export terminals",
-      "euLabel": "European arrival ports",
-      "us": ["Savannah, GA", "Baltimore, MD", "Newark, NJ", "Houston, TX"],
-      "eu": ["Klaipėda, Lithuania", "Poti, Georgia", "Rotterdam, Netherlands"]
+      "arrivalLabel": "Arrival ports",
+      "instantLabel": "Instant pricing available",
+      "requestLabel": "Available on request",
+      "us": [
+        "Los Angeles, CA",
+        "Seattle, WA",
+        "Newark, NJ",
+        "Houston, TX",
+        "Savannah, GA",
+        "Chicago, IL"
+      ],
+      "euInstant": [
+        "Klaipėda, Lithuania",
+        "Poti, Georgia",
+        "Rotterdam, Netherlands"
+      ],
+      "euRequest": [
+        "Bremerhaven, Germany",
+        "Gdańsk, Poland",
+        "Batumi, Georgia",
+        "Constanța, Romania",
+        "Varna, Bulgaria",
+        "Mersin, Turkey",
+        "Beirut, Lebanon",
+        "Aqaba, Jordan",
+        "Dubai, United Arab Emirates",
+        "Dammam, Saudi Arabia",
+        "Doha, Qatar",
+        "Salalah, Oman"
+      ]
+    },
+    "tracking": {
+      "eyebrow": "Shipment Tracking",
+      "title": "See what a shipment looks like",
+      "subtitle": "A real lot, from the yard to the port — this is what we track behind the scenes for every vehicle we ship.",
+      "sampleLot": "LOT 048231",
+      "sampleVehicle": "2019 Toyota 4Runner",
+      "sampleAuction": "Copart",
+      "sampleOrigin": "Savannah, GA",
+      "sampleDestination": "Poti, Georgia",
+      "routeLabel": "Live route · pickup to port",
+      "contactPrompt": "Want the real status of your shipment?",
+      "contactCta": "Contact us for a tracking update"
     }
   },
   "About": {
@@ -265,18 +489,30 @@
     "story": {
       "title": "Our story",
       "paragraphs": [
-        "SmartAutoBid started with a simple frustration: incredible vehicles sell every day at Copart and IAAI auctions across the U.S., but buyers in Europe are locked out — no dealer license, no local presence, no way to inspect a lot in person.",
+        "SmartAutoBid started with a simple frustration: incredible vehicles sell every day at Copart and IAAI auctions across the U.S., but buyers overseas are locked out — no dealer license, no local presence, no way to inspect a lot in person.",
         "We built a team that lives inside that gap. Buyers who know how to read an auction report, a logistics desk that knows every export document by heart, and a support team that speaks the languages our clients do.",
-        "Today we source, buy, and ship vehicles from coast to coast in the U.S. to ports across Northern Europe, the Baltics, and the Caucasus — handling the parts our clients never want to think about twice."
+        "Today we source, buy, and ship vehicles from coast to coast in the U.S. to ports across Europe, the Caucasus, and the Middle East — handling the parts our clients never want to think about twice."
       ]
     },
     "values": {
       "title": "What we hold to",
       "items": [
-        { "title": "Say the price once", "desc": "One quote, covering bid limit, purchase, and freight, before you commit to anything." },
-        { "title": "Never bid past your limit", "desc": "You set the cap. We stop there, even if the vehicle sells for more." },
-        { "title": "Document everything", "desc": "Every photo, invoice, and customs form is shared as soon as we have it." },
-        { "title": "Answer in your language", "desc": "Support in English, Russian, Lithuanian, and Georgian, not just at the sale." }
+        {
+          "title": "Say the price once",
+          "desc": "One quote, covering bid limit, purchase, and freight, before you commit to anything."
+        },
+        {
+          "title": "Never bid past your limit",
+          "desc": "You set the cap. We stop there, even if the vehicle sells for more."
+        },
+        {
+          "title": "Document everything",
+          "desc": "Every photo, invoice, and customs form is shared as soon as we have it."
+        },
+        {
+          "title": "Answer in your language",
+          "desc": "Support in English, Russian, Lithuanian, and Georgian, not just at the sale."
+        }
       ]
     },
     "founding": {
@@ -339,7 +575,7 @@
         },
         {
           "question": "Where do you ship to?",
-          "answer": "We regularly ship to Klaipėda (Lithuania), Poti (Georgia), and Rotterdam (Netherlands), with other European ports available on request."
+          "answer": "We regularly ship to Klaipėda (Lithuania), Poti (Georgia), and Rotterdam (Netherlands), with additional ports across Europe, the Caucasus, and the Middle East available on request."
         },
         {
           "question": "Who handles customs and import duties?",
@@ -465,7 +701,7 @@
       {
         "title": "Who we are",
         "body": [
-          "SmartAutoBid is a vehicle buying and logistics agent operated by Smart Auto Bid LLC, a Georgia, USA limited liability company. We search for, bid on, and purchase vehicles on our clients' behalf at Copart and IAAI public salvage and used-vehicle auctions, and arrange inland transport, export documentation, ocean freight, and delivery to ports in Europe. We are not Copart, IAAI, or an auction house, and we are not affiliated with, endorsed by, or an official representative of either company."
+          "SmartAutoBid is a vehicle buying and logistics agent operated by Smart Auto Bid LLC, a Georgia, USA limited liability company. We search for, bid on, and purchase vehicles on our clients' behalf at Copart and IAAI public salvage and used-vehicle auctions, and arrange inland transport, export documentation, ocean freight, and delivery to ports in Europe, the Caucasus, and the Middle East. We are not Copart, IAAI, or an auction house, and we are not affiliated with, endorsed by, or an official representative of either company."
         ]
       },
       {

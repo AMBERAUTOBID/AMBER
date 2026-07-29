@@ -11,6 +11,7 @@ export default function ScrollableSelect({
   placeholder,
   searchPlaceholder,
   disabled = false,
+  getLabel,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -18,7 +19,9 @@ export default function ScrollableSelect({
   placeholder: string;
   searchPlaceholder: string;
   disabled?: boolean;
+  getLabel?: (opt: string) => string;
 }) {
+  const label = (opt: string) => (getLabel ? getLabel(opt) : opt);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -62,7 +65,7 @@ export default function ScrollableSelect({
               : "border-char-200 bg-white text-char-500 hover:border-char-300"
         )}
       >
-        <span className="truncate">{value || placeholder}</span>
+        <span className="truncate">{value ? label(value) : placeholder}</span>
         <CaretDown size={14} weight="bold" className="shrink-0" />
       </button>
 
@@ -102,7 +105,7 @@ export default function ScrollableSelect({
                     opt === value ? "font-semibold text-amber-600" : "text-char-700"
                   )}
                 >
-                  {opt}
+                  {label(opt)}
                 </button>
               </li>
             ))}
