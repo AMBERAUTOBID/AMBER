@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:locales": "node scripts/checkLocaleParity.mjs",
+    "verify": "npm run typecheck && npm run check:locales && npm test && npm run lint",
     "bot:run": "tsx scripts/telegram-bot/run.ts",
     "bot:local": "tsx --env-file=.env.local scripts/telegram-bot/run.ts"
   },

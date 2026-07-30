@@ -16,7 +16,8 @@ Two that catch people immediately:
   `src/shared/config/site.ts`. Never inline them.
 - `messages/en.json`, `ru.json`, and `lt.json` must have identical key sets.
 
-Verify with `npx tsc --noEmit` and `npm test` before finishing.
+Verify with `npm run verify` before finishing (typecheck, locale parity, tests,
+lint). CI runs the same checks plus a production build on every push.
 
 A second editing session may be working in this tree at the same time. Stage
 explicit paths — never `git add -A`.

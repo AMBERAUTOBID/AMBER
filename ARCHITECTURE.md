@@ -171,18 +171,28 @@ to holding customer passwords in any form.
 
 ## 7. Verification
 
-Before finishing any change:
+Before finishing any change, run everything:
 
 ```bash
-npx tsc --noEmit
+npm run verify
 ```
 
-The cost model has unit tests, because it is arithmetic that gets published:
+That is typecheck → locale parity → unit tests → lint. Individually:
 
-```bash
-npm test
-```
+| Command | Checks |
+|---|---|
+| `npm run typecheck` | Types across `src/` and `scripts/` |
+| `npm run check:locales` | en/ru/lt have identical key sets (invariant #2) |
+| `npm test` | The cost model — arithmetic that gets published |
+| `npm run lint` | ESLint |
+| `npm run build` | What Vercel runs; catches client/server boundary errors |
+
+**CI runs all of these plus the production build on every push and pull
+request** (`.github/workflows/checks.yml`), so a break is caught at push time
+rather than at the next deploy. The build step uses placeholder secrets — no
+page fetches Apibara at build time, so real keys are not needed and must never
+be added to a workflow that runs on every branch.
 
 Note that a second editing session may be working in this tree concurrently.
-Stage explicit paths — never `git add -A` — and re-run the typecheck before
+Stage explicit paths — never `git add -A` — and re-run `npm run verify` before
 committing, since the other session can break the build underneath you.
