@@ -30,7 +30,7 @@ export default async function TermsPage({
 
   return (
     <>
-      <section className="bg-gradient-to-b from-amber-50/60 via-background to-background py-16 sm:py-20">
+      <section className="bg-gradient-to-b from-amber-50/60 via-background to-background pt-16 pb-10 sm:pt-20">
         <Container>
           {/* Same column as the sections below, so the hero doesn't sit
               flush left while the body text is centred. */}
