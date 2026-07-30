@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { siteUrl } from "@/shared/config/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -12,6 +13,6 @@ export default function robots(): MetadataRoute.Robots {
       // single client that could drain the Apibara request quota.
       disallow: ["/api/", "/vehicle/"],
     },
-    sitemap: "https://smartautobid.com/sitemap.xml",
+    sitemap: siteUrl("/sitemap.xml"),
   };
 }

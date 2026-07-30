@@ -11,11 +11,7 @@ import {
   TelegramLogo,
   EnvelopeSimple,
 } from "@phosphor-icons/react/dist/ssr";
-
-const PHONE_DISPLAY = "+1 (912) 561-2347";
-const PHONE_E164 = "+19125612347";
-const TELEGRAM_HANDLE = "SmartAutoBid";
-const EMAIL = "info@smartautobid.com";
+import { SITE, CONTACT_HREF } from "@/shared/config/site";
 
 export async function generateMetadata({
   params,
@@ -43,26 +39,26 @@ export default async function ContactPage({
     {
       icon: Phone,
       label: tc("phone"),
-      value: PHONE_DISPLAY,
-      href: `tel:${PHONE_E164}`,
+      value: SITE.phone.display,
+      href: CONTACT_HREF.tel,
     },
     {
       icon: WhatsappLogo,
       label: tc("whatsapp"),
-      value: PHONE_DISPLAY,
-      href: `https://wa.me/${PHONE_E164.replace(/\D/g, "")}`,
+      value: SITE.phone.display,
+      href: CONTACT_HREF.whatsapp,
     },
     {
       icon: TelegramLogo,
       label: tc("telegram"),
-      value: `@${TELEGRAM_HANDLE}`,
-      href: `https://t.me/${TELEGRAM_HANDLE}`,
+      value: SITE.telegram.display,
+      href: CONTACT_HREF.telegram,
     },
     {
       icon: EnvelopeSimple,
       label: tc("email"),
-      value: EMAIL,
-      href: `mailto:${EMAIL}`,
+      value: SITE.email,
+      href: CONTACT_HREF.email,
     },
   ];
 

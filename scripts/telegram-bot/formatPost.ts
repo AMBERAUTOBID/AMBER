@@ -9,14 +9,15 @@ import type { ComparableSoldStats } from "./marketStats";
 // The language list is defined next to the keyboard that renders it, so a
 // caption can never exist for a language with no button (or vice versa).
 import { POST_LANGS, type PostLang } from "../../src/lib/telegramApi";
+import { SITE, CONTACT_HREF } from "../../src/shared/config/site";
 import type { VehicleListItem } from "./apibaraClient";
 import type { ChannelSection, SavedSearchFilter } from "./filters";
 
 export { POST_LANGS, type PostLang };
 
 const DEFAULT_DESTINATION_PORT = "Klaipėda, Lithuania";
-const CONTACT_PHONE_DISPLAY = "+1 (912) 561-2347";
-const CONTACT_WHATSAPP = "https://wa.me/19125612347";
+const CONTACT_PHONE_DISPLAY = SITE.phone.display;
+const CONTACT_WHATSAPP = CONTACT_HREF.whatsapp;
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

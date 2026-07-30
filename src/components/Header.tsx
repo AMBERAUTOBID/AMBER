@@ -8,9 +8,8 @@ import { List, X, ArrowRight, Phone } from "@phosphor-icons/react/dist/ssr";
 import { clsx } from "clsx";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { TextRoll } from "./ui/text-roll";
+import { SITE, CONTACT_HREF } from "@/shared/config/site";
 
-const PHONE_DISPLAY = "+1 (912) 561-2347";
-const PHONE_E164 = "+19125612347";
 const BRAND_PART_1 = "Smart";
 const BRAND_PART_2 = "AutoBid";
 
@@ -87,11 +86,11 @@ export default function Header() {
             );
           })}
           <a
-            href={`tel:${PHONE_E164}`}
+            href={CONTACT_HREF.tel}
             className="hidden items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-medium text-char-600 transition-colors hover:bg-char-100 hover:text-char-900 xl:flex"
           >
             <Phone size={16} weight="fill" className="text-amber-500" />
-            {PHONE_DISPLAY}
+            {SITE.phone.display}
           </a>
           <LanguageSwitcher />
           <Link

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { clsx } from "clsx";
 import { Minus, Plus, WhatsappLogo, Info } from "@phosphor-icons/react/dist/ssr";
 import { Link } from "@/i18n/navigation";
+import { whatsappHref } from "@/shared/config/site";
 import ScrollableSelect from "./ScrollableSelect";
 import {
   estimateLandedCost,
@@ -24,7 +25,6 @@ const PORT_OPTIONS = Object.keys(PORT_MULTIPLIER);
 const PORT_DISPLAY_NAMES: Record<string, Partial<Record<string, string>>> = {
   "Klaipėda, Lithuania": { lt: "Klaipėdos, Lithuania" },
 };
-const WHATSAPP_NUMBER = "19125612347";
 const FALLBACK_BID_STEP_USD = 100;
 
 function formatUsd(v: number) {
@@ -163,7 +163,7 @@ export default function VehicleCostPanel({
   const portCity = port.split(",")[0];
   const dutyWaived = customs?.dutyWaivedForUsaMade && effectiveUsaMade;
 
-  const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+  const whatsappUrl = whatsappHref(
     t("whatsappMessage", {
       title: lotTitle,
       lot: lotNumber,
@@ -171,7 +171,7 @@ export default function VehicleCostPanel({
       bid: formatUsd(bidNumber),
       port: portLabel,
     })
-  )}`;
+  );
 
   return (
     <div className="rounded-2xl border border-char-200 bg-white p-5">
@@ -344,7 +344,7 @@ export default function VehicleCostPanel({
 
       <div className="mt-4 flex flex-col gap-2">
         <a
-          href={whatsappHref}
+          href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-3.5 text-sm font-semibold text-white shadow-sm shadow-amber-900/20 transition-colors hover:bg-amber-600"

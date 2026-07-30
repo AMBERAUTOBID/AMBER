@@ -5,6 +5,8 @@
  * switch buttons on those posts) - kept here rather than duplicated so the
  * button layout/callback_data format can't drift between the two.
  */
+import { siteUrl } from "../shared/config/site";
+
 const TELEGRAM_API = "https://api.telegram.org";
 
 function botToken(): string {
@@ -33,8 +35,6 @@ export function isPostLang(value: unknown): value is PostLang {
   return POST_LANGS.includes(value as PostLang);
 }
 
-const SITE_URL = "https://smartautobid.com";
-
 const LANG_BUTTON_LABEL: Record<PostLang, string> = {
   en: "🇬🇧 EN",
   ru: "🇷🇺 RU",
@@ -52,7 +52,7 @@ const DETAILS_BUTTON_LABEL: Record<PostLang, string> = {
  * locale - English - carries no prefix while ru/lt do. */
 export function vehicleUrl(vin: string, lang: PostLang): string {
   const prefix = lang === "en" ? "" : `/${lang}`;
-  return `${SITE_URL}${prefix}/vehicle/${encodeURIComponent(vin)}`;
+  return siteUrl(`${prefix}/vehicle/${encodeURIComponent(vin)}`);
 }
 
 /**

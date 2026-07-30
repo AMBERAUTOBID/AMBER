@@ -1,14 +1,13 @@
 import { getTranslations } from "next-intl/server";
 import { WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
-
-const PHONE_E164 = "+19125612347";
+import { CONTACT_HREF } from "@/shared/config/site";
 
 export default async function WhatsAppButton() {
   const t = await getTranslations("WhatsAppButton");
 
   return (
     <a
-      href={`https://wa.me/${PHONE_E164.replace(/\D/g, "")}`}
+      href={CONTACT_HREF.whatsapp}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={t("label")}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { SITE } from "@/shared/config/site";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
 
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
-  const toAddress = process.env.CONTACT_EMAIL_TO || "info@smartautobid.com";
+  const toAddress = process.env.CONTACT_EMAIL_TO || SITE.email;
 
   if (!gmailUser || !gmailPass) {
     console.warn(
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
     });
 
     await transporter.sendMail({
-      from: `"SmartAutoBid Website" <${gmailUser}>`,
+      from: `"${SITE.name} Website" <${gmailUser}>`,
       to: toAddress,
       replyTo: submission.email,
       subject: `New website inquiry from ${submission.name}`,

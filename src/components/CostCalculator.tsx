@@ -31,6 +31,7 @@ import {
   customsBreakdown,
 } from "@/lib/costEstimate";
 import { Link } from "@/i18n/navigation";
+import { SITE, CONTACT_HREF } from "@/shared/config/site";
 import ScrollableSelect from "./ScrollableSelect";
 import Container from "./Container";
 import Reveal from "./Reveal";
@@ -110,9 +111,6 @@ const PORT_DISPLAY_NAMES: Record<string, Partial<Record<string, string>>> = {
 function portLabel(port: string, locale: string) {
   return PORT_DISPLAY_NAMES[port]?.[locale] ?? port;
 }
-const PHONE_E164 = "+19125612347";
-const PHONE_DISPLAY = "+1 (912) 561-2347";
-
 type Result = {
   lotPrice: number;
   auctionFees: number;
@@ -509,11 +507,11 @@ export default function CostCalculator() {
 
           <div className="mt-6 flex flex-wrap gap-3">
             <a
-              href={`tel:${PHONE_E164}`}
+              href={CONTACT_HREF.tel}
               className="inline-flex items-center gap-2 rounded-full bg-char-900 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-char-800"
             >
               <Phone size={16} weight="fill" className="text-amber-400" />
-              {t("ctaPhone")} {PHONE_DISPLAY}
+              {t("ctaPhone")} {SITE.phone.display}
             </a>
             <Link
               href="/shipping"

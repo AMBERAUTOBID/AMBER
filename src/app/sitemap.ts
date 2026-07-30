@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { routing } from "@/i18n/routing";
+import { SITE } from "@/shared/config/site";
 
-const BASE_URL = "https://smartautobid.com";
+const BASE_URL = SITE.url;
 
 const PATHS = [
   "",

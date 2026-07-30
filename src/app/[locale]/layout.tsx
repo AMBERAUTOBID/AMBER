@@ -4,6 +4,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { SITE } from "@/shared/config/site";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -38,14 +39,14 @@ export async function generateMetadata({
   const title = t("title");
   const description = t("description");
   return {
-    metadataBase: new URL("https://smartautobid.com"),
+    metadataBase: new URL(SITE.url),
     title,
     description,
     openGraph: {
       title,
       description,
-      url: "https://smartautobid.com",
-      siteName: "SmartAutoBid",
+      url: SITE.url,
+      siteName: SITE.name,
       locale,
       type: "website",
     },
