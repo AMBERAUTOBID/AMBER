@@ -32,7 +32,9 @@ export default async function TermsPage({
     <>
       <section className="bg-gradient-to-b from-amber-50/60 via-background to-background py-16 sm:py-20">
         <Container>
-          <Reveal className="max-w-2xl">
+          {/* Same column as the sections below, so the hero doesn't sit
+              flush left while the body text is centred. */}
+          <Reveal className="mx-auto max-w-3xl">
             <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-700">
               {t("hero.eyebrow")}
             </span>
