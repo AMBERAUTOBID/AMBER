@@ -687,93 +687,381 @@
   "Terms": {
     "hero": {
       "eyebrow": "Terms of Service",
-      "title": "Terms of Service",
-      "subtitle": "The terms that govern your use of smartautobid.com and our vehicle buying and shipping services."
+      "title": "Terms of Use and Service",
+      "subtitle": "These Terms of Use and Service govern the use of Smart Auto Bid LLC's services. Smart Auto Bid LLC acts as an independent intermediary and logistics coordinator between vehicle auction platforms and providers of transport, handling, and international shipping services, in order to facilitate the acquisition, transport, and export of vehicles."
     },
-    "updated": "Last updated: July 23, 2026",
+    "updated": "Last updated: July 30, 2026",
+    "intro": [
+      "By registering, placing an order, making a payment, participating in an auction, or otherwise using Smart Auto Bid LLC's services, the client confirms that they have read, understood, and agree to be bound by these terms."
+    ],
     "sections": [
       {
-        "title": "Acceptance of these terms",
+        "title": "1. Smart Auto Bid LLC's role as an intermediary",
         "body": [
-          "By using smartautobid.com or engaging Smart Auto Bid LLC (\"SmartAutoBid,\" \"we,\" \"us\") to bid on, purchase, or ship a vehicle, you agree to these Terms of Service. If you do not agree, please don't use our services."
+          "Smart Auto Bid LLC acts solely as an independent intermediary and logistics coordinator between third-party vehicle auction platforms, including but not limited to Copart and IAAI, and providers of transport, handling, warehousing, and international shipping services.",
+          "Smart Auto Bid LLC is not an auction platform, a vehicle manufacturer, or a seller, and does not acquire title to the vehicles offered at auction, unless expressly stated otherwise in writing in a specific case.",
+          "Smart Auto Bid LLC may provide the following services:",
+          [
+            "granting eligible clients access to third-party auction platforms;",
+            "placing bids at auction on the client's instructions;",
+            "coordinating collection of the vehicle from the auction or seller location;",
+            "arranging delivery of the vehicle to a warehouse, terminal, or export port;",
+            "coordinating receipt, storage, processing, and loading of the vehicle;",
+            "receiving, holding, and forwarding vehicle documents where these are provided by the auction, the seller, or another third party;",
+            "coordinating container loading and ocean transport to the destination chosen by the client;",
+            "providing other administrative and logistics coordination services."
+          ],
+          "Auctions, sellers, inland carriers, warehouses, terminals, handling companies, customs brokers, freight forwarders, and shipping lines are independent third parties. They are not employees, agents, partners, or controlled companies of Smart Auto Bid LLC, unless expressly established otherwise in writing.",
+          "The purchase and sale of a vehicle is concluded under the rules of the specific auction or seller. Full responsibility for placing a bid, selecting the vehicle, purchasing it, and transferring title rests with the client, the auction, and the seller under their mutual agreements."
         ]
       },
       {
-        "title": "Who we are",
+        "title": "2. Client account and eligibility to use the services",
         "body": [
-          "SmartAutoBid is a vehicle buying and logistics agent operated by Smart Auto Bid LLC, a Georgia, USA limited liability company. We search for, bid on, and purchase vehicles on our clients' behalf at Copart and IAAI public salvage and used-vehicle auctions, and arrange inland transport, export documentation, ocean freight, and delivery to ports in Europe, the Caucasus, and the Middle East. We are not Copart, IAAI, or an auction house, and we are not affiliated with, endorsed by, or an official representative of either company."
+          "The client must provide accurate, complete, and current registration, identity, company, payment, delivery, and export information.",
+          "Smart Auto Bid LLC has the right to request:",
+          [
+            "identity documents;",
+            "company registration documents;",
+            "ultimate beneficial owner details;",
+            "confirmation of the source of funds;",
+            "importer or consignee information;",
+            "any additional information needed to comply with legal, sanctions, anti-money-laundering, or export control requirements."
+          ],
+          "The client is responsible for all actions taken through their account. The client may not transfer the account to another person or allow it to be used by unauthorised persons.",
+          "Smart Auto Bid LLC may suspend or terminate the client's access to the services if the information provided is false, the client breaches these terms, fails to meet payment obligations, or where reasonable legal, sanctions, fraud, or security risks arise."
         ]
       },
       {
-        "title": "Eligibility",
+        "title": "3. Auction bids and vehicle acquisition",
         "body": [
-          "You must be at least 18 years old and have the legal authority to enter into a binding agreement to use our services."
+          "A client's instruction to place a bid at auction is binding and, once the bid wins, generally cannot be withdrawn.",
+          "The client is solely responsible for:",
+          [
+            "inspecting the selected vehicle;",
+            "assessing the vehicle's history, photographs, and description;",
+            "assessing the type of title document;",
+            "calculating repair, transport, duty, tax, and import costs;",
+            "the vehicle's suitability for export and import;",
+            "complying with all auction fees and deadlines."
+          ],
+          "Auction results, vehicle availability, reserve price, seller approval, and other sale conditions depend on third parties. Smart Auto Bid LLC does not guarantee that a client's bid will be accepted or that the vehicle will be sold to the client."
         ]
       },
       {
-        "title": "Bidding is not guaranteed to win",
+        "title": "4. Payments, fees, and arrears",
         "body": [
-          "Auctions are run entirely by Copart and IAAI under their own rules. We bid on your behalf up to the maximum amount you approve in writing, but we cannot guarantee that any bid will win, and the final sale price and outcome are determined solely by the auction platform."
+          "The client must pay on time:",
+          [
+            "the purchase price of the vehicle;",
+            "auction and seller fees;",
+            "Smart Auto Bid LLC service or brokerage fees;",
+            "inland transport costs;",
+            "storage, loading, terminal, and port charges;",
+            "ocean freight costs;",
+            "customs, documentation, insurance, and other applicable charges."
+          ],
+          "All price calculations provided are preliminary unless expressly stated to be final. Prices may change due to fuel prices, shipping line tariffs, port charges, currency exchange rates, the size or condition of the vehicle, additional services, and other circumstances outside Smart Auto Bid LLC's control.",
+          "The client is responsible for bank transfer, currency exchange, credit card, chargeback, and other charges imposed by financial service providers.",
+          "If payment is not made on time, Smart Auto Bid LLC may:",
+          [
+            "suspend the provision of services;",
+            "withhold documents or the vehicle to the extent permitted by applicable law;",
+            "refuse to release the vehicle or arrange its onward transport;",
+            "refer the debt for collection;",
+            "claim storage costs, late payment interest, legal costs, and collection costs."
+          ],
+          "Service, auction, transport, loading, and administration fees already paid are non-refundable where the service has already been ordered, has been started, or an obligation to a third party has arisen, except where mandatory applicable law provides otherwise."
         ]
       },
       {
-        "title": "Vehicle condition",
+        "title": "5. Condition of vehicles",
         "body": [
-          "Most vehicles available through Copart and IAAI are salvage, insurance, or wholesale vehicles sold as-is, with no warranty. Condition reports and photos are produced by the auction platform, not by us; while we review available listing information in good faith before bidding, we do not independently inspect vehicles in person unless you've specifically arranged that with us, and we are not responsible for discrepancies between a listing and the vehicle's actual condition."
+          "All vehicles acquired through auctions or other third-party sellers are sold under the rules of the relevant auction or seller, generally on an \"as is, where is\" basis, without express or implied warranties.",
+          "Smart Auto Bid LLC does not inspect and does not warrant a vehicle's:",
+          [
+            "technical condition;",
+            "mileage accuracy;",
+            "completeness;",
+            "quality of repair;",
+            "safety;",
+            "mechanical or electronic operation;",
+            "vehicle history;",
+            "eligibility for registration or road use;",
+            "compliance with destination country requirements;",
+            "accuracy of photographs or the auction description."
+          ],
+          "The client understands and agrees that a vehicle may:",
+          [
+            "be damaged, flood-affected, fire-damaged, dismantled, or non-running;",
+            "have hidden damage or damage not stated in the auction description;",
+            "be missing keys, parts, the battery, or other components;",
+            "have changed in condition between the time it was photographed and the time it is collected;",
+            "fail to meet safety, emissions, type-approval, registration, or import requirements in the destination country."
+          ],
+          "The client assumes all risk relating to the selection, repair, use, registration, transport, export, and import of the vehicle."
         ]
       },
       {
-        "title": "Fees, deposits & payment",
+        "title": "6. Title and other documents",
         "body": [
-          "Before we place any bid on your behalf, we provide you in writing with our brokerage fee and an estimate of auction, transport, and shipping costs, and no bid is placed without your prior approval of a maximum bid amount. Deposit requirements and payment terms vary by vehicle and route and are set out in your individual quote or purchase agreement."
+          "Smart Auto Bid LLC does not guarantee the existence, type, validity, issuing timeframe, or suitability of title documents for export, registration, or import.",
+          "Documents are issued by the auction, the seller, an insurance company, a vehicle registration authority, or another third party. Document issuing timeframes are outside Smart Auto Bid LLC's control.",
+          "The client is solely responsible for assessing the document type, legal restrictions, and suitability, including:",
+          [
+            "Certificate of Title;",
+            "Salvage Title;",
+            "Bill of Sale;",
+            "Non-Repairable Certificate;",
+            "Certificate of Destruction;",
+            "Parts Only documents;",
+            "liens;",
+            "export restrictions;",
+            "registration or import prohibitions."
+          ],
+          "Smart Auto Bid LLC is not liable for:",
+          [
+            "missing or late-issued documents;",
+            "errors in documents;",
+            "an incorrect vehicle identification number;",
+            "documents lost or damaged as a result of a third party's actions;",
+            "documents that are not suitable for export, registration, or import;",
+            "refusal by customs, a port, or another authority to accept documents;",
+            "detention or confiscation of a vehicle due to documentation problems."
+          ]
         ]
       },
       {
-        "title": "Shipping & delivery timelines",
+        "title": "7. Inland transport, storage, and loading",
         "body": [
-          "Shipping timelines we provide are estimates only. Actual transit times depend on ocean carrier schedules, port congestion, and customs processing at origin and destination, and are outside our direct control."
+          "Inland carriers, warehouses, terminals, handling companies, and other service providers are independent third parties.",
+          "Stated collection, delivery, loading, or sailing timeframes are approximate and are not guaranteed.",
+          "The client understands that transporting or loading damaged, non-running, or non-standard vehicles may require towing, lifting, a forklift, a winch, additional labour, or other special equipment. Additional charges may apply for these services.",
+          "The client is responsible for all storage costs arising from:",
+          [
+            "late payment;",
+            "missing documents;",
+            "delayed client instructions;",
+            "customs or port inspection;",
+            "inability to load or dispatch the vehicle;",
+            "other causes outside Smart Auto Bid LLC's control."
+          ]
         ]
       },
       {
-        "title": "Customs, duties & compliance",
+        "title": "8. Ocean transport",
         "body": [
-          "You are responsible for complying with the import laws of your destination country. Unless otherwise agreed in writing, import duties, VAT, excise taxes, and any destination-country compliance requirements are your responsibility."
+          "Smart Auto Bid LLC may coordinate ocean transport through independent shipping lines, freight forwarders, carriers, or other logistics service providers.",
+          "Ocean transport is additionally subject to the terms of the specific carrier, shipping line, freight forwarder, terminal, or bill of lading.",
+          "Vessel schedules, transit times, ports, routes, and container availability may change without prior notice.",
+          "Smart Auto Bid LLC does not guarantee:",
+          [
+            "a specific loading date;",
+            "a vessel departure date;",
+            "an arrival date at the destination port;",
+            "a direct route;",
+            "a specific shipping line;",
+            "acceptance of the vehicle at a specific port;",
+            "the duration of customs or port procedures."
+          ],
+          "The client must collect the cargo at the destination on time and pay all local costs, including duties, taxes, unloading, terminal, demurrage, detention, storage, and other charges."
         ]
       },
       {
-        "title": "Limitation of liability",
+        "title": "9. Risk of damage, loss, and insurance",
         "body": [
-          "Our services are provided on an as-available basis. To the maximum extent permitted by law, SmartAutoBid is not liable for indirect or consequential damages, for errors, misrepresentations, or unavailability of third-party auction platforms, or for delays caused by carriers, customs authorities, or other circumstances outside our reasonable control. Where liability cannot be excluded, it is limited to the fees you paid SmartAutoBid for the transaction giving rise to the claim."
+          "Unless expressly agreed otherwise in writing, transport, storage, loading, and ocean carriage of the vehicle are carried out at the client's risk.",
+          "Smart Auto Bid LLC is not liable for damage, loss, theft, deterioration, or missing parts arising from the acts or omissions of independent carriers, terminals, warehouses, ports, shipping lines, or other third parties.",
+          "The client is advised to purchase transport and marine cargo insurance separately. Insurance is not automatically included in the price of the services unless expressly confirmed in writing.",
+          "Claims for damage occurring during transport must be submitted directly to the responsible carrier, shipping line, terminal, or insurance company in accordance with their procedures and deadlines.",
+          "Smart Auto Bid LLC may, so far as reasonably possible, assist the client in submitting documents for a claim, but does not guarantee that the claim will be satisfied."
         ]
       },
       {
-        "title": "Third-party auction platforms",
+        "title": "10. Export and import requirements",
         "body": [
-          "Our search tool links directly to Copart's and IAAI's own websites, which have their own terms of use and privacy practices. We are not responsible for the content, availability, or accuracy of those third-party platforms."
+          "The client is solely responsible for complying with all applicable export, import, customs, sanctions, registration, safety, environmental, and tax requirements.",
+          "The export of used self-propelled vehicles from the United States may be subject to US customs requirements, including 19 CFR § 192.2 and other applicable legislation.",
+          "The client is solely responsible for:",
+          [
+            "submitting proper and valid documents;",
+            "import permits;",
+            "duties, taxes, and levies;",
+            "destination country requirements as to vehicle age, emissions, technical condition, and registration;",
+            "the accuracy of consignee and importer details;",
+            "the vehicle's eligibility for entry into the destination country."
+          ],
+          "Smart Auto Bid LLC is not liable if a vehicle cannot be exported, imported, registered, or released from customs."
         ]
       },
       {
-        "title": "Intellectual property",
+        "title": "11. Sanctions, export control, and prohibited activity",
         "body": [
-          "The SmartAutoBid name, logo, and website content are the property of Smart Auto Bid LLC and may not be used without our permission."
+          "The client confirms that the client, the consignee of the vehicle, the end user, and other parties connected with the transaction are not subject to sanctions imposed by the United States, the United Nations, the European Union, the United Kingdom, the United Arab Emirates, or other applicable authorities.",
+          "The client may not use Smart Auto Bid LLC's services for:",
+          [
+            "money laundering;",
+            "terrorist financing;",
+            "circumvention of sanctions;",
+            "forgery of documents;",
+            "alteration of a vehicle identification number;",
+            "export of stolen vehicles;",
+            "submission of false customs declarations;",
+            "unlawful re-export;",
+            "any other unlawful activity."
+          ],
+          "Smart Auto Bid LLC may refuse to carry out a transaction, suspend its performance, require additional documents, or pass information to the competent authorities where required by law or where there are reasonable grounds to suspect unlawful activity."
         ]
       },
       {
-        "title": "Governing law",
+        "title": "12. Cancellation of services",
         "body": [
-          "These Terms are governed by the laws of the State of Georgia, USA, without regard to conflict-of-law principles. Any dispute not resolved informally will be handled in the courts located in Chatham County, Georgia, except where applicable consumer protection law in your home country requires otherwise."
+          "The client may not cancel a winning auction bid or an ordered service without potential financial consequences.",
+          "In the event of cancellation, the client must cover:",
+          [
+            "auction penalties;",
+            "seller claims;",
+            "transport cancellation fees;",
+            "storage costs;",
+            "administration fees;",
+            "all other costs incurred by Smart Auto Bid LLC or third parties."
+          ],
+          "Smart Auto Bid LLC may cancel or refuse to perform an order if:",
+          [
+            "the vehicle cannot lawfully be exported;",
+            "the client does not pay on time;",
+            "the client does not provide the required documents;",
+            "the service has become impossible or unreasonably dangerous;",
+            "there is a risk of sanctions, fraud, or breach of law."
+          ]
         ]
       },
       {
-        "title": "Changes to these terms",
+        "title": "13. Limitation of liability",
         "body": [
-          "We may update these Terms from time to time. Continued use of our site or services after changes take effect constitutes acceptance of the revised Terms."
+          "To the extent permitted by applicable law, Smart Auto Bid LLC is not liable for indirect, incidental, special, punitive, or consequential losses, including:",
+          [
+            "loss of profit;",
+            "loss of business;",
+            "loss of use of the vehicle;",
+            "reduction in market value;",
+            "repair costs;",
+            "downtime;",
+            "additional duties or taxes;",
+            "currency exchange losses;",
+            "emotional or reputational loss."
+          ],
+          "To the extent permitted by applicable law, Smart Auto Bid LLC's total liability arising out of any one vehicle, order, or service may not exceed the service fees actually paid by the client to Smart Auto Bid LLC for the specific order in dispute.",
+          "This limitation does not apply to the extent that liability cannot be limited under mandatory applicable law."
         ]
       },
       {
-        "title": "Contact us",
+        "title": "14. Client's obligation to indemnify",
         "body": [
-          "Questions about these Terms can be sent to info@smartautobid.com, by phone or WhatsApp at +1 (912) 561-2347, or by mail to Smart Auto Bid LLC, 289 Telfair Rd #I, Savannah, GA 31415, USA."
+          "The client agrees to indemnify and hold harmless Smart Auto Bid LLC, its officers, employees, agents, and service providers against claims, losses, fines, costs, and legal fees arising from:",
+          [
+            "the client's breach of these terms;",
+            "false or incomplete information provided by the client;",
+            "the client's instructions;",
+            "unlawful export or import of a vehicle;",
+            "breach of customs, sanctions, or tax requirements;",
+            "infringement of third-party rights;",
+            "use or resale of the vehicle."
+          ]
+        ]
+      },
+      {
+        "title": "15. Force majeure",
+        "body": [
+          "Smart Auto Bid LLC is not liable for delay, disruption, or failure to perform services caused by circumstances beyond its reasonable control, including:",
+          [
+            "natural disasters;",
+            "hurricanes, floods, fires, or earthquakes;",
+            "war, terrorism, or civil unrest;",
+            "strikes or labour disputes;",
+            "epidemics or pandemics;",
+            "port closures;",
+            "changes to vessel schedules;",
+            "shortages of containers or transport;",
+            "acts of customs or government authorities;",
+            "cyber incidents;",
+            "failures of communications or information systems."
+          ]
+        ]
+      },
+      {
+        "title": "16. Third-party rules",
+        "body": [
+          "By using the services of auctions, carriers, terminals, freight forwarders, shipping lines, and other third parties, the client also agrees to comply with their rules, agreements, tariffs, and limitations of liability.",
+          "Where these terms conflict with the mandatory terms of a specific auction, carrier, or shipping line, that third party's terms apply to the relevant part of the service.",
+          "Copart, IAAI, and other trademarks referred to in this document belong to their respective owners. Smart Auto Bid LLC does not own them and is not affiliated with, sponsored by, or endorsed by them, except where expressly stated in writing."
+        ]
+      },
+      {
+        "title": "17. Complaints and claims",
+        "body": [
+          "The client must notify Smart Auto Bid LLC in writing of any problem or claim as soon as possible.",
+          "A claim must include:",
+          [
+            "the client's name or company name;",
+            "the vehicle identification number;",
+            "the order or invoice number;",
+            "a description of the problem;",
+            "photographs and other supporting documents;",
+            "the resolution sought."
+          ],
+          "Claims for visible damage to a vehicle must be recorded at the time of receipt and submitted within the deadline set by the carrier, terminal, insurer, or other responsible party."
+        ]
+      },
+      {
+        "title": "18. Governing law and dispute resolution",
+        "body": [
+          "These terms are governed by the laws of the State of Georgia, United States of America, without regard to conflict-of-law rules.",
+          "Before commencing formal proceedings, the parties undertake to seek in good faith to resolve the dispute by negotiation.",
+          "If the dispute is not resolved within 30 calendar days of a written claim being submitted, it will be resolved in the competent courts of Chatham County, State of Georgia, United States of America.",
+          "Where mandatory consumer protection provisions apply to the client, this section does not limit rights that cannot be waived under the law."
+        ]
+      },
+      {
+        "title": "19. Electronic communications",
+        "body": [
+          "The client agrees to receive agreements, invoices, notices, confirmations, documents, and other information by email, through the website, through the client account, or by other electronic means.",
+          "Electronic consent, ticking a checkbox, placing an order, or making a payment has the same legal effect as a physical signature, to the extent permitted by applicable law."
+        ]
+      },
+      {
+        "title": "20. Changes to the terms",
+        "body": [
+          "Smart Auto Bid LLC may amend these terms from time to time.",
+          "The updated version takes effect once published on the website or on any other date stated there. Continued use of the services after the changes take effect constitutes acceptance of the updated terms.",
+          "Material changes do not apply retroactively to an order already confirmed, unless required by law or agreed otherwise in writing by the parties."
+        ]
+      },
+      {
+        "title": "21. Severability",
+        "body": [
+          "If any provision of these terms is held to be invalid or unenforceable, the remaining provisions remain in full force and effect.",
+          "An invalid provision must be replaced with a valid provision that most closely reflects the original economic and legal purpose."
+        ]
+      },
+      {
+        "title": "22. Entire agreement",
+        "body": [
+          "These terms, together with the specific order, invoice, quote, auction rules, and other terms confirmed in writing, constitute the entire agreement between the client and Smart Auto Bid LLC regarding the services provided.",
+          "Oral statements or agreements are not valid unless confirmed in writing by an authorised representative of Smart Auto Bid LLC."
+        ]
+      },
+      {
+        "title": "23. Contact information",
+        "body": [
+          "Smart Auto Bid LLC",
+          [
+            "Business address: 289 Telfair Rd #I, Savannah, GA 31415, USA",
+            "Email: info@smartautobid.com",
+            "Telephone: +1 (912) 561-2347",
+            "Website: smartautobid.com"
+          ],
+          "By using Smart Auto Bid LLC's services, the client confirms that they have read, understood, and agree to be bound by these Terms of Use and Service, as well as by the rules of the relevant auction, seller, carrier, and other service providers."
         ]
       }
     ]

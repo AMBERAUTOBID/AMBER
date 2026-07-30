@@ -22,7 +22,11 @@ export default async function TermsPage({
   setRequestLocale(locale);
   const t = await getTranslations("Terms");
 
-  const sections = t.raw("sections") as { title: string; body: string[] }[];
+  /** A body entry is either a paragraph or a bullet list of its own. */
+  type Block = string | string[];
+
+  const intro = t.raw("intro") as string[];
+  const sections = t.raw("sections") as { title: string; body: Block[] }[];
 
   return (
     <>
@@ -46,15 +50,38 @@ export default async function TermsPage({
       <section className="pb-20">
         <Container>
           <div className="mx-auto max-w-3xl space-y-10">
+            {intro.length > 0 && (
+              <Reveal>
+                <div className="space-y-3">
+                  {intro.map((paragraph, i) => (
+                    <p key={i} className="text-base leading-relaxed text-char-600">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              </Reveal>
+            )}
+
             {sections.map((section, i) => (
               <Reveal key={section.title} delay={Math.min(i * 0.04, 0.3)}>
                 <h2 className="text-xl font-bold text-char-900">{section.title}</h2>
                 <div className="mt-3 space-y-3">
-                  {section.body.map((paragraph, j) => (
-                    <p key={j} className="text-base leading-relaxed text-char-600">
-                      {paragraph}
-                    </p>
-                  ))}
+                  {section.body.map((block, j) =>
+                    Array.isArray(block) ? (
+                      <ul
+                        key={j}
+                        className="list-disc space-y-1.5 pl-5 text-base leading-relaxed text-char-600 marker:text-amber-500"
+                      >
+                        {block.map((item, k) => (
+                          <li key={k}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p key={j} className="text-base leading-relaxed text-char-600">
+                        {block}
+                      </p>
+                    ),
+                  )}
                 </div>
               </Reveal>
             ))}

@@ -686,94 +686,382 @@
   },
   "Terms": {
     "hero": {
-      "eyebrow": "Naudojimo sąlygos",
-      "title": "Naudojimo sąlygos",
-      "subtitle": "Sąlygos, reglamentuojančios naudojimąsi svetaine smartautobid.com bei mūsų automobilių pirkimo ir gabenimo paslaugomis."
+      "eyebrow": "Naudojimosi sąlygos",
+      "title": "Naudojimosi ir paslaugų teikimo sąlygos",
+      "subtitle": "Šios Naudojimosi ir paslaugų teikimo sąlygos reglamentuoja naudojimąsi Smart Auto Bid LLC paslaugomis. Smart Auto Bid LLC veikia kaip nepriklausomas tarpininkas ir logistikos koordinatorius tarp automobilių aukcionų platformų, transporto, krovos ir tarptautinės laivybos paslaugų teikėjų, siekiant palengvinti transporto priemonių įsigijimą, transportavimą ir eksportą."
     },
-    "updated": "Paskutinį kartą atnaujinta: 2026 m. liepos 23 d.",
+    "updated": "Paskutinį kartą atnaujinta: 2026 m. liepos 30 d.",
+    "intro": [
+      "Registruodamasis, pateikdamas užsakymą, atlikdamas mokėjimą, dalyvaudamas aukcione ar kitaip naudodamasis Smart Auto Bid LLC paslaugomis, klientas patvirtina, kad perskaitė, suprato ir sutinka laikytis šių sąlygų."
+    ],
     "sections": [
       {
-        "title": "Šių sąlygų priėmimas",
+        "title": "1. „Smart Auto Bid LLC“ tarpininko vaidmuo",
         "body": [
-          "Naudodamiesi svetaine smartautobid.com arba pasitelkdami Smart Auto Bid LLC („SmartAutoBid“, „mes“) automobilio statymui, pirkimui ar gabenimui, sutinkate su šiomis Naudojimo sąlygomis. Jei nesutinkate, prašome nesinaudoti mūsų paslaugomis."
+          "Smart Auto Bid LLC veikia tik kaip nepriklausomas tarpininkas ir logistikos koordinatorius tarp trečiųjų šalių automobilių aukcionų platformų, įskaitant, bet neapsiribojant, „Copart“ ir „IAAI“, bei transportavimo, krovos, sandėliavimo ir tarptautinės laivybos paslaugų teikėjų.",
+          "Smart Auto Bid LLC nėra aukciono platforma, transporto priemonių gamintojas ar pardavėjas ir neįgyja nuosavybės teisės į aukcionuose siūlomas transporto priemones, nebent konkrečiu atveju raštu aiškiai nurodyta kitaip.",
+          "Smart Auto Bid LLC gali teikti šias paslaugas:",
+          [
+            "suteikti reikalavimus atitinkantiems klientams prieigą prie trečiųjų šalių aukcionų platformų;",
+            "kliento nurodymu pateikti pasiūlymus aukcione;",
+            "koordinuoti transporto priemonės paėmimą iš aukciono ar pardavėjo vietos;",
+            "organizuoti transporto priemonės pristatymą į sandėlį, terminalą ar eksporto uostą;",
+            "koordinuoti transporto priemonės priėmimą, saugojimą, apdorojimą ir pakrovimą;",
+            "gauti, saugoti ir perduoti transporto priemonės dokumentus, kai juos pateikia aukcionas, pardavėjas ar kita trečioji šalis;",
+            "koordinuoti konteinerių pakrovimą ir jūrų transportavimą į kliento pasirinktą paskirties vietą;",
+            "teikti kitas administracines ir logistikos koordinavimo paslaugas."
+          ],
+          "Aukcionai, pardavėjai, sausumos vežėjai, sandėliai, terminalai, krovos bendrovės, muitinės tarpininkai, ekspeditoriai ir laivybos linijos yra nepriklausomos trečiosios šalys. Jie nėra Smart Auto Bid LLC darbuotojai, atstovai, partneriai ar kontroliuojamos bendrovės, nebent raštu aiškiai nustatyta kitaip.",
+          "Transporto priemonės pirkimo–pardavimo sandoris sudaromas pagal konkretaus aukciono ar pardavėjo taisykles. Visa atsakomybė už pasiūlymo pateikimą, transporto priemonės pasirinkimą, pirkimą ir nuosavybės teisės perdavimą tenka klientui, aukcionui ir pardavėjui pagal jų tarpusavio susitarimus."
         ]
       },
       {
-        "title": "Kas mes esame",
+        "title": "2. Kliento paskyra ir teisė naudotis paslaugomis",
         "body": [
-          "SmartAutoBid yra automobilių pirkimo ir logistikos agentas, veikiantis per Smart Auto Bid LLC — Džordžijos valstijos, JAV, ribotos atsakomybės bendrovę. Ieškome, statome ir perkame automobilius klientų vardu viešuose Copart ir IAAI daužtų bei naudotų automobilių aukcionuose, taip pat organizuojame vidaus transportavimą, eksporto dokumentaciją, jūrų frachtą ir pristatymą į Europos, Kaukazo ir Artimųjų Rytų uostus. Nesame Copart, IAAI ar aukciono namai ir nesame susiję, patvirtinti ar oficialiai atstovaujantys nė vienai iš šių bendrovių."
+          "Klientas privalo pateikti tikslią, išsamią ir aktualią registracijos, tapatybės, įmonės, mokėjimo, pristatymo ir eksporto informaciją.",
+          "Smart Auto Bid LLC turi teisę pareikalauti:",
+          [
+            "asmens tapatybę patvirtinančių dokumentų;",
+            "įmonės registracijos dokumentų;",
+            "galutinio naudos gavėjo duomenų;",
+            "lėšų kilmės patvirtinimo;",
+            "importuotojo ar gavėjo informacijos;",
+            "papildomos informacijos, reikalingos teisės aktų, sankcijų, pinigų plovimo prevencijos ar eksporto kontrolės reikalavimams vykdyti."
+          ],
+          "Klientas atsako už visus veiksmus, atliktus naudojantis jo paskyra. Klientas negali perduoti paskyros kitam asmeniui ar leisti ja naudotis neįgaliotiems asmenims.",
+          "Smart Auto Bid LLC gali sustabdyti arba nutraukti kliento prieigą prie paslaugų, jeigu pateikta informacija yra klaidinga, klientas pažeidžia šias sąlygas, nevykdo mokėjimo įsipareigojimų arba kyla pagrįstų teisinių, sankcijų, sukčiavimo ar saugumo rizikų."
         ]
       },
       {
-        "title": "Tinkamumas",
+        "title": "3. Aukciono pasiūlymai ir transporto priemonės įsigijimas",
         "body": [
-          "Turite būti bent 18 metų amžiaus ir turėti teisinę galią sudaryti privalomą sutartį, kad galėtumėte naudotis mūsų paslaugomis."
+          "Kliento nurodymas pateikti pasiūlymą aukcione yra privalomas ir, pasiūlymui laimėjus, paprastai negali būti atšauktas.",
+          "Klientas pats atsako už:",
+          [
+            "pasirinktos transporto priemonės patikrinimą;",
+            "transporto priemonės istorijos, nuotraukų ir aprašymo įvertinimą;",
+            "nuosavybės dokumentų tipo įvertinimą;",
+            "remonto, transportavimo, muitų, mokesčių ir importo išlaidų apskaičiavimą;",
+            "transporto priemonės tinkamumą eksportui ir importui;",
+            "visų aukciono mokesčių ir terminų laikymąsi."
+          ],
+          "Aukciono rezultatai, transporto priemonės prieinamumas, rezervinė kaina, pardavėjo patvirtinimas ir kitos pardavimo sąlygos priklauso nuo trečiųjų šalių. Smart Auto Bid LLC negarantuoja, kad kliento pasiūlymas bus priimtas ar kad transporto priemonė bus parduota klientui."
         ]
       },
       {
-        "title": "Laimėjimas aukcione negarantuojamas",
+        "title": "4. Mokėjimai, mokesčiai ir įsiskolinimai",
         "body": [
-          "Aukcionus visiškai vykdo Copart ir IAAI pagal savo pačių taisykles. Statome jūsų vardu iki maksimalios sumos, kurią patvirtinote raštu, tačiau negalime garantuoti, kad koks nors statymas laimės, o galutinę pardavimo kainą ir rezultatą lemia tik aukciono platforma."
+          "Klientas privalo laiku sumokėti:",
+          [
+            "transporto priemonės pirkimo kainą;",
+            "aukciono ir pardavėjo mokesčius;",
+            "Smart Auto Bid LLC paslaugų ar tarpininkavimo mokesčius;",
+            "sausumos transportavimo išlaidas;",
+            "saugojimo, pakrovimo, terminalo ir uosto mokesčius;",
+            "jūrų transportavimo išlaidas;",
+            "muitinės, dokumentų, draudimo ir kitus taikomus mokesčius."
+          ],
+          "Visi pateikti kainų skaičiavimai yra preliminarūs, nebent aiškiai nurodyta, kad kaina yra galutinė. Kainos gali keistis dėl degalų kainų, laivybos linijų tarifų, uostų mokesčių, valiutų kursų, transporto priemonės dydžio ar būklės, papildomų paslaugų ir kitų nuo Smart Auto Bid LLC nepriklausančių aplinkybių.",
+          "Klientas atsako už banko pavedimų, valiutos keitimo, kredito kortelių, grąžintų mokėjimų ir kitus finansinių paslaugų teikėjų mokesčius.",
+          "Neatlikus mokėjimo laiku, Smart Auto Bid LLC gali:",
+          [
+            "sustabdyti paslaugų teikimą;",
+            "sulaikyti dokumentus ar transporto priemonę tiek, kiek tai leidžia taikomi įstatymai;",
+            "atsisakyti išduoti transporto priemonę ar organizuoti jos tolesnį transportavimą;",
+            "perduoti skolą išieškojimui;",
+            "reikalauti atlyginti saugojimo, delspinigių, teisinių ir išieškojimo išlaidų sumas."
+          ],
+          "Sumokėti paslaugų, aukciono, transportavimo, pakrovimo ir administravimo mokesčiai negrąžinami, jeigu paslauga jau buvo užsakyta, pradėta vykdyti arba atsirado įsipareigojimas trečiajai šaliai, išskyrus atvejus, kai privalomai taikomi įstatymai nustato kitaip."
         ]
       },
       {
-        "title": "Automobilio būklė",
+        "title": "5. Transporto priemonių būklė",
         "body": [
-          "Dauguma per Copart ir IAAI parduodamų automobilių yra daužti, draudimo ar didmeniniai automobiliai, parduodami tokie, kokie yra, be garantijos. Būklės ataskaitas ir nuotraukas rengia aukciono platforma, o ne mes; nors sąžiningai peržiūrime turimą informaciją apie lotą prieš statydami, mes atskirai fiziškai automobilių netikriname, nebent tai konkrečiai su jumis suderinta, ir neatsakome už skirtumus tarp skelbimo ir faktinės automobilio būklės."
+          "Visos per aukcionus ar kitus trečiuosius pardavėjus įsigytos transporto priemonės parduodamos pagal atitinkamo aukciono arba pardavėjo taisykles, paprastai principu „kaip yra, kur yra“, be išreikštų ar numanomų garantijų.",
+          "Smart Auto Bid LLC netikrina ir negarantuoja transporto priemonės:",
+          [
+            "techninės būklės;",
+            "ridos tikslumo;",
+            "komplektiškumo;",
+            "remonto kokybės;",
+            "saugumo;",
+            "mechaninio ar elektroninio veikimo;",
+            "transporto priemonės istorijos;",
+            "tinkamumo registruoti ar eksploatuoti;",
+            "atitikties paskirties šalies reikalavimams;",
+            "nuotraukų ar aukciono aprašymo tikslumo."
+          ],
+          "Klientas supranta ir sutinka, kad transporto priemonė gali:",
+          [
+            "būti apgadinta, užlieta, degusi, išardyta ar nevažiuojanti;",
+            "turėti paslėptų arba aukciono aprašyme nenurodytų pažeidimų;",
+            "neturėti raktų, dalių, akumuliatoriaus ar kitų elementų;",
+            "būti pakeistos būklės nuo jos fotografavimo iki paėmimo momento;",
+            "neatitikti saugumo, išmetamųjų teršalų, homologacijos, registracijos ar importo reikalavimų paskirties šalyje."
+          ],
+          "Klientas prisiima visą su transporto priemonės pasirinkimu, remontu, naudojimu, registracija, transportavimu, eksportu ir importu susijusią riziką."
         ]
       },
       {
-        "title": "Mokesčiai, depozitai ir apmokėjimas",
+        "title": "6. Nuosavybės ir kiti dokumentai",
         "body": [
-          "Prieš atlikdami bet kokį statymą jūsų vardu, raštu pateikiame savo tarpininkavimo mokestį bei aukciono, transportavimo ir gabenimo išlaidų įvertį, ir joks statymas neatliekamas be jūsų iš anksto raštu patvirtintos maksimalios statymo sumos. Depozito reikalavimai ir apmokėjimo sąlygos priklauso nuo automobilio ir maršruto bei nurodomi jūsų individualiame pasiūlyme ar pirkimo sutartyje."
+          "Smart Auto Bid LLC negarantuoja nuosavybės dokumentų buvimo, tipo, galiojimo, išdavimo termino ar tinkamumo eksportui, registracijai ar importui.",
+          "Dokumentus išduoda aukcionas, pardavėjas, draudimo bendrovė, transporto priemonių registravimo institucija ar kita trečioji šalis. Dokumentų išdavimo terminai nepriklauso nuo Smart Auto Bid LLC.",
+          "Klientas pats atsako už dokumentų tipo, teisinių apribojimų ir tinkamumo įvertinimą, įskaitant:",
+          [
+            "„Certificate of Title“;",
+            "„Salvage Title“;",
+            "„Bill of Sale“;",
+            "„Non-Repairable Certificate“;",
+            "„Certificate of Destruction“;",
+            "„Parts Only“ dokumentus;",
+            "įkeitimus;",
+            "eksporto apribojimus;",
+            "registravimo ar importo draudimus."
+          ],
+          "Smart Auto Bid LLC neatsako už:",
+          [
+            "trūkstamus ar pavėluotai išduodamus dokumentus;",
+            "dokumentų klaidas;",
+            "neteisingą transporto priemonės identifikavimo numerį;",
+            "prarastus ar sugadintus dokumentus, jeigu tai įvyko dėl trečiosios šalies veiksmų;",
+            "dokumentus, kurie nėra tinkami eksportui, registracijai ar importui;",
+            "muitinės, uosto ar kitos institucijos atsisakymą priimti dokumentus;",
+            "transporto priemonės sulaikymą ar konfiskavimą dėl dokumentacijos problemų."
+          ]
         ]
       },
       {
-        "title": "Gabenimo terminai",
+        "title": "7. Sausumos transportavimas, saugojimas ir pakrovimas",
         "body": [
-          "Mūsų nurodomi gabenimo terminai yra tik įverčiai. Faktinė gabenimo trukmė priklauso nuo jūrų vežėjų tvarkaraščių, uostų apkrovos ir muitinės procedūrų kilmės bei paskirties šalyse, o tai nepriklauso nuo mūsų."
+          "Sausumos vežėjai, sandėliai, terminalai, krovos bendrovės ir kiti paslaugų teikėjai yra nepriklausomos trečiosios šalys.",
+          "Nurodyti paėmimo, pristatymo, pakrovimo ar išplaukimo terminai yra apytiksliai ir nėra garantuojami.",
+          "Klientas supranta, kad transportuojant ar kraunant apgadintas, nevažiuojančias ar nestandartines transporto priemones gali būti reikalingas vilkimas, kėlimas, šakinis krautuvas, gervė, papildoma darbo jėga ar kita speciali įranga. Už šias paslaugas gali būti taikomi papildomi mokesčiai.",
+          "Klientas atsako už visas saugojimo išlaidas, atsiradusias dėl:",
+          [
+            "pavėluoto mokėjimo;",
+            "trūkstamų dokumentų;",
+            "kliento nurodymų vėlavimo;",
+            "muitinės ar uosto patikrinimo;",
+            "negalėjimo pakrauti ar išsiųsti transporto priemonės;",
+            "kitų nuo Smart Auto Bid LLC nepriklausančių priežasčių."
+          ]
         ]
       },
       {
-        "title": "Muitai, mokesčiai ir atitiktis",
+        "title": "8. Jūrų transportavimas",
         "body": [
-          "Jūs esate atsakingi už paskirties šalies importo įstatymų laikymąsi. Jei raštu nesusitarta kitaip, importo muitai, PVM, akcizai ir bet kokie paskirties šalies atitikties reikalavimai yra jūsų atsakomybė."
+          "Smart Auto Bid LLC gali koordinuoti jūrų transportavimą per nepriklausomas laivybos linijas, ekspeditorius, vežėjus ar kitus logistikos paslaugų teikėjus.",
+          "Jūrų transportavimui papildomai taikomos konkretaus vežėjo, laivybos linijos, ekspeditoriaus, terminalo ar konosamento sąlygos.",
+          "Laivų tvarkaraščiai, tranzito terminai, uostai, maršrutai ir konteinerių prieinamumas gali būti keičiami be išankstinio įspėjimo.",
+          "Smart Auto Bid LLC negarantuoja:",
+          [
+            "konkrečios pakrovimo datos;",
+            "laivo išplaukimo datos;",
+            "atvykimo į paskirties uostą datos;",
+            "tiesioginio maršruto;",
+            "konkrečios laivybos linijos;",
+            "transporto priemonės priėmimo konkrečiame uoste;",
+            "muitinės ar uosto procedūrų trukmės."
+          ],
+          "Klientas privalo laiku atsiimti krovinį paskirties vietoje ir sumokėti visas vietines išlaidas, įskaitant muitus, mokesčius, iškrovimą, terminalo, demurrage, detention, sandėliavimo ir kitas rinkliavas."
         ]
       },
       {
-        "title": "Atsakomybės apribojimas",
+        "title": "9. Žalos, praradimo ir draudimo rizika",
         "body": [
-          "Mūsų paslaugos teikiamos tokios, kokios yra, ir priklausomai nuo prieinamumo. Įstatymų leidžiama maksimalia apimtimi SmartAutoBid neatsako už netiesioginius ar pasekminius nuostolius, trečiųjų šalių aukciono platformų klaidas, klaidingą informaciją ar neprieinamumą, taip pat už vėlavimus, kuriuos sukėlė vežėjai, muitinės institucijos ar kitos aplinkybės, kurių protingai negalime kontroliuoti. Kai atsakomybės negalima atmesti, ji ribojama suma, kurią sumokėjote SmartAutoBid už atitinkamą sandorį."
+          "Jeigu raštu aiškiai nesusitarta kitaip, transporto priemonės transportavimas, saugojimas, pakrovimas ir jūrų gabenimas vykdomi kliento rizika.",
+          "Smart Auto Bid LLC neatsako už transporto priemonės žalą, praradimą, vagystę, pablogėjimą ar dalių trūkumą, atsiradusį dėl nepriklausomų vežėjų, terminalų, sandėlių, uostų, laivybos linijų ar kitų trečiųjų šalių veiksmų ar neveikimo.",
+          "Klientui rekomenduojama atskirai įsigyti transportavimo ir jūrinio krovinio draudimą. Draudimas nėra automatiškai įtrauktas į paslaugų kainą, nebent tai aiškiai patvirtinta raštu.",
+          "Pretenzijos dėl transportavimo metu atsiradusios žalos turi būti teikiamos tiesiogiai atsakingam vežėjui, laivybos linijai, terminalui ar draudimo bendrovei pagal jų nustatytas procedūras ir terminus.",
+          "Smart Auto Bid LLC, kiek pagrįstai įmanoma, gali padėti klientui pateikti dokumentus pretenzijai, tačiau negarantuoja, kad pretenzija bus patenkinta."
         ]
       },
       {
-        "title": "Trečiųjų šalių aukciono platformos",
+        "title": "10. Eksporto ir importo reikalavimai",
         "body": [
-          "Mūsų paieškos įrankis nukreipia tiesiai į Copart ir IAAI svetaines, kurios turi savo naudojimo sąlygas ir privatumo praktiką. Neatsakome už šių trečiųjų šalių platformų turinį, prieinamumą ar tikslumą."
+          "Klientas pats atsako už visų taikomų eksporto, importo, muitinės, sankcijų, registracijos, saugumo, aplinkosaugos ir mokesčių reikalavimų laikymąsi.",
+          "Eksportuojant naudotas savaeiges transporto priemones iš Jungtinių Amerikos Valstijų gali būti taikomi JAV muitinės reikalavimai, įskaitant 19 CFR § 192.2 ir kitus galiojančius teisės aktus.",
+          "Klientas pats atsako už:",
+          [
+            "tinkamų ir galiojančių dokumentų pateikimą;",
+            "importo leidimus;",
+            "muitus, mokesčius ir rinkliavas;",
+            "paskirties šalies amžiaus, išmetamųjų teršalų, techninės būklės ir registravimo reikalavimus;",
+            "gavėjo ir importuotojo duomenų tikslumą;",
+            "transporto priemonės tinkamumą įvežti į paskirties šalį."
+          ],
+          "Smart Auto Bid LLC neatsako, jeigu transporto priemonė negali būti eksportuota, importuota, registruota ar išleista iš muitinės."
         ]
       },
       {
-        "title": "Intelektinė nuosavybė",
+        "title": "11. Sankcijos, eksporto kontrolė ir draudžiama veikla",
         "body": [
-          "SmartAutoBid pavadinimas, logotipas ir svetainės turinys priklauso Smart Auto Bid LLC ir negali būti naudojami be mūsų leidimo."
+          "Klientas patvirtina, kad jis, transporto priemonės gavėjas, galutinis naudotojas ir kitos su sandoriu susijusios šalys nėra subjektai, kuriems taikomos Jungtinių Amerikos Valstijų, Jungtinių Tautų, Europos Sąjungos, Jungtinės Karalystės, Jungtinių Arabų Emyratų ar kitų taikomų institucijų sankcijos.",
+          "Klientas negali naudoti Smart Auto Bid LLC paslaugų:",
+          [
+            "pinigų plovimui;",
+            "terorizmo finansavimui;",
+            "sankcijų apėjimui;",
+            "dokumentų klastojimui;",
+            "transporto priemonės identifikavimo numerio keitimui;",
+            "vogtų transporto priemonių eksportui;",
+            "klaidingų muitinės deklaracijų teikimui;",
+            "neteisėtam reeksportui;",
+            "kitai neteisėtai veiklai."
+          ],
+          "Smart Auto Bid LLC gali atsisakyti vykdyti sandorį, sulaikyti jo vykdymą, pareikalauti papildomų dokumentų arba perduoti informaciją kompetentingoms institucijoms, jeigu to reikalauja įstatymai arba kyla pagrįstų įtarimų dėl neteisėtos veiklos."
         ]
       },
       {
-        "title": "Taikoma teisė",
+        "title": "12. Paslaugų atšaukimas",
         "body": [
-          "Šioms Sąlygoms taikoma Džordžijos valstijos, JAV, teisė, neatsižvelgiant į kolizines teisės normas. Bet koks nesutarimas, neišspręstas neteismine tvarka, bus nagrinėjamas Chatham apygardos, Džordžijos valstijos, teismuose, išskyrus atvejus, kai jūsų šalies vartotojų apsaugos įstatymai reikalauja kitaip."
+          "Klientas negali atšaukti laimėto aukciono pasiūlymo ar užsakytos paslaugos be galimų finansinių pasekmių.",
+          "Atšaukimo atveju klientas privalo padengti:",
+          [
+            "aukciono baudas;",
+            "pardavėjo reikalavimus;",
+            "transportavimo atšaukimo mokesčius;",
+            "saugojimo išlaidas;",
+            "administravimo mokesčius;",
+            "visas kitas Smart Auto Bid LLC ar trečiųjų šalių patirtas išlaidas."
+          ],
+          "Smart Auto Bid LLC gali atšaukti ar atsisakyti vykdyti užsakymą, jeigu:",
+          [
+            "transporto priemonė negali būti teisėtai eksportuojama;",
+            "klientas laiku nesumoka;",
+            "klientas nepateikia reikalaujamų dokumentų;",
+            "paslauga tapo neįmanoma ar nepagrįstai pavojinga;",
+            "kyla sankcijų, sukčiavimo ar teisės aktų pažeidimo rizika."
+          ]
         ]
       },
       {
-        "title": "Šių sąlygų pakeitimai",
+        "title": "13. Atsakomybės apribojimas",
         "body": [
-          "Kartais galime atnaujinti šias Sąlygas. Tolesnis naudojimasis mūsų svetaine ar paslaugomis po pakeitimų įsigaliojimo reiškia sutikimą su atnaujintomis Sąlygomis."
+          "Kiek leidžia taikomi įstatymai, Smart Auto Bid LLC neatsako už netiesioginius, atsitiktinius, specialiuosius, baudinius ar pasekminius nuostolius, įskaitant:",
+          [
+            "negautą pelną;",
+            "verslo praradimą;",
+            "naudojimosi transporto priemone praradimą;",
+            "rinkos vertės sumažėjimą;",
+            "remonto išlaidas;",
+            "prastovas;",
+            "papildomus muitus ar mokesčius;",
+            "valiutų kursų nuostolius;",
+            "emocinius ar reputacijos nuostolius."
+          ],
+          "Kiek leidžia taikomi įstatymai, bendra Smart Auto Bid LLC atsakomybė, kylanti iš vienos transporto priemonės, užsakymo ar paslaugos, negali viršyti paslaugų mokesčių, kuriuos klientas faktiškai sumokėjo Smart Auto Bid LLC už konkretų ginčo objektu esantį užsakymą.",
+          "Šis apribojimas netaikomas tiek, kiek atsakomybės negalima apriboti pagal privalomai taikomus įstatymus."
         ]
       },
       {
-        "title": "Susisiekite su mumis",
+        "title": "14. Kliento pareiga atlyginti nuostolius",
         "body": [
-          "Klausimus dėl šių Sąlygų galite siųsti adresu info@smartautobid.com, skambinti arba rašyti per WhatsApp +1 (912) 561-2347, arba paštu adresu Smart Auto Bid LLC, 289 Telfair Rd #I, Savannah, GA 31415, USA."
+          "Klientas sutinka atlyginti ir apsaugoti Smart Auto Bid LLC, jos vadovus, darbuotojus, atstovus ir paslaugų teikėjus nuo pretenzijų, nuostolių, baudų, išlaidų ir teisinių mokesčių, atsiradusių dėl:",
+          [
+            "kliento padaryto šių sąlygų pažeidimo;",
+            "klaidingos ar neišsamios kliento pateiktos informacijos;",
+            "kliento nurodymų;",
+            "neteisėto transporto priemonės eksporto ar importo;",
+            "muitinės, sankcijų ar mokesčių reikalavimų pažeidimo;",
+            "trečiųjų asmenų teisių pažeidimo;",
+            "transporto priemonės naudojimo ar perpardavimo."
+          ]
+        ]
+      },
+      {
+        "title": "15. Nenugalima jėga",
+        "body": [
+          "Smart Auto Bid LLC neatsako už vėlavimą, paslaugų sutrikimą ar neįvykdymą, atsiradusį dėl aplinkybių, kurių ji pagrįstai negali kontroliuoti, įskaitant:",
+          [
+            "stichines nelaimes;",
+            "uraganus, potvynius, gaisrus ar žemės drebėjimus;",
+            "karą, terorizmą ar pilietinius neramumus;",
+            "streikus ar darbo ginčus;",
+            "epidemijas ar pandemijas;",
+            "uostų uždarymą;",
+            "laivų tvarkaraščių pakeitimus;",
+            "konteinerių ar transporto priemonių trūkumą;",
+            "muitinės ar valdžios institucijų veiksmus;",
+            "kibernetinius incidentus;",
+            "ryšio ar informacinių sistemų sutrikimus."
+          ]
+        ]
+      },
+      {
+        "title": "16. Trečiųjų šalių taisyklės",
+        "body": [
+          "Naudodamasis aukcionų, vežėjų, terminalų, ekspeditorių, laivybos linijų ir kitų trečiųjų šalių paslaugomis, klientas taip pat sutinka laikytis jų taisyklių, sutarčių, tarifų ir atsakomybės apribojimų.",
+          "Jeigu šios sąlygos prieštarauja konkretaus aukciono, vežėjo ar laivybos linijos privalomoms sąlygoms, atitinkamai paslaugos daliai taikomos tos trečiosios šalies sąlygos.",
+          "„Copart“ ir „IAAI“ bei kiti šiame dokumente minimi prekių ženklai priklauso jų savininkams. Smart Auto Bid LLC nėra jų savininkė ir nėra su jais susijusi, remiama ar patvirtinta, išskyrus atvejus, kai tai aiškiai nurodyta raštu."
+        ]
+      },
+      {
+        "title": "17. Skundai ir pretenzijos",
+        "body": [
+          "Klientas privalo kuo greičiau raštu pranešti apie bet kokią problemą ar pretenziją.",
+          "Pretenzijoje turi būti pateikta:",
+          [
+            "kliento vardas arba įmonės pavadinimas;",
+            "transporto priemonės identifikavimo numeris;",
+            "užsakymo arba sąskaitos numeris;",
+            "problemos aprašymas;",
+            "nuotraukos ir kiti patvirtinantys dokumentai;",
+            "pageidaujamas problemos sprendimas."
+          ],
+          "Pretenzijos dėl matomos transporto priemonės žalos turi būti užfiksuotos priėmimo metu ir pateiktos per vežėjo, terminalo, draudiko ar kitos atsakingos šalies nustatytą terminą."
+        ]
+      },
+      {
+        "title": "18. Taikytina teisė ir ginčų sprendimas",
+        "body": [
+          "Šioms sąlygoms taikoma Džordžijos valstijos, Jungtinių Amerikos Valstijų, teisė, neatsižvelgiant į teisės kolizijos taisykles.",
+          "Prieš pradėdamos oficialų ginčo nagrinėjimą, šalys įsipareigoja sąžiningai siekti išspręsti ginčą derybomis.",
+          "Jeigu per 30 kalendorinių dienų nuo rašytinės pretenzijos pateikimo ginčas neišsprendžiamas, jis sprendžiamas Čatamo apygardos (Chatham County), Džordžijos valstijos, Jungtinių Amerikos Valstijų, kompetentinguose teismuose.",
+          "Jeigu klientui taikomos privalomos vartotojų apsaugos nuostatos, ši dalis neriboja teisių, kurių pagal įstatymus negalima atsisakyti."
+        ]
+      },
+      {
+        "title": "19. Elektroniniai pranešimai",
+        "body": [
+          "Klientas sutinka gauti sutartis, sąskaitas, pranešimus, patvirtinimus, dokumentus ir kitą informaciją elektroniniu paštu, per interneto svetainę, kliento paskyrą ar kitomis elektroninėmis priemonėmis.",
+          "Elektroninis sutikimas, žymimojo langelio pažymėjimas, užsakymo pateikimas ar mokėjimo atlikimas turi tokią pačią teisinę galią kaip fizinis parašas, kiek tai leidžia taikomi įstatymai."
+        ]
+      },
+      {
+        "title": "20. Sąlygų pakeitimai",
+        "body": [
+          "Smart Auto Bid LLC gali periodiškai keisti šias sąlygas.",
+          "Atnaujinta versija įsigalioja ją paskelbus interneto svetainėje arba kitą joje nurodytą dieną. Tolesnis paslaugų naudojimas po pakeitimų įsigaliojimo reiškia sutikimą su atnaujintomis sąlygomis.",
+          "Esminiai jau patvirtinto užsakymo pakeitimai netaikomi atgaline data, nebent to reikalauja įstatymai arba šalys raštu susitaria kitaip."
+        ]
+      },
+      {
+        "title": "21. Atskiriamumas",
+        "body": [
+          "Jeigu kuri nors šių sąlygų nuostata pripažįstama negaliojančia ar neįgyvendinama, likusios nuostatos lieka galioti visa apimtimi.",
+          "Negaliojanti nuostata turi būti pakeista galiojančia nuostata, kuri kuo tiksliau atitinka pradinį ekonominį ir teisinį tikslą."
+        ]
+      },
+      {
+        "title": "22. Visas susitarimas",
+        "body": [
+          "Šios sąlygos, kartu su konkrečiu užsakymu, sąskaita, pasiūlymu, aukciono taisyklėmis ir kitomis raštu patvirtintomis sąlygomis, sudaro visą kliento ir Smart Auto Bid LLC susitarimą dėl teikiamų paslaugų.",
+          "Žodiniai pareiškimai ar susitarimai negalioja, jeigu jie nepatvirtinti raštu įgalioto Smart Auto Bid LLC atstovo."
+        ]
+      },
+      {
+        "title": "23. Kontaktinė informacija",
+        "body": [
+          "Smart Auto Bid LLC",
+          [
+            "Veiklos adresas: 289 Telfair Rd #I, Savannah, GA 31415, USA",
+            "Elektroninis paštas: info@smartautobid.com",
+            "Telefono numeris: +1 (912) 561-2347",
+            "Interneto svetainė: smartautobid.com"
+          ],
+          "Naudodamasis Smart Auto Bid LLC paslaugomis, klientas patvirtina, kad perskaitė, suprato ir sutinka laikytis šių Naudojimosi ir paslaugų teikimo sąlygų bei atitinkamo aukciono, pardavėjo, vežėjo ir kitų paslaugų teikėjų taisyklių."
         ]
       }
     ]
