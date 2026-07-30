@@ -10,7 +10,7 @@ import {
 import { loadPostedStore, isAlreadyPosted, markPosted, pruneAndSave } from "./postedStore";
 import { buildAllCaptions, extractPhotoUrls } from "./formatPost";
 import { postVehicleToChannel } from "./telegram";
-import { kvSetJson } from "../../src/lib/upstashKv";
+import { kvSetJson } from "../../src/modules/telegram/api/kv";
 
 // A dry run must not touch any persisted state: it neither posts nor caches
 // captions, so marking those lots as "posted" would silently ensure they

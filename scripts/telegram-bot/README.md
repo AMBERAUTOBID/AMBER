@@ -5,7 +5,7 @@ not Vercel - see that file's comment for why). Searches Apibara for each
 profile in `filters.ts`, and posts any new matching lot to the Telegram
 channel: a photo album, followed by a details message (VIN, mileage,
 damage, condition, auction time in Vilnius, comparable recent sales, and a
-cost estimate to the destination port reusing `src/lib/costEstimate.ts`)
+cost estimate to the destination port reusing `src/modules/pricing/model/costEstimate.ts`)
 with 🇬🇧 EN / 🇷🇺 RU / 🇱🇹 LT buttons that
 swap the message's language in place when tapped, plus a link button to
 that lot's own page on the website (`/vehicle/<vin>`) in the currently
@@ -37,7 +37,7 @@ Costs are split into two blocks on purpose:
 - **Duty and VAT are published as rates, not amounts.** They're the
   destination country's, they depend on how the lot is finally valued at
   clearing, and a channel post is the wrong place to imply a firm figure.
-  Rates come from `PORT_CUSTOMS` in `src/lib/costEstimate.ts`, so the EU's
+  Rates come from `PORT_CUSTOMS` in `src/modules/pricing/model/costEstimate.ts`, so the EU's
   US-built-car duty waiver stays accurate if that table changes.
 
 **Comparable sales** (`marketStats.ts`) are quoted as a range plus sample

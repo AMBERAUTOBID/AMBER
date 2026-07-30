@@ -9,7 +9,7 @@ import { formatUsd, formatEur } from "../../src/modules/pricing/model/format";
 import type { ComparableSoldStats } from "./marketStats";
 // The language list is defined next to the keyboard that renders it, so a
 // caption can never exist for a language with no button (or vice versa).
-import { POST_LANGS, type PostLang } from "../../src/lib/telegramApi";
+import { POST_LANGS, type PostLang } from "../../src/modules/telegram/api/botApi";
 import { SITE, CONTACT_HREF } from "../../src/shared/config/site";
 import type { VehicleListItem } from "./apibaraClient";
 import type { ChannelSection, SavedSearchFilter } from "./filters";

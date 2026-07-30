@@ -5,7 +5,7 @@
  * switch buttons on those posts) - kept here rather than duplicated so the
  * button layout/callback_data format can't drift between the two.
  */
-import { siteUrl } from "../shared/config/site";
+import { siteUrl } from "../../../shared/config/site";
 
 const TELEGRAM_API = "https://api.telegram.org";
 

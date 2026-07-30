@@ -1,6 +1,6 @@
 /**
  * Shared, isomorphic helpers for turning user input (the hero/search widget)
- * into Apibara search filters. Kept separate from src/lib/apibara.ts (which
+ * into Apibara search filters. Kept separate from src/modules/inventory/api (which
  * is server-only and holds the API key) so SearchWidget.tsx can import this
  * safely as a client component.
  */

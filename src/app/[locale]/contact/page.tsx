@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import Container from "@/shared/ui/Container";
 import Reveal from "@/shared/ui/Reveal";
-import ContactForm from "@/components/ContactForm";
+import ContactForm from "@/modules/leads/components/ContactForm";
 import SectionHeading from "@/shared/ui/SectionHeading";
-import FAQAccordion from "@/components/FAQAccordion";
+import FAQAccordion from "@/modules/leads/components/FAQAccordion";
 import {
   Phone,
   WhatsappLogo,

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { kvGetJson } from "@/lib/upstashKv";
+import { kvGetJson } from "@/modules/telegram/api/kv";
 import {
   editMessageText,
   answerCallbackQuery,
   languageKeyboard,
   isPostLang,
   type PostLang,
-} from "@/lib/telegramApi";
+} from "@/modules/telegram/api/botApi";
 
 type CachedCaptions = Record<PostLang, string>;
 

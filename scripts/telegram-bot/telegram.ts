@@ -1,4 +1,4 @@
-import { telegramCall, languageKeyboard } from "../../src/lib/telegramApi";
+import { telegramCall, languageKeyboard } from "../../src/modules/telegram/api/botApi";
 import type { ChannelSection } from "./filters";
 
 /**

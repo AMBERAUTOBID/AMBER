@@ -40,7 +40,7 @@ export const SECTION_LOT_STATUS: Record<ChannelSection, LotStatus> = {
  *
  * Field notes (only include what you actually want to filter on - omit the
  * rest):
- * - make/model: match src/lib/vehicleData.ts's naming (e.g. "Land Rover",
+ * - make/model: match src/modules/inventory/model/vehicleData.ts's naming (e.g. "Land Rover",
  *   "Range Rover Sport") - Apibara's make/model match is case-insensitive.
  * - damage: real values confirmed via Apibara's /vehicles/filters endpoint:
  *   "Mechanical" | "Hail" | "Fire" | "Water" | "Theft" | "Repossession" |

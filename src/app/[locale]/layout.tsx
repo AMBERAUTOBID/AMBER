@@ -8,7 +8,7 @@ import { SITE } from "@/shared/config/site";
 import Header from "@/shared/layout/Header";
 import Footer from "@/shared/layout/Footer";
 import WhatsAppButton from "@/shared/layout/WhatsAppButton";
-import CookieConsent from "@/components/CookieConsent";
+import CookieConsent from "@/modules/consent/components/CookieConsent";
 import "../globals.css";
 
 const inter = Inter({
