@@ -4,7 +4,8 @@ import {
   normalizeApibaraLocation,
   PORT_CUSTOMS,
   USD_TO_EUR,
-} from "../../src/lib/costEstimate";
+} from "../../src/modules/pricing/model/costEstimate";
+import { formatUsd, formatEur } from "../../src/modules/pricing/model/format";
 import type { ComparableSoldStats } from "./marketStats";
 // The language list is defined next to the keyboard that renders it, so a
 // caption can never exist for a language with no button (or vice versa).
@@ -22,13 +23,6 @@ const CONTACT_WHATSAPP = CONTACT_HREF.whatsapp;
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-function formatUsd(v: number): string {
-  return `$${Math.round(v).toLocaleString()}`;
-}
-function formatEur(v: number): string {
-  return `€${Math.round(v).toLocaleString()}`;
-}
-
 function formatPct(rate: number): string {
   return `${Math.round(rate * 100)}%`;
 }

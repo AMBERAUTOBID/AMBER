@@ -15,24 +15,16 @@ import {
   SERVICE_FEE_OVERSIZE_USD,
   type AuctionNetwork,
   type CoreVehicleKind,
-} from "@/lib/costEstimate";
+} from "@/modules/pricing/model/costEstimate";
+import { formatUsd, formatEur } from "@/modules/pricing/model/format";
+import { portLabel as localisedPortLabel, portCityNominative } from "@/modules/pricing/model/ports";
 
 // Only the three destinations with a real customs model are offered here.
 // The point of a per-lot calculator is an instant number, and the quote-only
 // ports (see QUOTE_ONLY_DESTINATION_PORTS) can't produce one - the full
 // calculator on /shipping is where those belong, hence the link below it.
 const PORT_OPTIONS = Object.keys(PORT_MULTIPLIER);
-const PORT_DISPLAY_NAMES: Record<string, Partial<Record<string, string>>> = {
-  "Klaipėda, Lithuania": { lt: "Klaipėdos, Lithuania" },
-};
 const FALLBACK_BID_STEP_USD = 100;
-
-function formatUsd(v: number) {
-  return `$${Math.round(v).toLocaleString()}`;
-}
-function formatEur(v: number) {
-  return `€${Math.round(v).toLocaleString()}`;
-}
 
 function Row({
   label,
@@ -155,12 +147,12 @@ export default function VehicleCostPanel({
   });
 
   const customs = PORT_CUSTOMS[port];
-  const portLabel = PORT_DISPLAY_NAMES[port]?.[locale] ?? port;
+  const portLabel = localisedPortLabel(port, locale);
   // Deliberately the raw key's city, not the localised override: the override
   // is the Lithuanian genitive ("Klaipėdos"), which only reads correctly after
   // the preposition the site calculator uses. The row labels here interpolate
   // the city as a bare label, so they need the nominative ("Klaipėda").
-  const portCity = port.split(",")[0];
+  const portCity = portCityNominative(port);
   const dutyWaived = customs?.dutyWaivedForUsaMade && effectiveUsaMade;
 
   const whatsappUrl = whatsappHref(
@@ -221,7 +213,7 @@ export default function VehicleCostPanel({
           options={PORT_OPTIONS}
           placeholder={t("terminalPlaceholder")}
           searchPlaceholder={t("searchPlaceholder")}
-          getLabel={(opt) => PORT_DISPLAY_NAMES[opt]?.[locale] ?? opt}
+          getLabel={(opt) => localisedPortLabel(opt, locale)}
         />
       </div>
 

@@ -19,25 +19,32 @@ import {
   Tractor,
 } from "@phosphor-icons/react/dist/ssr";
 import { clsx } from "clsx";
-import { PICKUP_LOCATIONS } from "@/lib/pickupLocations";
-import { localTransportRateUsd } from "@/lib/localTransportRates";
-import { QUOTE_ONLY_DESTINATION_PORTS } from "@/lib/mapGeo";
+import { PICKUP_LOCATIONS } from "@/modules/pricing/model/pickupLocations";
+import { localTransportRateUsd } from "@/modules/pricing/model/localTransportRates";
+import { QUOTE_ONLY_DESTINATION_PORTS } from "@/modules/pricing/model/mapGeo";
 import {
   PORT_MULTIPLIER,
   TRUCKING_FLAT_USD,
   BROKERAGE_FEE_USD,
   USD_TO_EUR,
+  CORE_VEHICLE_BASE_SHIPPING,
   auctionFeesUsd,
   customsBreakdown,
-} from "@/lib/costEstimate";
+  type CoreVehicleKind,
+} from "@/modules/pricing/model/costEstimate";
+import { formatUsd, formatEur } from "@/modules/pricing/model/format";
+import { portLabel } from "@/modules/pricing/model/ports";
 import { Link } from "@/i18n/navigation";
 import { SITE, CONTACT_HREF } from "@/shared/config/site";
 import ScrollableSelect from "@/shared/ui/ScrollableSelect";
 import Container from "@/shared/ui/Container";
 import Reveal from "@/shared/ui/Reveal";
-import RouteGlobe from "./ui/route-globe";
+import RouteGlobe from "./RouteGlobe";
 
-type PrimaryVehicleKind = "car" | "suv" | "motorcycle";
+/** The three kinds the shared cost model prices. Aliased rather than
+ * redeclared so this widget can never drift out of sync with the model the
+ * Telegram bot also uses. */
+type PrimaryVehicleKind = CoreVehicleKind;
 type MoreVehicleKind =
   | "atv"
   | "trike"
@@ -85,10 +92,12 @@ const VEHICLE_ICONS: Record<VehicleKind, typeof Car> = {
 // Illustrative shipping base rates (USD) and destination-port multipliers —
 // same estimate model used site-wide, not a live freight-rate feed. Rates for
 // the "More" categories are rough placeholders pending real freight numbers.
+//
+// car/suv/motorcycle are spread in from the shared model rather than repeated
+// here: this table used to restate all three, so a rate change in the model
+// silently left this widget quoting the old number.
 const VEHICLE_BASE_SHIPPING: Record<VehicleKind, number> = {
-  car: 950,
-  suv: 1250,
-  motorcycle: 500,
+  ...CORE_VEHICLE_BASE_SHIPPING,
   atv: 350,
   trike: 550,
   bigMotorcycle: 650,
@@ -102,15 +111,7 @@ const VEHICLE_BASE_SHIPPING: Record<VehicleKind, number> = {
 // Destinations with a real customs/duty model (priced) plus destinations
 // that only offer a "request a quote by email" flow (no customs data yet).
 const PORT_OPTIONS = [...Object.keys(PORT_MULTIPLIER), ...QUOTE_ONLY_DESTINATION_PORTS];
-// Port keys double as pricing/customs lookup keys shared across all locales,
-// so they can't just be translated in messages/*.json — this overrides the
-// displayed label per locale without touching the underlying key.
-const PORT_DISPLAY_NAMES: Record<string, Partial<Record<string, string>>> = {
-  "Klaipėda, Lithuania": { lt: "Klaipėdos, Lithuania" },
-};
-function portLabel(port: string, locale: string) {
-  return PORT_DISPLAY_NAMES[port]?.[locale] ?? port;
-}
+
 type Result = {
   lotPrice: number;
   auctionFees: number;
@@ -122,13 +123,6 @@ type Result = {
   isGeorgia: boolean;
   totalEur: number;
 };
-
-function formatUsd(v: number) {
-  return `$${Math.round(v).toLocaleString()}`;
-}
-function formatEur(v: number) {
-  return `€${Math.round(v).toLocaleString()}`;
-}
 
 export default function CostCalculator() {
   const t = useTranslations("Calculator");

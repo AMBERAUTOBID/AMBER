@@ -6,7 +6,7 @@ import Button from "@/shared/ui/Button";
 import Reveal from "@/shared/ui/Reveal";
 import InventoryGallery from "@/components/InventoryGallery";
 import AuctionCountdown from "@/components/AuctionCountdown";
-import VehicleCostPanel from "@/components/VehicleCostPanel";
+import VehicleCostPanel from "@/modules/pricing/components/VehicleCostPanel";
 import PastSalesTable from "@/components/PastSalesTable";
 import LotCard from "@/components/LotCard";
 import {
@@ -18,7 +18,8 @@ import {
   extractMediaExtras,
   isUsaManufactured,
 } from "@/lib/apibara";
-import { inferCoreVehicleKind, normalizeApibaraLocation } from "@/lib/costEstimate";
+import { inferCoreVehicleKind, normalizeApibaraLocation } from "@/modules/pricing/model/costEstimate";
+import { formatUsd as formatMoneyUsd } from "@/modules/pricing/model/format";
 import {
   MapPin,
   Info,
@@ -33,13 +34,12 @@ import {
 
 const DELIVERY_PORTS = ["Klaipėda, Lithuania", "Rotterdam, Netherlands", "Poti, Georgia"];
 
+/** Null-tolerant wrapper over the shared money formatter: a missing value
+ * renders as nothing at all rather than as a zero that would read as a real
+ * price. */
 function formatUsd(value: number | null | undefined) {
   if (typeof value !== "number") return null;
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
+  return formatMoneyUsd(value);
 }
 
 /** Lots with no bids yet come back as 0 rather than null - "$0" would read as

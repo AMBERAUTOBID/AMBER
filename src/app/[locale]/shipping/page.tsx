@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import Container from "@/shared/ui/Container";
 import Reveal from "@/shared/ui/Reveal";
 import SectionHeading from "@/shared/ui/SectionHeading";
-import CostCalculator from "@/components/CostCalculator";
+import CostCalculator from "@/modules/pricing/components/CostCalculator";
 import Button from "@/shared/ui/Button";
 import { Anchor, MapPin } from "@phosphor-icons/react/dist/ssr";
 

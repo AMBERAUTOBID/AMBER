@@ -10,7 +10,7 @@ import {
   oceanRouteWaypoints,
   densifyRoute,
   type GeoPoint,
-} from "@/lib/mapGeo";
+} from "@/modules/pricing/model/mapGeo";
 
 type Vec3 = [number, number, number];
 type CobeMarker = { location: [number, number]; size: number; color?: Vec3; id?: string };

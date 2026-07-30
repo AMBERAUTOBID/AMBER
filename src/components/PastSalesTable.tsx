@@ -1,13 +1,6 @@
 import { CaretDown } from "@phosphor-icons/react/dist/ssr";
 import type { VehicleListItem } from "@/lib/apibara";
-
-function formatUsd(value: number) {
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-}
+import { formatUsd } from "@/modules/pricing/model/format";
 
 /**
  * The actual comparable lots behind the min/avg/max strip. Only rows with a

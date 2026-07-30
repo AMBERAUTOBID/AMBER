@@ -5,7 +5,7 @@ import Reveal from "@/shared/ui/Reveal";
 import Button from "@/shared/ui/Button";
 import SectionHeading from "@/shared/ui/SectionHeading";
 import SearchWidget from "@/components/SearchWidget";
-import CostCalculator from "@/components/CostCalculator";
+import CostCalculator from "@/modules/pricing/components/CostCalculator";
 import Marquee from "@/shared/ui/Marquee";
 import HeroGallery from "@/shared/ui/HeroGallery";
 import {
