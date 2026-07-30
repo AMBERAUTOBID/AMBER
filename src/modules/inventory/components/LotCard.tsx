@@ -1,6 +1,6 @@
 import { MapPin, Gauge } from "@phosphor-icons/react/dist/ssr";
 import { Link } from "@/i18n/navigation";
-import type { VehicleListItem } from "@/lib/apibara";
+import type { VehicleListItem } from "@/modules/inventory/api";
 
 /** Lots that haven't been bid on yet come back as 0, not null - printing
  * "$0" would read as a price rather than as "no bids yet". */

@@ -1,12 +1,28 @@
 /**
- * Standalone Apibara client for the Telegram bot script. Deliberately
- * separate from src/lib/apibara.ts (which is Next.js-only - it uses
- * `next: { revalidate }`, a caching option only the Next.js runtime
- * understands) since this runs outside Next entirely, via a plain `tsx`
- * process in a GitHub Actions workflow. No caching here on purpose: the
- * script runs once, does its work, and exits - there's nothing to reuse a
- * cache across.
+ * Apibara fetch client for the Telegram bot.
+ *
+ * Only the *transport* is separate from the website's client
+ * (src/modules/inventory/api/client.ts). That one caches with
+ * `next: { revalidate }`, an option only the Next runtime understands, and
+ * this script runs outside Next entirely — a plain `tsx` process in a GitHub
+ * Actions workflow. No caching here on purpose: the script runs once, does its
+ * work, and exits, so there is nothing to reuse a cache across.
+ *
+ * The response *types* are NOT duplicated. They used to be — this file
+ * declared its own narrower VehicleListItem, so a renamed upstream field would
+ * have broken the bot or the website silently, with no compile error to catch
+ * it. They now come from the shared, runtime-agnostic module.
  */
+import type {
+  AuctionPlatform,
+  LotStatus,
+  RelatedVehiclesResponse,
+  VehicleListItem,
+} from "../../src/modules/inventory/api/types";
+
+// Re-exported so the bot's own modules can keep importing these from here
+// rather than each reaching across into src/ separately.
+export type { AuctionPlatform, LotStatus, RelatedVehiclesResponse, VehicleListItem };
 
 const BASE_URL = "https://apibara.tech/api/v1/vehicle-auction";
 
@@ -31,82 +47,18 @@ async function apibaraGet<T>(
   return (await res.json()) as T;
 }
 
-export type AuctionPlatform = "copart" | "iaai";
-
-// Subset of the fields the search list endpoint returns - just what the
-// bot needs to filter and format a post. See src/lib/apibara.ts for the
-// fuller, verified shape shared with the website.
-export interface VehicleListItem {
-  platform: AuctionPlatform;
-  lot_number: string;
-  vin: string;
-  title: string;
-  year: number;
-  make: string;
-  model: string;
-  auction?: { state?: string; auction_at?: string | null; formatted?: string };
-  pricing?: {
-    current_bid_usd?: number | null;
-    buy_now_usd?: number | null;
-    // Only populated on lots that have already sold - i.e. the `past`
-    // entries from /related, never the live listings we post.
-    last_sold_price_usd?: number | null;
-  };
-  location?: { display?: string };
-  seller?: { name?: string; type?: string };
-  condition?: {
-    run_condition?: { label?: string };
-    has_key?: boolean | null;
-    primary_damage?: string | null;
-    secondary_damage?: string | null;
-  };
-  odometer?: { mi?: number | null };
-  vehicle_specs?: {
-    exterior_color?: string;
-    transmission?: string;
-    fuel_type?: string;
-    drive_type?: string;
-    body_style?: string;
-  };
-  sale_document?: { name?: string };
-  media?: {
-    items?: { type: string; thumb?: string; large?: string }[];
-  };
-}
-
-/**
- * Confirmed against the live /vehicles/filters endpoint, which advertises
- * lot_status as All | "Buy Now" | Timed (and a separate lot_sub_status of
- * Open | Live | Ended, defaulting to Open - i.e. we already only ever see
- * lots that are still biddable).
- *
- * Spot-checked on real results: "Buy Now" returned 20/20 lots carrying a
- * buy_now_usd price, "Timed" returned 0/20 - so the two are disjoint, which
- * is exactly what keeps the channel's two sections from overlapping.
- */
-export type LotStatus = "All" | "Buy Now" | "Timed";
-
-/**
- * Real comparable sales for a lot. The endpoint's shape is a nested object,
- * NOT the flat array Apibara's OpenAPI schema advertises (same discrepancy
- * noted in src/lib/apibara.ts).
- *
- * Beware what `past` actually is: it's matched at make/model level only, so
- * the same twelve Honda Civic sales come back for a 2010 VP, a 2014 EX and a
- * 2020 Sport Touring alike, spanning 2010-2026 and everything from a burnt
- * shell at $150 to a clean car at $17,000. Averaging it raw produces a
- * confident-looking number that means nothing - see marketStats.ts for the
- * comparability filtering that makes it safe to quote.
- */
-export interface RelatedVehiclesResponse {
-  ok: boolean;
-  data: { source: VehicleListItem; past: VehicleListItem[]; upcoming: VehicleListItem[] };
-}
-
+/** See the caveats on RelatedVehiclesResponse in the shared types: `past` is
+ * matched at make/model level only, so it must be filtered for comparability
+ * before anything is quoted from it (marketStats.ts does that). */
 export async function getRelatedVehicles(vinOrLot: string): Promise<RelatedVehiclesResponse> {
   return apibaraGet(`/vehicles/${encodeURIComponent(vinOrLot)}/related`);
 }
 
+/**
+ * The bot's own query surface. Deliberately not the website's
+ * VehicleSearchParams: the bot filters on fields the site's search UI doesn't
+ * expose (damage, has_key, seller_type) and doesn't paginate.
+ */
 export interface SearchVehiclesParams {
   platform?: AuctionPlatform;
   lot_status?: LotStatus;

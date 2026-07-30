@@ -4,11 +4,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import Container from "@/shared/ui/Container";
 import Button from "@/shared/ui/Button";
 import Reveal from "@/shared/ui/Reveal";
-import InventoryGallery from "@/components/InventoryGallery";
-import AuctionCountdown from "@/components/AuctionCountdown";
+import InventoryGallery from "@/modules/inventory/components/InventoryGallery";
+import AuctionCountdown from "@/modules/inventory/components/AuctionCountdown";
 import VehicleCostPanel from "@/modules/pricing/components/VehicleCostPanel";
-import PastSalesTable from "@/components/PastSalesTable";
-import LotCard from "@/components/LotCard";
+import PastSalesTable from "@/modules/inventory/components/PastSalesTable";
+import LotCard from "@/modules/inventory/components/LotCard";
 import {
   getVehicleDetail,
   getRelatedVehicles,
@@ -17,7 +17,7 @@ import {
   extractLotDeepSpecs,
   extractMediaExtras,
   isUsaManufactured,
-} from "@/lib/apibara";
+} from "@/modules/inventory/api";
 import { inferCoreVehicleKind, normalizeApibaraLocation } from "@/modules/pricing/model/costEstimate";
 import { formatUsd as formatMoneyUsd } from "@/modules/pricing/model/format";
 import {

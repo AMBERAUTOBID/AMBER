@@ -19,8 +19,8 @@ import {
   MODELS_BY_CATEGORY,
   YEAR_OPTIONS,
   type VehicleCategory,
-} from "@/lib/vehicleData";
-import { MORE_TYPE_TO_APIBARA_TYPE } from "@/lib/searchQuery";
+} from "@/modules/inventory/model/vehicleData";
+import { MORE_TYPE_TO_APIBARA_TYPE } from "@/modules/inventory/model/searchQuery";
 import ScrollingPlaceholder from "@/shared/ui/ScrollingPlaceholder";
 import ScrollableSelect from "@/shared/ui/ScrollableSelect";
 import OdometerRange, { ODO_MIN, ODO_MAX } from "./OdometerRange";

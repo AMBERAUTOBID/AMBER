@@ -3,11 +3,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import Container from "@/shared/ui/Container";
 import Reveal from "@/shared/ui/Reveal";
 import Button from "@/shared/ui/Button";
-import SearchWidget from "@/components/SearchWidget";
-import LotCard from "@/components/LotCard";
+import SearchWidget from "@/modules/inventory/components/SearchWidget";
+import LotCard from "@/modules/inventory/components/LotCard";
 import { Link } from "@/i18n/navigation";
-import { searchVehicles, searchVehiclesAcrossTypes, type AuctionPlatform } from "@/lib/apibara";
-import { parseFreeTextQuery, CATEGORY_TYPE_GROUPS } from "@/lib/searchQuery";
+import { searchVehicles, searchVehiclesAcrossTypes, type AuctionPlatform } from "@/modules/inventory/api";
+import { parseFreeTextQuery, CATEGORY_TYPE_GROUPS } from "@/modules/inventory/model/searchQuery";
 import {
   Info,
   ChatCircleDots,

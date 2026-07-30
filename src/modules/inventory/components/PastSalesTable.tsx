@@ -1,5 +1,5 @@
 import { CaretDown } from "@phosphor-icons/react/dist/ssr";
-import type { VehicleListItem } from "@/lib/apibara";
+import type { VehicleListItem } from "@/modules/inventory/api";
 import { formatUsd } from "@/modules/pricing/model/format";
 
 /**
