@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import Container from "@/components/Container";
-import Button from "@/components/Button";
-import Reveal from "@/components/Reveal";
+import Container from "@/shared/ui/Container";
+import Button from "@/shared/ui/Button";
+import Reveal from "@/shared/ui/Reveal";
 import InventoryGallery from "@/components/InventoryGallery";
 import AuctionCountdown from "@/components/AuctionCountdown";
 import VehicleCostPanel from "@/components/VehicleCostPanel";

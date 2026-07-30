@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import Container from "@/components/Container";
-import Reveal from "@/components/Reveal";
-import SectionHeading from "@/components/SectionHeading";
+import Container from "@/shared/ui/Container";
+import Reveal from "@/shared/ui/Reveal";
+import SectionHeading from "@/shared/ui/SectionHeading";
 import CostCalculator from "@/components/CostCalculator";
-import Button from "@/components/Button";
+import Button from "@/shared/ui/Button";
 import { Anchor, MapPin } from "@phosphor-icons/react/dist/ssr";
 
 export async function generateMetadata({

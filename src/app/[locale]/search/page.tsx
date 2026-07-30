@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import Container from "@/components/Container";
-import Reveal from "@/components/Reveal";
-import Button from "@/components/Button";
+import Container from "@/shared/ui/Container";
+import Reveal from "@/shared/ui/Reveal";
+import Button from "@/shared/ui/Button";
 import SearchWidget from "@/components/SearchWidget";
 import LotCard from "@/components/LotCard";
 import { Link } from "@/i18n/navigation";

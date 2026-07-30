@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import Container from "@/components/Container";
-import Reveal from "@/components/Reveal";
-import Button from "@/components/Button";
+import Container from "@/shared/ui/Container";
+import Reveal from "@/shared/ui/Reveal";
+import Button from "@/shared/ui/Button";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("NotFound");

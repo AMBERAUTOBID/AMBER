@@ -6,7 +6,7 @@ import { clsx } from "clsx";
 import { Minus, Plus, WhatsappLogo, Info } from "@phosphor-icons/react/dist/ssr";
 import { Link } from "@/i18n/navigation";
 import { whatsappHref } from "@/shared/config/site";
-import ScrollableSelect from "./ScrollableSelect";
+import ScrollableSelect from "@/shared/ui/ScrollableSelect";
 import {
   estimateLandedCost,
   PORT_MULTIPLIER,

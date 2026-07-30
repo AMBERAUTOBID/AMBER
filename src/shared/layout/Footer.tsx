@@ -6,7 +6,7 @@ import {
   TelegramLogo,
   EnvelopeSimple,
 } from "@phosphor-icons/react/dist/ssr";
-import Container from "./Container";
+import Container from "../ui/Container";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { SITE, CONTACT_HREF } from "@/shared/config/site";
 

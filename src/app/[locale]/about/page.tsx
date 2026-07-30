@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import Container from "@/components/Container";
-import Reveal from "@/components/Reveal";
-import SectionHeading from "@/components/SectionHeading";
+import Container from "@/shared/ui/Container";
+import Reveal from "@/shared/ui/Reveal";
+import SectionHeading from "@/shared/ui/SectionHeading";
 import {
   Tag,
   HandPalm,

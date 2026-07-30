@@ -7,7 +7,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { List, X, ArrowRight, Phone } from "@phosphor-icons/react/dist/ssr";
 import { clsx } from "clsx";
 import LanguageSwitcher from "./LanguageSwitcher";
-import { TextRoll } from "./ui/text-roll";
+import { TextRoll } from "../ui/text-roll";
 import { SITE, CONTACT_HREF } from "@/shared/config/site";
 
 const BRAND_PART_1 = "Smart";

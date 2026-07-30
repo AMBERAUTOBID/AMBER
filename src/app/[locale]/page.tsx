@@ -1,13 +1,13 @@
 import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import Container from "@/components/Container";
-import Reveal from "@/components/Reveal";
-import Button from "@/components/Button";
-import SectionHeading from "@/components/SectionHeading";
+import Container from "@/shared/ui/Container";
+import Reveal from "@/shared/ui/Reveal";
+import Button from "@/shared/ui/Button";
+import SectionHeading from "@/shared/ui/SectionHeading";
 import SearchWidget from "@/components/SearchWidget";
 import CostCalculator from "@/components/CostCalculator";
-import Marquee from "@/components/Marquee";
-import HeroGallery from "@/components/HeroGallery";
+import Marquee from "@/shared/ui/Marquee";
+import HeroGallery from "@/shared/ui/HeroGallery";
 import {
   Gavel,
   FileText,

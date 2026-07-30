@@ -5,9 +5,9 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { SITE } from "@/shared/config/site";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import WhatsAppButton from "@/components/WhatsAppButton";
+import Header from "@/shared/layout/Header";
+import Footer from "@/shared/layout/Footer";
+import WhatsAppButton from "@/shared/layout/WhatsAppButton";
 import CookieConsent from "@/components/CookieConsent";
 import "../globals.css";
 

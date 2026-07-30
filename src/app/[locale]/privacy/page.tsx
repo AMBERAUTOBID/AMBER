@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import Container from "@/components/Container";
-import Reveal from "@/components/Reveal";
+import Container from "@/shared/ui/Container";
+import Reveal from "@/shared/ui/Reveal";
 
 export async function generateMetadata({
   params,

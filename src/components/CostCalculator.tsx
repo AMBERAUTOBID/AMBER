@@ -32,9 +32,9 @@ import {
 } from "@/lib/costEstimate";
 import { Link } from "@/i18n/navigation";
 import { SITE, CONTACT_HREF } from "@/shared/config/site";
-import ScrollableSelect from "./ScrollableSelect";
-import Container from "./Container";
-import Reveal from "./Reveal";
+import ScrollableSelect from "@/shared/ui/ScrollableSelect";
+import Container from "@/shared/ui/Container";
+import Reveal from "@/shared/ui/Reveal";
 import RouteGlobe from "./ui/route-globe";
 
 type PrimaryVehicleKind = "car" | "suv" | "motorcycle";

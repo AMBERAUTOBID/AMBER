@@ -21,8 +21,8 @@ import {
   type VehicleCategory,
 } from "@/lib/vehicleData";
 import { MORE_TYPE_TO_APIBARA_TYPE } from "@/lib/searchQuery";
-import ScrollingPlaceholder from "./ScrollingPlaceholder";
-import ScrollableSelect from "./ScrollableSelect";
+import ScrollingPlaceholder from "@/shared/ui/ScrollingPlaceholder";
+import ScrollableSelect from "@/shared/ui/ScrollableSelect";
 import OdometerRange, { ODO_MIN, ODO_MAX } from "./OdometerRange";
 
 const CATEGORY_ICONS: Record<VehicleCategory, typeof Car> = {
