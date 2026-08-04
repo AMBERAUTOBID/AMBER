@@ -64,6 +64,7 @@ src/
     ui/                           Button, Container, Reveal, SectionHeading…
     layout/                       Header, Footer, LanguageSwitcher
     config/site.ts                THE source for phone, email, domain, socials
+    gate/                         pre-launch holding page (temporary — see §7)
     i18n/                         locale routing and navigation
 
 messages/                       one JSON per locale — keys must stay in parity
@@ -169,7 +170,27 @@ to holding customer passwords in any form.
 
 ---
 
-## 7. Verification
+## 7. The pre-launch gate — temporary by design
+
+`shared/gate/preLaunchGate.ts` replaces the whole site with a "coming soon"
+page unless the visitor has unlocked it. It exists because Vercel's own
+Deployment Protection does **not** cover production domains on the Pro plan
+without a $150/month add-on — verified empirically, not assumed: with Vercel
+Authentication + Standard Protection enabled, the generated deployment URL
+returned 302 while `smartautobid.vercel.app` still served the full homepage.
+
+- **Switched by `SITE_GATE_PASSWORD`.** Unset = live. Launching is a dashboard
+  change, not a code change — the same convention analytics and reCAPTCHA use.
+- **`proxy.ts` runs it before locale routing**, and its matcher now includes
+  `/api/` so the contact endpoint isn't left callable behind a hidden site.
+  That is the only reason `api` is in the matcher; the `startsWith("/api/")`
+  guard exists to stop next-intl rewriting those paths.
+- **It is not authentication.** One shared password, no identity, no
+  revocation. Phase 2's `modules/auth` must not be built on top of it.
+- **Delete it at launch** once the site is public for good: this file plus its
+  two call sites in `proxy.ts`, and restore `api` to the matcher exclusion.
+
+## 8. Verification
 
 Before finishing any change, run everything:
 
