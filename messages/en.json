@@ -9,7 +9,8 @@
     "shipping": "Shipping & Tracking",
     "about": "About",
     "contact": "Contact",
-    "cta": "Get a Free Quote"
+    "cta": "Get a Free Quote",
+    "login": "Log in"
   },
   "Footer": {
     "tagline": "From the auction lane to your driveway — we bid, buy, and ship U.S. vehicles to Europe, the Middle East, and beyond.",
@@ -1080,5 +1081,107 @@
     "privacyLink": "Learn more",
     "accept": "Accept",
     "decline": "Decline"
+  },
+  "Auth": {
+    "login": {
+      "title": "Log in",
+      "subtitle": "Access your bids, plan, and account.",
+      "email": "Email",
+      "password": "Password",
+      "forgot": "Forgot password?",
+      "submit": "Log in",
+      "submitting": "Logging in…",
+      "noAccount": "Don't have an account yet?",
+      "toRegister": "Register",
+      "errors": {
+        "invalid_credentials": "Incorrect email or password.",
+        "email_not_verified": "Please verify your email first — check your inbox for our link.",
+        "rate_limited": "Too many attempts. Please wait a few minutes and try again.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Register to work with us on your next vehicle.",
+      "name": "Full name",
+      "email": "Email",
+      "phone": "Phone (optional)",
+      "password": "Password",
+      "passwordHint": "At least 10 characters.",
+      "submit": "Create account",
+      "submitting": "Creating…",
+      "checkInbox": "Almost done — check your inbox and click the verification link we just sent.",
+      "haveAccount": "Already have an account?",
+      "toLogin": "Log in",
+      "errors": {
+        "invalid_email": "Please enter a valid email address.",
+        "invalid_password": "Password must be at least 10 characters.",
+        "invalid_name": "Please enter your name.",
+        "rate_limited": "Too many attempts. Please wait a few minutes and try again.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we'll send you a reset link.",
+      "email": "Email",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "checkInbox": "If that email is registered with us, a reset link is on its way.",
+      "error": "Something went wrong. Please try again.",
+      "backToLogin": "Back to login"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "subtitle": "Pick a new password for your account.",
+      "newPassword": "New password",
+      "submit": "Save new password",
+      "submitting": "Saving…",
+      "done": "Your password has been changed. You can now log in with it.",
+      "toLogin": "Go to login",
+      "missingToken": "This page only works from the link in a password-reset email. Request one from the login page.",
+      "errors": {
+        "weak_password": "Password must be at least 10 characters.",
+        "invalid_or_expired": "This link is invalid or has expired. Please request a new one.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "verify": {
+      "title": "Email verification",
+      "success": "Your email is verified — your account is ready.",
+      "failed": "This verification link is invalid or has expired.",
+      "failedHint": "Links are valid for 24 hours. Register again or contact us and we'll sort it out.",
+      "toLogin": "Log in"
+    },
+    "account": {
+      "title": "My account",
+      "greeting": "Hello, {name}",
+      "planHeading": "Your plan",
+      "noPlan": "No plan yet",
+      "noPlanHint": "To start bidding, choose a plan and place your deposit — contact us and we'll guide you through it.",
+      "logout": "Log out",
+      "plans": {
+        "starter": "Starter",
+        "minimal": "Minimal",
+        "standard": "Standard",
+        "premium": "Premium",
+        "professional": "Professional"
+      }
+    },
+    "emails": {
+      "verify": {
+        "subject": "Confirm your SmartAutoBid email",
+        "greeting": "Welcome to SmartAutoBid!",
+        "instruction": "Click the link below to confirm your email address:",
+        "expiry": "The link is valid for 24 hours."
+      },
+      "reset": {
+        "subject": "Reset your SmartAutoBid password",
+        "greeting": "A password reset was requested for your account.",
+        "instruction": "Click the link below to choose a new password. If you didn't request this, you can ignore this email:",
+        "expiry": "The link is valid for 1 hour."
+      },
+      "signature": "— The {site} team"
+    }
   }
 }

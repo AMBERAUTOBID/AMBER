@@ -93,6 +93,15 @@ export default function Header() {
             {SITE.phone.display}
           </a>
           <LanguageSwitcher />
+          {/* Static on purpose: reading the session cookie in the header
+              would force every marketing page to render dynamically. The
+              account page is where logged-in state gets decided. */}
+          <Link
+            href="/login"
+            className="whitespace-nowrap rounded-full border border-char-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-char-800 transition-colors hover:border-amber-400 hover:text-amber-700"
+          >
+            {t("login")}
+          </Link>
           <Link
             href="/contact"
             className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-amber-900/20 transition-all hover:bg-amber-600 hover:shadow-md"
@@ -140,13 +149,21 @@ export default function Header() {
           </nav>
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-char-200/70 pt-4">
             <LanguageSwitcher />
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white"
-            >
-              {t("cta")}
-              <ArrowRight size={15} weight="bold" />
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="rounded-full border border-char-200 bg-white px-4 py-2.5 text-sm font-semibold text-char-800"
+              >
+                {t("login")}
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white"
+              >
+                {t("cta")}
+                <ArrowRight size={15} weight="bold" />
+              </Link>
+            </div>
           </div>
         </div>
       )}

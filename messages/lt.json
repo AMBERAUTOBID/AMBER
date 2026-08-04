@@ -9,7 +9,8 @@
     "shipping": "Gabenimas ir sekimas",
     "about": "Apie mus",
     "contact": "Kontaktai",
-    "cta": "Gauti nemokamą pasiūlymą"
+    "cta": "Gauti nemokamą pasiūlymą",
+    "login": "Prisijungti"
   },
   "Footer": {
     "tagline": "Nuo aukciono salės iki jūsų kiemo — dalyvaujame varžytynėse, perkame ir gabename automobilius iš JAV į Europą, Artimuosius Rytus ir kitas šalis.",
@@ -1080,5 +1081,107 @@
     "privacyLink": "Sužinoti daugiau",
     "accept": "Sutinku",
     "decline": "Atsisakyti"
+  },
+  "Auth": {
+    "login": {
+      "title": "Prisijungimas",
+      "subtitle": "Jūsų statymai, planas ir paskyra.",
+      "email": "El. paštas",
+      "password": "Slaptažodis",
+      "forgot": "Pamiršote slaptažodį?",
+      "submit": "Prisijungti",
+      "submitting": "Jungiamės…",
+      "noAccount": "Dar neturite paskyros?",
+      "toRegister": "Registruotis",
+      "errors": {
+        "invalid_credentials": "Neteisingas el. paštas arba slaptažodis.",
+        "email_not_verified": "Pirmiausia patvirtinkite el. paštą — patikrinkite laišką su nuoroda.",
+        "rate_limited": "Per daug bandymų. Palaukite kelias minutes ir bandykite dar kartą.",
+        "generic": "Įvyko klaida. Bandykite dar kartą."
+      }
+    },
+    "register": {
+      "title": "Sukurti paskyrą",
+      "subtitle": "Užsiregistruokite ir dirbkime kartu dėl jūsų kito automobilio.",
+      "name": "Vardas ir pavardė",
+      "email": "El. paštas",
+      "phone": "Telefonas (nebūtina)",
+      "password": "Slaptažodis",
+      "passwordHint": "Mažiausiai 10 simbolių.",
+      "submit": "Sukurti paskyrą",
+      "submitting": "Kuriame…",
+      "checkInbox": "Beveik baigta — atidarykite laišką ir paspauskite patvirtinimo nuorodą.",
+      "haveAccount": "Jau turite paskyrą?",
+      "toLogin": "Prisijungti",
+      "errors": {
+        "invalid_email": "Įveskite teisingą el. pašto adresą.",
+        "invalid_password": "Slaptažodį turi sudaryti bent 10 simbolių.",
+        "invalid_name": "Įveskite savo vardą.",
+        "rate_limited": "Per daug bandymų. Palaukite kelias minutes ir bandykite dar kartą.",
+        "generic": "Įvyko klaida. Bandykite dar kartą."
+      }
+    },
+    "forgot": {
+      "title": "Slaptažodžio atkūrimas",
+      "subtitle": "Įveskite el. paštą ir atsiųsime atkūrimo nuorodą.",
+      "email": "El. paštas",
+      "submit": "Siųsti nuorodą",
+      "submitting": "Siunčiame…",
+      "checkInbox": "Jei šis el. paštas pas mus registruotas, nuoroda jau keliauja.",
+      "error": "Įvyko klaida. Bandykite dar kartą.",
+      "backToLogin": "Grįžti į prisijungimą"
+    },
+    "reset": {
+      "title": "Naujas slaptažodis",
+      "subtitle": "Pasirinkite naują paskyros slaptažodį.",
+      "newPassword": "Naujas slaptažodis",
+      "submit": "Išsaugoti slaptažodį",
+      "submitting": "Saugome…",
+      "done": "Slaptažodis pakeistas. Dabar galite su juo prisijungti.",
+      "toLogin": "Eiti į prisijungimą",
+      "missingToken": "Šis puslapis veikia tik per nuorodą iš slaptažodžio atkūrimo laiško. Užsisakykite ją prisijungimo puslapyje.",
+      "errors": {
+        "weak_password": "Slaptažodį turi sudaryti bent 10 simbolių.",
+        "invalid_or_expired": "Nuoroda negalioja arba pasibaigė. Užsisakykite naują.",
+        "generic": "Įvyko klaida. Bandykite dar kartą."
+      }
+    },
+    "verify": {
+      "title": "El. pašto patvirtinimas",
+      "success": "El. paštas patvirtintas — jūsų paskyra paruošta.",
+      "failed": "Patvirtinimo nuoroda negalioja arba pasibaigė.",
+      "failedHint": "Nuorodos galioja 24 valandas. Registruokitės iš naujo arba susisiekite — padėsime.",
+      "toLogin": "Prisijungti"
+    },
+    "account": {
+      "title": "Mano paskyra",
+      "greeting": "Sveiki, {name}",
+      "planHeading": "Jūsų planas",
+      "noPlan": "Planas dar nepasirinktas",
+      "noPlanHint": "Norėdami pradėti statyti, pasirinkite planą ir įneškite depozitą — susisiekite, viską paaiškinsime.",
+      "logout": "Atsijungti",
+      "plans": {
+        "starter": "Pradedantysis",
+        "minimal": "Minimalus",
+        "standard": "Standartinis",
+        "premium": "Premium",
+        "professional": "Profesionalus"
+      }
+    },
+    "emails": {
+      "verify": {
+        "subject": "Patvirtinkite savo SmartAutoBid el. paštą",
+        "greeting": "Sveiki prisijungę prie SmartAutoBid!",
+        "instruction": "Paspauskite nuorodą žemiau, kad patvirtintumėte el. pašto adresą:",
+        "expiry": "Nuoroda galioja 24 valandas."
+      },
+      "reset": {
+        "subject": "SmartAutoBid slaptažodžio atkūrimas",
+        "greeting": "Jūsų paskyrai buvo užsakytas slaptažodžio atkūrimas.",
+        "instruction": "Paspauskite nuorodą žemiau ir pasirinkite naują slaptažodį. Jei to neužsakėte, tiesiog ignoruokite šį laišką:",
+        "expiry": "Nuoroda galioja 1 valandą."
+      },
+      "signature": "— {site} komanda"
+    }
   }
 }
