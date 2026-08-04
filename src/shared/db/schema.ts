@@ -119,8 +119,17 @@ export const deposits = pgTable(
     status: text("status", { enum: ["pending", "confirmed", "refund_requested", "refunded"] })
       .notNull()
       .default("pending"),
-    /** Which admin confirmed/refunded — accountability, not decoration. */
-    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    /**
+     * Which admin confirmed/refunded — accountability, not decoration.
+     *
+     * `set null` rather than the default restrict: without it, deleting any
+     * staff account fails with a foreign-key error because it once approved
+     * a deposit, which would make an account-deletion request (GDPR) fail on
+     * a technicality. The deposit row and its reviewedAt survive regardless,
+     * and audit_log independently records who did it and when, so the
+     * accountability trail does not depend on this column alone.
+     */
+    reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -137,8 +146,14 @@ export const auditLog = pgTable(
   "audit_log",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    /** Null actor = the system itself (e.g. scheduled cleanup). */
-    actorId: uuid("actor_id").references(() => users.id),
+    /**
+     * Null actor = the system itself (e.g. scheduled cleanup), or an actor
+     * whose account was later deleted. `set null` for the same reason as
+     * deposits.reviewedBy: an append-only log must never be the thing that
+     * blocks erasing a person. Identifying details belong in `detail`, which
+     * survives the account.
+     */
+    actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
     action: text("action").notNull(),
     targetType: text("target_type"),
     targetId: text("target_id"),

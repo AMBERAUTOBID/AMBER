@@ -10,7 +10,8 @@
     "about": "Apie mus",
     "contact": "Kontaktai",
     "cta": "Gauti nemokamą pasiūlymą",
-    "login": "Prisijungti"
+    "login": "Prisijungti",
+    "plans": "Planai"
   },
   "Footer": {
     "tagline": "Nuo aukciono salės iki jūsų kiemo — dalyvaujame varžytynėse, perkame ir gabename automobilius iš JAV į Europą, Artimuosius Rytus ir kitas šalis.",
@@ -1161,12 +1162,14 @@
       "noPlanHint": "Norėdami pradėti statyti, pasirinkite planą ir įneškite depozitą — susisiekite, viską paaiškinsime.",
       "logout": "Atsijungti",
       "plans": {
-        "starter": "Pradedantysis",
-        "minimal": "Minimalus",
-        "standard": "Standartinis",
-        "premium": "Premium",
-        "professional": "Profesionalus"
-      }
+        "tier1": "Pirmas lygis",
+        "tier2": "Antras lygis",
+        "tier3": "Trečias lygis"
+      },
+      "pendingPlan": "{plan} — laukiama patvirtinimo",
+      "pendingHint": "Jūsų užklausą gavome. Gavus {amount} depozitą, planas aktyvuosis automatiškai.",
+      "viewPlans": "Peržiūrėti planus",
+      "adminConsole": "Administratoriaus pultas"
     },
     "emails": {
       "verify": {
@@ -1182,6 +1185,62 @@
         "expiry": "Nuoroda galioja 1 valandą."
       },
       "signature": "— {site} komanda"
+    }
+  },
+  "Plans": {
+    "metaTitle": "Planai ir depozitai",
+    "metaDescription": "Pasirinkite, kaip dirbsime kartu.",
+    "eyebrow": "Planai",
+    "title": "Pasirinkite, kaip dirbsime kartu",
+    "intro": "Kiekviename plane — asmeninis konsultantas ir visas aptarnavimas: pirkimas, gabenimas ir dokumentai. Depozitas grąžinamas pasibaigus bendradarbiavimui.",
+    "popular": "Populiariausias",
+    "noDeposit": "Be depozito",
+    "noDepositLabel": "pradėkite nemokamai",
+    "refundableDeposit": "grąžinamas depozitas",
+    "choose": "Pasirinkti planą",
+    "chooseSignedOut": "Registruokitės, kad pasirinktumėte",
+    "choosing": "Siunčiame…",
+    "chosen": "Užklausa pateikta",
+    "requestedHint": "Užklausą gavome. Susisieksime su jumis ir atsiųsime rekvizitus — planas aktyvuojamas gavus depozitą.",
+    "alreadyPending": "Jau turite plano užklausą, laukiančią patvirtinimo. Su jumis susisieksime.",
+    "requestError": "Įvyko klaida. Bandykite dar kartą arba susisiekite su mumis.",
+    "footnote": "Depozitas grąžinamas per vieną darbo dieną pasibaigus bendradarbiavimui, jei nėra aktyvių statymų. Rodomi preliminarūs skaičiai — kainos tikslinamos.",
+    "features": {
+      "bidLimit": "Statymų limitas iki {amount}",
+      "bidUnlimited": "Neribota statymų galia",
+      "concurrent": "Iki {count} aktyvių statymų vienu metu",
+      "concurrentUnlimited": "Neribotas aktyvių statymų skaičius",
+      "fee": "Bendradarbiavimo kaina: {amount} už lotą",
+      "nightReserve": "Matoma naktinių aukcionų rezervų kaina",
+      "liveAuction": "Dalyvavimas gyvuose aukcionuose",
+      "selfBidding": "Savarankiškas statymas pagal užklausą"
+    },
+    "tiers": {
+      "tier1": {
+        "name": "Pirmas lygis"
+      },
+      "tier2": {
+        "name": "Antras lygis"
+      },
+      "tier3": {
+        "name": "Trečias lygis"
+      }
+    }
+  },
+  "Admin": {
+    "title": "Administratoriaus pultas",
+    "subtitle": "Patvirtinkite depozitus ir aktyvuokite klientų planus.",
+    "queueHeading": "Laukiantys depozitai ({count})",
+    "queueEmpty": "Nėra depozitų, laukiančių patvirtinimo.",
+    "confirmDeposit": "Patvirtinti depozitą",
+    "confirming": "Patvirtiname…",
+    "requestedOn": "Užklausa {date}",
+    "alreadyHandled": "Šis depozitas jau apdorotas.",
+    "actionFailed": "Nepavyko atlikti veiksmo. Bandykite dar kartą.",
+    "tiers": {
+      "tier1": "Pirmas lygis",
+      "tier2": "Antras lygis",
+      "tier3": "Trečias lygis"
     }
   }
 }

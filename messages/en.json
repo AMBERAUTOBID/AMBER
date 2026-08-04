@@ -10,7 +10,8 @@
     "about": "About",
     "contact": "Contact",
     "cta": "Get a Free Quote",
-    "login": "Log in"
+    "login": "Log in",
+    "plans": "Plans"
   },
   "Footer": {
     "tagline": "From the auction lane to your driveway — we bid, buy, and ship U.S. vehicles to Europe, the Middle East, and beyond.",
@@ -1161,12 +1162,14 @@
       "noPlanHint": "To start bidding, choose a plan and place your deposit — contact us and we'll guide you through it.",
       "logout": "Log out",
       "plans": {
-        "starter": "Starter",
-        "minimal": "Minimal",
-        "standard": "Standard",
-        "premium": "Premium",
-        "professional": "Professional"
-      }
+        "tier1": "Tier one",
+        "tier2": "Tier two",
+        "tier3": "Tier three"
+      },
+      "pendingPlan": "{plan} — awaiting confirmation",
+      "pendingHint": "We've received your request. Once your {amount} deposit arrives, your plan activates automatically.",
+      "viewPlans": "View plans",
+      "adminConsole": "Admin console"
     },
     "emails": {
       "verify": {
@@ -1182,6 +1185,62 @@
         "expiry": "The link is valid for 1 hour."
       },
       "signature": "— The {site} team"
+    }
+  },
+  "Plans": {
+    "metaTitle": "Plans & deposits",
+    "metaDescription": "Choose how you work with SmartAutoBid.",
+    "eyebrow": "Plans",
+    "title": "Choose how you work with us",
+    "intro": "Every plan includes a personal consultant and our full buying, shipping and paperwork service. The deposit is refundable and returned when you finish working with us.",
+    "popular": "Most popular",
+    "noDeposit": "No deposit",
+    "noDepositLabel": "get started free",
+    "refundableDeposit": "refundable deposit",
+    "choose": "Choose this plan",
+    "chooseSignedOut": "Register to choose",
+    "choosing": "Sending…",
+    "chosen": "Requested",
+    "requestedHint": "Request received. We'll contact you with transfer details and activate your plan once the deposit arrives.",
+    "alreadyPending": "You already have a plan request awaiting confirmation. We'll be in touch.",
+    "requestError": "Something went wrong. Please try again or contact us.",
+    "footnote": "Deposits are refunded within one working day of finishing your cooperation with us, provided no bids are active. Placeholder figures shown while pricing is finalised.",
+    "features": {
+      "bidLimit": "Bidding limit up to {amount}",
+      "bidUnlimited": "Unlimited bidding power",
+      "concurrent": "Up to {count} active bids at once",
+      "concurrentUnlimited": "Unlimited active bids",
+      "fee": "Service fee: {amount} per lot",
+      "nightReserve": "See night auction reserve prices",
+      "liveAuction": "Take part in live auctions",
+      "selfBidding": "Self-bidding available on request"
+    },
+    "tiers": {
+      "tier1": {
+        "name": "Tier one"
+      },
+      "tier2": {
+        "name": "Tier two"
+      },
+      "tier3": {
+        "name": "Tier three"
+      }
+    }
+  },
+  "Admin": {
+    "title": "Admin console",
+    "subtitle": "Confirm deposits and activate client plans.",
+    "queueHeading": "Pending deposits ({count})",
+    "queueEmpty": "No deposits awaiting confirmation.",
+    "confirmDeposit": "Confirm deposit",
+    "confirming": "Confirming…",
+    "requestedOn": "Requested {date}",
+    "alreadyHandled": "That deposit was already handled.",
+    "actionFailed": "Action failed. Please try again.",
+    "tiers": {
+      "tier1": "Tier one",
+      "tier2": "Tier two",
+      "tier3": "Tier three"
     }
   }
 }

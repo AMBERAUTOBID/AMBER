@@ -3,16 +3,24 @@
  * gets the same treatment as the cost model: exhaustive tests, run in CI on
  * every push. A red test here means the rules governing real customers'
  * access and money moved — deliberately or not.
+ *
+ * These tests are written to survive the plan table being rewritten with
+ * real numbers: they derive their expectations FROM plans.ts rather than
+ * restating its figures, so filling in the real values can't silently
+ * invalidate them. The handful of assertions that do hardcode something are
+ * business rules, not numbers — e.g. "exactly one tier may self-bid".
  */
 import { describe, expect, it } from "vitest";
 import { can, type Actor } from "./can";
 import { PLANS, PLAN_KEYS, type PlanKey } from "./plans";
 
+const MID_TIER: PlanKey = "tier2";
+
 function client(overrides: Partial<Actor> = {}): Actor {
   return {
     role: "client",
     emailVerified: true,
-    activePlanKey: "standard",
+    activePlanKey: MID_TIER,
     selfBiddingGranted: false,
     ...overrides,
   };
@@ -32,51 +40,43 @@ describe("gatekeeping order", () => {
   });
 });
 
-describe("bid amount limits per plan", () => {
-  // [plan, a bid the plan must allow, a bid it must refuse (null = unlimited)]
-  const cases: Array<[PlanKey, number, number | null]> = [
-    ["starter", 999_999, null],
-    ["minimal", 5_000, 5_001],
-    ["standard", 15_000, 15_001],
-    ["premium", 30_000, 30_001],
-    ["professional", 999_999, null],
-  ];
+describe("bid amount limits — derived from the plan table", () => {
+  for (const key of PLAN_KEYS) {
+    const cap = PLANS[key].maxBidUsd;
 
-  for (const [plan, okAmount, overAmount] of cases) {
-    it(`${plan}: allows $${okAmount}`, () => {
-      const d = can(client({ activePlanKey: plan }), {
-        type: "place_bid_request",
-        amountUsd: okAmount,
-        activeBidCount: 0,
-      });
-      expect(d.allowed).toBe(true);
-    });
-
-    if (overAmount !== null) {
-      it(`${plan}: refuses $${overAmount}`, () => {
-        const d = can(client({ activePlanKey: plan }), {
+    if (cap === null) {
+      it(`${key}: unlimited bid amount`, () => {
+        const d = can(client({ activePlanKey: key }), {
           type: "place_bid_request",
-          amountUsd: overAmount,
+          amountUsd: 10_000_000,
           activeBidCount: 0,
         });
-        expect(d).toEqual({ allowed: false, reason: "bid_amount_over_plan_limit" });
+        expect(d.allowed).toBe(true);
+      });
+    } else {
+      it(`${key}: allows exactly $${cap}, refuses $${cap + 1}`, () => {
+        const at = can(client({ activePlanKey: key }), {
+          type: "place_bid_request",
+          amountUsd: cap,
+          activeBidCount: 0,
+        });
+        expect(at.allowed).toBe(true);
+
+        const over = can(client({ activePlanKey: key }), {
+          type: "place_bid_request",
+          amountUsd: cap + 1,
+          activeBidCount: 0,
+        });
+        expect(over).toEqual({ allowed: false, reason: "bid_amount_over_plan_limit" });
       });
     }
   }
-
-  it("a bid exactly at the limit is allowed — the limit is inclusive", () => {
-    const d = can(client({ activePlanKey: "minimal" }), {
-      type: "place_bid_request",
-      amountUsd: PLANS.minimal.maxBidUsd!,
-      activeBidCount: 0,
-    });
-    expect(d.allowed).toBe(true);
-  });
 });
 
-describe("concurrent bid limits per plan", () => {
+describe("concurrent bid limits — derived from the plan table", () => {
   for (const key of PLAN_KEYS) {
     const limit = PLANS[key].maxConcurrentBids;
+
     if (limit === null) {
       it(`${key}: unlimited concurrency`, () => {
         const d = can(client({ activePlanKey: key }), {
@@ -121,29 +121,31 @@ describe("night reserve and live auction visibility", () => {
 });
 
 describe("self-bidding: plan eligibility AND per-user grant, in that order", () => {
-  it("ineligible plan refuses even a granted user — the grant can't outrank the plan", () => {
-    const d = can(client({ activePlanKey: "standard", selfBiddingGranted: true }), {
-      type: "self_bid",
+  const eligible = PLAN_KEYS.filter((k) => PLANS[k].selfBiddingEligible);
+  const ineligible = PLAN_KEYS.filter((k) => !PLANS[k].selfBiddingEligible);
+
+  it("exactly one tier is self-bidding eligible — widening this is a business decision, not a refactor", () => {
+    expect(eligible).toHaveLength(1);
+  });
+
+  for (const key of ineligible) {
+    it(`${key}: refuses even a granted user — the grant can't outrank the plan`, () => {
+      const d = can(client({ activePlanKey: key, selfBiddingGranted: true }), { type: "self_bid" });
+      expect(d).toEqual({ allowed: false, reason: "self_bidding_not_eligible" });
     });
-    expect(d).toEqual({ allowed: false, reason: "self_bidding_not_eligible" });
-  });
+  }
 
-  it("eligible plan without the admin grant is refused — buying the top plan alone unlocks nothing", () => {
-    const d = can(client({ activePlanKey: "professional" }), { type: "self_bid" });
-    expect(d).toEqual({ allowed: false, reason: "self_bidding_not_granted" });
-  });
-
-  it("eligible plan plus the grant is allowed", () => {
-    const d = can(client({ activePlanKey: "professional", selfBiddingGranted: true }), {
-      type: "self_bid",
+  for (const key of eligible) {
+    it(`${key}: without the admin grant is refused — buying the top plan alone unlocks nothing`, () => {
+      const d = can(client({ activePlanKey: key }), { type: "self_bid" });
+      expect(d).toEqual({ allowed: false, reason: "self_bidding_not_granted" });
     });
-    expect(d.allowed).toBe(true);
-  });
 
-  it("exactly one plan is self-bidding eligible — widening this is a business decision, not a refactor", () => {
-    const eligible = PLAN_KEYS.filter((k) => PLANS[k].selfBiddingEligible);
-    expect(eligible).toEqual(["professional"]);
-  });
+    it(`${key}: with the grant is allowed`, () => {
+      const d = can(client({ activePlanKey: key, selfBiddingGranted: true }), { type: "self_bid" });
+      expect(d.allowed).toBe(true);
+    });
+  }
 });
 
 describe("admin", () => {
@@ -172,7 +174,7 @@ describe("admin", () => {
 });
 
 describe("catalogue sanity — these fail if a plans.ts edit breaks an invariant", () => {
-  it("every plan has non-negative money fields", () => {
+  it("every plan has sane money fields", () => {
     for (const key of PLAN_KEYS) {
       expect(PLANS[key].depositCents).toBeGreaterThanOrEqual(0);
       expect(PLANS[key].feePerLotCents).toBeGreaterThan(0);
@@ -186,9 +188,20 @@ describe("catalogue sanity — these fail if a plans.ts edit breaks an invariant
     }
   });
 
+  it("bid caps never decrease as tiers go up (null = unlimited, ranks last)", () => {
+    const caps = PLAN_KEYS.map((k) => PLANS[k].maxBidUsd ?? Number.POSITIVE_INFINITY);
+    for (let i = 1; i < caps.length; i++) {
+      expect(caps[i]).toBeGreaterThanOrEqual(caps[i - 1]);
+    }
+  });
+
   it("plan keys match their table entries", () => {
     for (const key of PLAN_KEYS) {
       expect(PLANS[key].key).toBe(key);
     }
+  });
+
+  it("exactly one tier is featured on the plans page", () => {
+    expect(PLAN_KEYS.filter((k) => PLANS[k].featured)).toHaveLength(1);
   });
 });
