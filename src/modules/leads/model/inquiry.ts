@@ -43,7 +43,14 @@ export function parseInquiry(body: unknown): InquiryEnvelope | null {
   if (!body || typeof body !== "object") return null;
   const raw = body as Record<string, unknown>;
 
-  const name = asString(raw.name).trim();
+  // Collapsing all whitespace runs (including CR/LF) to single spaces is
+  // header-injection hardening, not cosmetics: the name is interpolated into
+  // the notification email's Subject header, and a newline smuggled into a
+  // header is how SMTP injection attacks start. nodemailer sanitizes too —
+  // this makes us safe even if that ever regresses.
+  const name = asString(raw.name).replace(/\s+/g, " ").trim();
+  // The email regex rejects all whitespace outright (\S only), which keeps
+  // CR/LF out of the Reply-To header by construction.
   const email = asString(raw.email);
   if (!name || !/^\S+@\S+\.\S+$/.test(email)) return null;
 
