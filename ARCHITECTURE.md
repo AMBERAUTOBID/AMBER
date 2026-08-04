@@ -146,27 +146,43 @@ These are not style preferences. Breaking one causes a real defect.
 
 ---
 
-## 6. Phase 2 — planned, not built
+## 6. Phase 2 — in progress
 
-Phase 2 is a client login with real Copart/IAAI bidding. The current structure
-leaves specific room for it; these are the intended slots, deliberately empty
-today:
+Phase 2 is the client login and bid-management system. Foundations landed
+2026-08: Neon Postgres (Frankfurt) via the Vercel integration, Drizzle ORM,
+`shared/db/` (schema + lazy client), and `modules/plans/`. Still to come:
+`modules/auth/`, `modules/bidding/`, `modules/account/`, `modules/admin/`, and
+the `(marketing)` / `(app)` route-group split.
 
-- `app/[locale]/(marketing)/` and `app/[locale]/(app)/` — route groups splitting
-  public pages from the authenticated area, which needs its own layout. Today's
-  `[locale]/layout.tsx` is the marketing layout; it moves into `(marketing)/`
-  when the app area lands.
-- `modules/auth/` — sessions and identity.
-- `modules/bidding/` — placing and tracking bids.
-- `modules/account/` — order and bid history.
-- A persistence layer. The site has none today: every dynamic value is fetched
-  live and cached. Phase 2 is where a database first becomes necessary.
+Decisions now settled — do not relitigate casually:
 
-**Open decision that must not be made casually:** the plan has clients bidding
-with *their own* auction credentials. Storing third-party credentials is a
-materially different security posture from anything the site does today. Decide
-the approach deliberately — delegated/token-based access is strongly preferable
-to holding customer passwords in any form.
+- **SmartAutoBid places bids on clients' behalf.** Clients do NOT bid with
+  their own Copart/IAAI credentials, which eliminates the third-party
+  credential-storage problem for everyone. The lone exception: the top plan is
+  *eligible* for live self-bidding, granted per-user by an admin after a
+  mandatory contact step (`users.selfBiddingGrantedAt`). Its security design
+  is deliberately deferred until that feature is actually built.
+- **`modules/plans/model/plans.ts` is the only place plan limits exist**, and
+  `can()` in the same folder is the only authorization decision point. No
+  other code may hard-code a plan name or limit; every gate — UI, API route,
+  admin console — calls `can()`, and API routes must call it server-side
+  regardless of what the UI already checked. Its tests are exhaustive because
+  they test the real security boundary. All plan *numbers* are PLACEHOLDERS
+  (invariant #4) until the owner supplies real ones.
+- **Sessions are database rows, not JWTs** — withdrawing a deposit must kill
+  access instantly, and a signed token can't be recalled. Cookies hold a
+  random token; the DB stores only its SHA-256 (same for email-verification
+  and reset tokens).
+- **Money is integer cents.** Everywhere. €500 is `50000`.
+- **No card payments in Phase 2.** Deposits arrive by bank transfer and an
+  admin confirms them (`deposits.status`, `reviewedBy`) — matching how the
+  business actually runs, and keeping PCI scope and chargebacks out entirely.
+- **The schema is one file** (`shared/db/schema.ts`) — a deliberate exception
+  to "shared/ knows no business", because foreign keys cross module lines.
+  Modules own behavior; the schema file owns shape. Migrations are generated
+  SQL committed under `drizzle/` (`npm run db:generate` / `db:migrate`).
+- **The pre-launch gate is not auth** (§7) and `modules/auth` must not build
+  on it.
 
 ---
 

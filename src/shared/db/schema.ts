@@ -1,0 +1,189 @@
+/**
+ * The relational schema — every table the application owns.
+ *
+ * One file rather than per-module fragments, and that is a deliberate
+ * exception to "shared/ knows no business": foreign keys cross module
+ * boundaries (a deposit references a user; an audit row references both), so
+ * splitting the schema by module would force circular imports or duplicate
+ * table definitions. Modules own the *behavior* around these tables; this
+ * file owns only their shape. See ARCHITECTURE.md §6.
+ *
+ * Conventions:
+ * - Money is integer cents/minor units, never floats — €500 is 50000. The
+ *   pricing module learned this lesson already; the same rule applies here.
+ * - Timestamps are timestamptz, set by the database (defaultNow), so rows
+ *   can't lie about when they were created even if app-server clocks drift.
+ * - Soft business state (plan, deposit) lives in its own table with history,
+ *   not as mutable columns on users — an admin question like "when was this
+ *   deposit confirmed and by whom" must always be answerable.
+ */
+import { sql, type SQL } from "drizzle-orm";
+import {
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  type AnyPgColumn,
+} from "drizzle-orm/pg-core";
+
+/** lower() for the functional unique index on users.email. */
+function sqlLower(col: AnyPgColumn): SQL {
+  return sql`lower(${col})`;
+}
+
+/**
+ * Identity only — what a person needs to log in and be addressed. Their
+ * commercial state (plan, deposit, bids) lives in the tables below.
+ *
+ * `selfBiddingGrantedAt`: the plan makes a client *eligible* for live
+ * self-bidding; this column records an admin actually *granting* it after the
+ * mandatory contact step. Two different facts, two different places — a plan
+ * purchase must never silently unlock live bidding.
+ */
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    /** Argon2id hash — never a password, never reversible. */
+    passwordHash: text("password_hash").notNull(),
+    name: text("name").notNull(),
+    phone: text("phone"),
+    /** UI locale (en/ru/lt) so emails arrive in the user's language. */
+    locale: text("locale").notNull().default("en"),
+    role: text("role", { enum: ["client", "admin"] })
+      .notNull()
+      .default("client"),
+    /** Null until the verification link is clicked; gates login. */
+    emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+    /** Which plan row is active. Null = registered but no plan chosen yet. */
+    activePlanKey: text("active_plan_key"),
+    selfBiddingGrantedAt: timestamp("self_bidding_granted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // Unique on lower(email) so Foo@x.com can't register alongside foo@x.com.
+    uniqueIndex("users_email_lower_idx").on(sqlLower(t.email)),
+  ]
+);
+
+/**
+ * Server-side sessions, one row per logged-in browser. DB-backed rather than
+ * JWT by explicit decision: when a deposit is withdrawn or an account is
+ * frozen, an admin deletes the rows and access dies *now* — a signed token
+ * would stay valid until expiry with no way to recall it.
+ *
+ * `tokenHash`: the cookie holds a random token; we store only its SHA-256.
+ * A leaked database dump therefore contains nothing that logs anyone in.
+ */
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tokenHash: text("token_hash").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Coarse context for the account's "active sessions" view and audits. */
+    userAgent: text("user_agent"),
+    ip: text("ip"),
+  },
+  (t) => [
+    uniqueIndex("sessions_token_hash_idx").on(t.tokenHash),
+    index("sessions_user_id_idx").on(t.userId),
+  ]
+);
+
+/**
+ * One row per deposit lifecycle event-holder — requested, then confirmed or
+ * refunded by a named admin. Deposits arrive by bank transfer and are
+ * confirmed manually (decision: no card payments in Phase 2; PCI scope and
+ * chargebacks are not worth it while the business runs on transfers).
+ */
+export const deposits = pgTable(
+  "deposits",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    planKey: text("plan_key").notNull(),
+    /** Integer euro cents. €1500 = 150000. */
+    amountCents: integer("amount_cents").notNull(),
+    status: text("status", { enum: ["pending", "confirmed", "refund_requested", "refunded"] })
+      .notNull()
+      .default("pending"),
+    /** Which admin confirmed/refunded — accountability, not decoration. */
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("deposits_user_id_idx").on(t.userId), index("deposits_status_idx").on(t.status)]
+);
+
+/**
+ * Append-only record of consequential actions: who did what to whom, when.
+ * Written by the code paths that change money- or access-relevant state
+ * (deposit confirmation, plan assignment, self-bidding grant, admin login).
+ * Nothing ever updates or deletes rows here.
+ */
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** Null actor = the system itself (e.g. scheduled cleanup). */
+    actorId: uuid("actor_id").references(() => users.id),
+    action: text("action").notNull(),
+    targetType: text("target_type"),
+    targetId: text("target_id"),
+    /** Free-form context: old/new values, request metadata. */
+    detail: jsonb("detail"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("audit_log_actor_idx").on(t.actorId), index("audit_log_action_idx").on(t.action)]
+);
+
+/**
+ * Rate-limit counters (login attempts, contact form, password resets), keyed
+ * by e.g. "login:1.2.3.4". A table instead of Redis because the volumes here
+ * are tiny and it saves provisioning a second store before Phase 2 needs one;
+ * swap for Upstash if these counters ever become hot.
+ */
+export const rateLimits = pgTable(
+  "rate_limits",
+  {
+    key: text("key").primaryKey(),
+    count: integer("count").notNull().default(0),
+    windowStartedAt: timestamp("window_started_at", { withTimezone: true }).notNull().defaultNow(),
+  }
+);
+
+/**
+ * Email verification + password reset tokens. Same hashing rule as sessions:
+ * the emailed link carries the token, the row stores only the hash.
+ */
+export const actionTokens = pgTable(
+  "action_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tokenHash: text("token_hash").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    purpose: text("purpose", { enum: ["verify_email", "reset_password"] }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    /** Set on first use — tokens are strictly single-use. */
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("action_tokens_hash_idx").on(t.tokenHash),
+    index("action_tokens_user_idx").on(t.userId),
+  ]
+);
