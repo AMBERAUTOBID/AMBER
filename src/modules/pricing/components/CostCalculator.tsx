@@ -30,6 +30,7 @@ import {
   CORE_VEHICLE_BASE_SHIPPING,
   auctionFeesUsd,
   customsBreakdown,
+  isUsaBuiltVin,
   type CoreVehicleKind,
 } from "@/modules/pricing/model/costEstimate";
 import { formatUsd, formatEur } from "@/modules/pricing/model/format";
@@ -135,6 +136,7 @@ export default function CostCalculator() {
   const [pickup, setPickup] = useState("");
   const [port, setPort] = useState(PORT_OPTIONS[0]);
   const [email, setEmail] = useState("");
+  const [vin, setVin] = useState("");
   const [usaMade, setUsaMade] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -143,6 +145,14 @@ export default function CostCalculator() {
   const selectedMoreKind = MORE_VEHICLE_KINDS.includes(vehicleKind as MoreVehicleKind)
     ? (vehicleKind as MoreVehicleKind)
     : null;
+  // A VIN states where the car was actually assembled, so once one is entered
+  // it decides the duty and the checkbox stops being editable — same rule as
+  // the per-lot panel. Ticking "made in USA" on a car the VIN says was built
+  // in Japan would quote a waiver customs would never grant.
+  const detectedUsaMade = isUsaBuiltVin(vin);
+  const originKnown = detectedUsaMade !== null;
+  const effectiveUsaMade = originKnown ? detectedUsaMade : usaMade;
+
   const isQuoteOnlyPort = QUOTE_ONLY_DESTINATION_PORTS.includes(port);
   const emailRequired = EMAIL_REQUIRED_KINDS.includes(vehicleKind) || isQuoteOnlyPort;
   const canCalculate = !emailRequired || email.trim().length > 0;
@@ -167,7 +177,7 @@ export default function CostCalculator() {
           vehicle: `${vehicleKind} via ${auction}${pickup ? ` from ${pickup}` : ""}`,
           message: `Quote request — no instant pricing for destination: ${port}. Lot price: $${
             Number(price) || 0
-          }, USA-made: ${usaMade}.`,
+          }, USA-made: ${effectiveUsaMade}${vin.trim() ? `, VIN: ${vin.trim()}` : ""}.`,
         }),
       })
         .then(() => setQuoteRequested(true))
@@ -190,7 +200,7 @@ export default function CostCalculator() {
       lotPriceUsd: lotPrice,
       shippingUsd: shipping,
       destinationPort: port,
-      usaMade,
+      usaMade: effectiveUsaMade,
     });
     const totalUsd = lotPrice + auctionFees + brokerageFee + trucking + shipping + duty + vat;
 
@@ -215,9 +225,9 @@ export default function CostCalculator() {
           name: "Price calculator lead",
           email: email.trim(),
           vehicle: `${vehicleKind} via ${auction}${pickup ? ` from ${pickup}` : ""}`,
-          message: `Calculator estimate — price: $${lotPrice}, port: ${port}, USA-made: ${usaMade}, total: ~€${Math.round(
-            totalUsd * USD_TO_EUR
-          )}`,
+          message: `Calculator estimate — price: $${lotPrice}, port: ${port}, USA-made: ${effectiveUsaMade}${
+            vin.trim() ? `, VIN: ${vin.trim()}` : ""
+          }, total: ~€${Math.round(totalUsd * USD_TO_EUR)}`,
         }),
       })
         .catch(() => {})
@@ -387,15 +397,41 @@ export default function CostCalculator() {
               className="mt-3 w-full rounded-xl border border-char-200 bg-char-50 px-4 py-3 text-sm outline-none focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
             />
 
-            <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-char-600">
+            <input
+              type="text"
+              value={vin}
+              onChange={(e) => setVin(e.target.value)}
+              placeholder={t("vinPlaceholder")}
+              maxLength={17}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              className="mt-3 w-full rounded-xl border border-char-200 bg-char-50 px-4 py-3 font-mono text-sm uppercase tracking-wider outline-none focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
+            />
+
+            <label
+              className={clsx(
+                "mt-3 flex items-center gap-2 text-sm text-char-600",
+                originKnown ? "cursor-default" : "cursor-pointer"
+              )}
+            >
               <input
                 type="checkbox"
-                checked={usaMade}
+                checked={effectiveUsaMade}
                 onChange={(e) => setUsaMade(e.target.checked)}
-                className="h-4 w-4 rounded accent-amber-500"
+                disabled={originKnown}
+                className="h-4 w-4 rounded accent-amber-500 disabled:opacity-60"
               />
               {t("usaMade")}
             </label>
+            {originKnown && (
+              <p className="mt-1.5 text-xs text-char-500">
+                {detectedUsaMade ? t("usaMadeFromVin") : t("notUsaMadeFromVin")}
+              </p>
+            )}
+            {effectiveUsaMade && (
+              <p className="mt-1.5 text-xs text-char-500">{t("usaMadeProofNote")}</p>
+            )}
 
             <button
               type="button"

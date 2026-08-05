@@ -8,6 +8,7 @@
  * as `null` so the caller can omit the row entirely. Never a `0`, never a
  * dash — either would state something the auction house never claimed.
  */
+import { isUsaBuiltVin } from "@/modules/pricing/model/costEstimate";
 import type {
   IaaiValuation,
   LotDeepSpecs,
@@ -135,13 +136,18 @@ export function extractMediaExtras(vehicle: VehicleListItem): LotMediaExtras {
 /**
  * Whether the car was built in the USA — decides if the 2026 EU-US trade
  * deal's 0% duty applies (see PORT_CUSTOMS in the pricing module). Returns
- * null when the source didn't say, so callers can fall back to the
- * conservative "assume duty applies" rather than silently claiming a waiver.
+ * null when neither the payload nor the VIN can say, so callers can fall back
+ * to the conservative "assume duty applies" rather than silently claiming a
+ * waiver.
+ *
+ * A country stated by the auction house wins over the VIN: it's the field a
+ * customs officer would be shown, and on the rare lot where the two disagree
+ * the stated one is what the paperwork will have to match.
  */
 export function isUsaManufactured(vehicle: VehicleListItem): boolean | null {
   const origin =
     rawStr(vehicle.details?.vehicle_description, "ManufacturedIn") ??
     rawStr(vehicle.details?.attributes, "CountryOfOrigin");
-  if (!origin) return null;
-  return /^(usa|united states)/i.test(origin);
+  if (origin) return /^(usa|united states)/i.test(origin);
+  return isUsaBuiltVin(vehicle.vin);
 }

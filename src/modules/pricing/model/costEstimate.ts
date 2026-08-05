@@ -57,6 +57,32 @@ export const PORT_CUSTOMS: Record<string, { vat: number; duty: number; dutyWaive
   "Poti, Georgia": { vat: 0.18, duty: 0.05, dutyWaivedForUsaMade: false },
 };
 
+/**
+ * Country of assembly read off the VIN's first character (the first digit of
+ * the World Manufacturer Identifier). 1, 4 and 5 are the United States; every
+ * other assigned code is somewhere else.
+ *
+ * Lives here rather than with the lot-payload readers because origin is a
+ * pricing input — it decides whether the 0% duty above applies — and both the
+ * lot pages and the standalone calculator need it. Copart sends no country
+ * field at all, so without this roughly half the inventory is quoted with a
+ * 10% duty it doesn't owe.
+ *
+ * Returns null rather than false for anything that isn't a well-formed modern
+ * VIN: pre-1981 cars use shorter formats whose first character carries no
+ * country meaning, and guessing "not American" there would reintroduce the
+ * same overcharge from the other direction.
+ */
+export function isUsaBuiltVin(vin: string | null | undefined): boolean | null {
+  const trimmed = vin?.trim().toUpperCase();
+  // I, O and Q are excluded from the VIN alphabet precisely so they can't be
+  // confused with 1 and 0, so their presence means this isn't a real VIN.
+  if (!trimmed || trimmed.length !== 17 || /[IOQ]/.test(trimmed)) return null;
+  const wmiCountry = trimmed[0];
+  if (!/[A-HJ-NPR-Z0-9]/.test(wmiCountry)) return null;
+  return wmiCountry === "1" || wmiCountry === "4" || wmiCountry === "5";
+}
+
 export const TRUCKING_FLAT_USD = 450;
 export const BROKERAGE_FEE_USD = 350;
 export const USD_TO_EUR = 0.92;

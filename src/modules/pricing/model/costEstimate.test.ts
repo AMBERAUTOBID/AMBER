@@ -22,6 +22,7 @@ import {
   estimateLandedCost,
   estimateVehicleCost,
   inferCoreVehicleKind,
+  isUsaBuiltVin,
   normalizeApibaraLocation,
   BROKERAGE_FEE_USD,
   CORE_VEHICLE_BASE_SHIPPING,
@@ -303,5 +304,65 @@ describe("estimateLandedCost", () => {
     const low = estimateLandedCost({ ...input, lotPriceUsd: 5_000 });
     const high = estimateLandedCost({ ...input, lotPriceUsd: 20_000 });
     expect(high.totalUsd).toBeGreaterThan(low.totalUsd);
+  });
+});
+
+/**
+ * RULES. Origin decides whether the 0% duty applies, so a wrong answer here
+ * moves a real quote by thousands of euros in either direction — hence the
+ * emphasis on "unknown" staying unknown rather than defaulting either way.
+ */
+describe("isUsaBuiltVin", () => {
+  it("reads 1, 4 and 5 as United States assembly", () => {
+    expect(isUsaBuiltVin("1FTZR15V3XTA88607")).toBe(true);
+    expect(isUsaBuiltVin("4T1BF1FK5CU513879")).toBe(true);
+    expect(isUsaBuiltVin("5UXCW2C09N9M57894")).toBe(true);
+  });
+
+  it("reads other assigned country codes as not United States", () => {
+    expect(isUsaBuiltVin("2HGFC2F59KH542891")).toBe(false); // Canada
+    expect(isUsaBuiltVin("3VWDX7AJ5DM123456")).toBe(false); // Mexico
+    expect(isUsaBuiltVin("JTJBC1BA5A2013390")).toBe(false); // Japan
+    expect(isUsaBuiltVin("WBA3A5C51DF123456")).toBe(false); // Germany
+    expect(isUsaBuiltVin("KMHD35LH5FU123456")).toBe(false); // South Korea
+  });
+
+  it("is case- and whitespace-insensitive", () => {
+    expect(isUsaBuiltVin("  1ftzr15v3xta88607  ")).toBe(true);
+  });
+
+  it("returns null for anything that isn't a well-formed modern VIN", () => {
+    expect(isUsaBuiltVin(null)).toBeNull();
+    expect(isUsaBuiltVin(undefined)).toBeNull();
+    expect(isUsaBuiltVin("")).toBeNull();
+    expect(isUsaBuiltVin("   ")).toBeNull();
+    // Pre-1981 short format: the leading digit carries no country meaning, so
+    // calling it "not American" would wrongly add 10% duty to a US classic.
+    expect(isUsaBuiltVin("1234567890")).toBeNull();
+    expect(isUsaBuiltVin("1FTZR15V3XTA886071")).toBeNull();
+  });
+
+  it("rejects VINs containing I, O or Q, which the VIN alphabet excludes", () => {
+    expect(isUsaBuiltVin("1FTZR15V3XTA8860O")).toBeNull();
+    expect(isUsaBuiltVin("1FTZRI5V3XTA88607")).toBeNull();
+    expect(isUsaBuiltVin("1FTZRQ5V3XTA88607")).toBeNull();
+  });
+
+  it("feeds the duty waiver: the same lot costs less once the VIN says US-built", () => {
+    const base = {
+      vehicleKind: "suv" as const,
+      lotPriceUsd: 29_650,
+      pickupLocation: "Sayreville, NJ",
+      auctionNetwork: "copart" as const,
+      destinationPort: "Klaipėda, Lithuania",
+    };
+    const withVin = estimateLandedCost({
+      ...base,
+      usaMade: isUsaBuiltVin("5UXCW2C09N9M57894") ?? false,
+    });
+    const without = estimateLandedCost({ ...base, usaMade: false });
+    expect(withVin.destinationSide.dutyUsd).toBe(0);
+    expect(without.destinationSide.dutyUsd).toBeGreaterThan(0);
+    expect(withVin.totalEur).toBeLessThan(without.totalEur);
   });
 });
