@@ -148,11 +148,16 @@ These are not style preferences. Breaking one causes a real defect.
 
 ## 6. Phase 2 — in progress
 
-Phase 2 is the client login and bid-management system. Foundations landed
-2026-08: Neon Postgres (Frankfurt) via the Vercel integration, Drizzle ORM,
-`shared/db/` (schema + lazy client), and `modules/plans/`. Still to come:
-`modules/auth/`, `modules/bidding/`, `modules/account/`, `modules/admin/`, and
-the `(marketing)` / `(app)` route-group split.
+Phase 2 is the client login and bid-management system.
+
+**Built:** Neon Postgres (Frankfurt) via the Vercel integration, Drizzle ORM,
+`shared/db/`, `modules/auth/` (register, login, email verification, password
+reset, DB sessions, rate limiting), `modules/plans/` (catalogue, `can()`,
+deposits, the confirmation dialog), `/plans`, and the admin deposit queue at
+`app/[locale]/admin`.
+
+**Next:** the client account area — see §6a. Then `modules/bidding/` (2.3) and
+order history (2.4).
 
 Decisions now settled — do not relitigate casually:
 
@@ -183,6 +188,91 @@ Decisions now settled — do not relitigate casually:
   SQL committed under `drizzle/` (`npm run db:generate` / `db:migrate`).
 - **The pre-launch gate is not auth** (§7) and `modules/auth` must not build
   on it.
+
+---
+
+## 6a. The client account area — designed, not built
+
+The signed-in client dashboard. Shape agreed 2026-08-05 after reviewing how
+bidplius.lt and vinas.lt present theirs; build it in `modules/account/` under
+an `(app)` route group.
+
+### Layout: sidebar, not tabs
+
+vinas.lt uses horizontal tabs, bidplius a left sidebar. **Sidebar**, because
+tabs stop working past ~5 entries and the eventual list is longer, and because
+every section then has its own URL — so an email can link a client straight to
+their plan. Collapses to a horizontal scroller on mobile.
+
+```
+/account            overview — plan status, recent activity
+/account/details    name, phone, language, change password
+/account/plan       current plan, or pending request + cancel
+/account/bids       Phase 2.3
+/account/watchlist  Phase 2.4
+/account/orders     Phase 2.4
+```
+
+**Build a section only when it has real data behind it.** An empty "Carfax
+reports" tab promises a product that doesn't exist. Today that means overview,
+details and plan; the rest appear with their features.
+
+Two entries on bidplius's sidebar are deliberately NOT ours: **Messages with
+the team** (the real channel is WhatsApp/Telegram — a second inbox somebody
+must remember to check is worse than none) and **Carfax reports** (a paid
+integration, not a dashboard page). One IS worth copying: **cancel a pending
+plan request**, which keeps the admin queue free of abandoned ones.
+
+### The header problem — decide before writing code
+
+`Header.tsx` is **static on purpose**: it never reads the session, which is
+what lets the marketing pages pre-render. Showing "Nojus ▾" instead of "Log
+in" means knowing who is asking, and that would make the homepage, About and
+Terms render per-request — losing static generation on exactly the pages SEO
+depends on.
+
+Chosen approach: **a client-side account widget.** The header stays static; a
+small component calls a lightweight `/api/auth/me` once and swaps the button.
+Render *nothing* in that slot until it resolves (~100ms) — showing "Log in" to
+someone who is signed in is what looks broken, not a brief gap.
+
+Rejected: server-rendering the header everywhere (costs static generation on
+every marketing page), and splitting headers per route group (correct, but two
+components to keep in sync for one button).
+
+### ⚠️ Do not collect national ID or IBAN yet
+
+bidplius's "My details" form collects **asmens kodas** (national identity
+number) and **IBAN**. Both are sensitive personal data under GDPR and change
+our obligations materially: lawful basis, retention limits, encryption at
+rest, breach notification. **Collect neither until invoices are actually
+issued**, and treat that as a security design task, not a form field. Name,
+address, phone and VAT number are ordinary business data and fine.
+
+Likewise vinas.lt's phone-verified ✓/✗ marker: phone verification means SMS,
+a paid provider and a per-signup cost. Show the number, don't verify it, until
+there is a reason.
+
+### Suggested build order
+
+1. `/api/auth/me` + the header account widget — unblocks everything else
+2. `(app)` route group and the sidebar shell
+3. `/account/plan` — move today's plan panel there, add cancel-request
+4. `/account/details` — name, phone, language, change password
+5. Notification emails on plan request (see below)
+
+Steps 1–2 are the architectural ones; the rest is filling in pages.
+
+### Known gap: nobody is told a request arrived
+
+A plan request writes a pending row and appears in the admin queue — **no
+email is sent to anyone**. The client is promised contact "within 1 business
+day" while nothing tells the admin the clock started. Two emails close it,
+both reusing the working `nodemailer` + DKIM setup: one to
+`info@smartautobid.com` with the client's details and a link to the queue, one
+to the client with a copy of the terms they accepted. Build the notification
+path properly here, because **bid requests in 2.3 need the same thing and are
+far more time-critical** — an auction closes whether or not anyone checked.
 
 ---
 
