@@ -15,6 +15,13 @@
       "when": 1785872417744,
       "tag": "0001_fine_moondragon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785950000000,
+      "tag": "0002_rename_plan_keys",
+      "breakpoints": true
     }
   ]
 }

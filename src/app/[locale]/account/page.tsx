@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/modules/auth/model/currentUser";
-import { isPlanKey, formatDepositEur } from "@/modules/plans/model/plans";
+import { isPlanKey, formatUsd } from "@/modules/plans/model/plans";
 import { latestDepositFor } from "@/modules/plans/model/deposits";
 import Container from "@/shared/ui/Container";
 import LogoutButton from "@/modules/auth/components/LogoutButton";
@@ -62,7 +62,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
                 {t("pendingPlan", { plan: t(`plans.${pending.planKey}`) })}
               </p>
               <p className="text-sm leading-relaxed text-char-600">
-                {t("pendingHint", { amount: formatDepositEur(pending.amountCents) })}
+                {t("pendingHint", { amount: formatUsd(pending.amountCents) })}
               </p>
             </div>
           ) : (

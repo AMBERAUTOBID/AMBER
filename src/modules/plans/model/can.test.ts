@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest";
 import { can, type Actor } from "./can";
 import { PLANS, PLAN_KEYS, type PlanKey } from "./plans";
 
-const MID_TIER: PlanKey = "tier2";
+const MID_TIER: PlanKey = "silver";
 
 function client(overrides: Partial<Actor> = {}): Actor {
   return {
@@ -203,22 +203,17 @@ describe("admin", () => {
 describe("catalogue sanity — these fail if a plans.ts edit breaks an invariant", () => {
   it("every plan has sane money fields", () => {
     for (const key of PLAN_KEYS) {
-      expect(PLANS[key].depositCents).toBeGreaterThanOrEqual(0);
-      expect(PLANS[key].feePerLotCents).toBeGreaterThan(0);
+      expect(PLANS[key].depositUsdCents).toBeGreaterThanOrEqual(0);
+      const fee = PLANS[key].feePerLotUsdCents;
+      // null is legitimate — a fee we haven't published is absent, not zero.
+      if (fee !== null) expect(fee).toBeGreaterThan(0);
     }
   });
 
   it("deposits strictly increase across the tier order", () => {
-    const deposits = PLAN_KEYS.map((k) => PLANS[k].depositCents);
+    const deposits = PLAN_KEYS.map((k) => PLANS[k].depositUsdCents);
     for (let i = 1; i < deposits.length; i++) {
       expect(deposits[i]).toBeGreaterThan(deposits[i - 1]);
-    }
-  });
-
-  it("bid caps never decrease as tiers go up (null = unlimited, ranks last)", () => {
-    const caps = PLAN_KEYS.map((k) => PLANS[k].maxBidUsd ?? Number.POSITIVE_INFINITY);
-    for (let i = 1; i < caps.length; i++) {
-      expect(caps[i]).toBeGreaterThanOrEqual(caps[i - 1]);
     }
   });
 
@@ -228,7 +223,31 @@ describe("catalogue sanity — these fail if a plans.ts edit breaks an invariant
     }
   });
 
-  it("exactly one tier is featured on the plans page", () => {
+  it("only a selectable tier may be featured — no highlighting what can't be bought", () => {
+    for (const key of PLAN_KEYS) {
+      if (PLANS[key].featured) expect(PLANS[key].available).toBe(true);
+    }
     expect(PLAN_KEYS.filter((k) => PLANS[k].featured)).toHaveLength(1);
+  });
+
+  it("at least one plan is selectable — otherwise /plans is a dead end", () => {
+    expect(PLAN_KEYS.filter((k) => PLANS[k].available).length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The conditional-concurrency rule ("N lots at a time, if each bid is under
+ * $X") is described on the plan cards but NOT yet implemented in
+ * judgeBidRequest. That is safe only while every plan carrying a threshold is
+ * unavailable. This test is the tripwire: flipping such a plan to available
+ * without implementing the rule turns it red, instead of silently letting a
+ * paying customer hold five $50,000 bids the plan never promised.
+ */
+describe("conditional concurrency is not yet enforced", () => {
+  it("no AVAILABLE plan carries an unenforced concurrency threshold", () => {
+    const offenders = PLAN_KEYS.filter(
+      (k) => PLANS[k].available && PLANS[k].concurrencyThresholdUsd !== null
+    );
+    expect(offenders).toEqual([]);
   });
 });

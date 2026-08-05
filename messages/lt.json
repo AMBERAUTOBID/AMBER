@@ -1166,9 +1166,10 @@
       "noPlanHint": "Norėdami pradėti statyti, pasirinkite planą ir įneškite depozitą — susisiekite, viską paaiškinsime.",
       "logout": "Atsijungti",
       "plans": {
-        "tier1": "Pirmas lygis",
-        "tier2": "Antras lygis",
-        "tier3": "Trečias lygis"
+        "bronze": "Bronza",
+        "silver": "Sidabras",
+        "gold": "Auksas",
+        "platinum": "Platina"
       },
       "pendingPlan": "{plan} — laukiama patvirtinimo",
       "pendingHint": "Jūsų užklausą gavome. Gavus {amount} depozitą, planas aktyvuosis automatiškai.",
@@ -1217,19 +1218,31 @@
       "fee": "Bendradarbiavimo kaina: {amount} už lotą",
       "nightReserve": "Matoma naktinių aukcionų rezervų kaina",
       "liveAuction": "Dalyvavimas gyvuose aukcionuose",
-      "selfBidding": "Savarankiškas statymas pagal užklausą"
+      "selfBidding": "Savarankiškas statymas pagal užklausą",
+      "consultant": "Jums priskirtas asmeninis konsultantas",
+      "concurrentConditional": "Iki {count} lotų vienu metu (kai kiekvienas statymas mažesnis nei {threshold})"
     },
     "tiers": {
-      "tier1": {
-        "name": "Pirmas lygis"
+      "bronze": {
+        "name": "Bronza",
+        "tagline": "Be depozito. Automobilį surandame ir statymus atliekame kartu su jumis — mokate tik nusipirkę."
       },
-      "tier2": {
-        "name": "Antras lygis"
+      "silver": {
+        "name": "Sidabras",
+        "tagline": "Statykite patys, po vieną lotą vienu metu."
       },
-      "tier3": {
-        "name": "Trečias lygis"
+      "gold": {
+        "name": "Auksas",
+        "tagline": "Daugiau galimybių: du lotai vienu metu."
+      },
+      "platinum": {
+        "name": "Platina",
+        "tagline": "Didžiausi mūsų limitai — nuolat perkantiems klientams."
       }
-    }
+    },
+    "comingSoon": "Netrukus",
+    "comingSoonHint": "Šis planas atsidarys, kai pradės veikti mūsų pačių prieiga prie aukcionų. Parašykite mums — pranešime iškart.",
+    "contactUs": "Susisiekite su mumis"
   },
   "Admin": {
     "title": "Administratoriaus pultas",
@@ -1242,9 +1255,10 @@
     "alreadyHandled": "Šis depozitas jau apdorotas.",
     "actionFailed": "Nepavyko atlikti veiksmo. Bandykite dar kartą.",
     "tiers": {
-      "tier1": "Pirmas lygis",
-      "tier2": "Antras lygis",
-      "tier3": "Trečias lygis"
+      "bronze": "Bronza",
+      "silver": "Sidabras",
+      "gold": "Auksas",
+      "platinum": "Platina"
     }
   }
 }

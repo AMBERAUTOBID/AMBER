@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { formatDepositEur } from "../model/plans";
+import { formatUsd } from "../model/plans";
 import type { DepositRow } from "../model/deposits";
 
 /**
@@ -53,7 +53,7 @@ export default function DepositQueue({ rows }: { rows: DepositRow[] }) {
             <p className="truncate font-semibold text-char-900">{row.userName}</p>
             <p className="truncate text-sm text-char-600">{row.userEmail}</p>
             <p className="mt-1 text-sm text-char-700">
-              {t(`tiers.${row.planKey}`)} — <strong>{formatDepositEur(row.amountCents)}</strong>
+              {t(`tiers.${row.planKey}`)} — <strong>{formatUsd(row.amountCents)}</strong>
             </p>
             <p className="mt-0.5 text-xs text-char-500">
               {t("requestedOn", { date: row.createdAt.toISOString().slice(0, 10) })}

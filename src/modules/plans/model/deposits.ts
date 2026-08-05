@@ -22,9 +22,16 @@ import { PLANS, type PlanKey } from "./plans";
 export type RequestResult =
   | { status: "requested"; depositId: string }
   /** An undecided request already exists — one open request at a time. */
-  | { status: "already_pending"; depositId: string };
+  | { status: "already_pending"; depositId: string }
+  /** Plan is shown on /plans but not yet selectable (Coming Soon). */
+  | { status: "unavailable" };
 
 export async function requestPlan(userId: string, planKey: PlanKey): Promise<RequestResult> {
+  // Checked here, not only in the UI. The Coming Soon cards render a Contact
+  // link instead of a button, but a hand-crafted POST must fail too — a plan
+  // we cannot yet service must never reach the deposit queue looking real.
+  if (!PLANS[planKey].available) return { status: "unavailable" };
+
   const existing = await db()
     .select({ id: schema.deposits.id })
     .from(schema.deposits)
@@ -39,7 +46,7 @@ export async function requestPlan(userId: string, planKey: PlanKey): Promise<Req
       userId,
       planKey,
       // From the catalogue, never from the client. See rule 1 above.
-      amountCents: PLANS[planKey].depositCents,
+      amountCents: PLANS[planKey].depositUsdCents,
       status: "pending",
     })
     .returning({ id: schema.deposits.id });

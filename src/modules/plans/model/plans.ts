@@ -4,91 +4,129 @@
  * hard-code a plan name or limit. Every gate goes through can() (see can.ts),
  * and can() reads only this table.
  *
- * ── EVERY NUMBER BELOW IS A PLACEHOLDER ─────────────────────────────────
- * Three tiers are scaffolded so the plans page, deposit flow and admin
- * console can be built and tested end to end. The figures are shaped like
- * plausible ones but are NOT SmartAutoBid's pricing. Per ARCHITECTURE.md
- * invariant #4 ("never invent a number"), they MUST be replaced with real
- * values before the site goes public. The site is gated meanwhile, so no
- * customer can see them.
+ * CURRENCY: every money figure in this module is **USD cents**. The auctions
+ * themselves bid in dollars and the tiers are priced against them, so the
+ * whole plans/deposits surface is dollars end to end — deposits and per-lot
+ * fees alike. (The landed-cost calculator in modules/pricing is a separate
+ * concern and still quotes destination currencies; nothing here changes it.)
  *
- * To fill in the real plans, edit ONLY this file plus the display names in
- * messages/*.json → Plans.tiers.*. Nothing else needs to change.
+ * AVAILABILITY: only Bronze can currently be taken. Silver, Gold and Platinum
+ * are shown but locked behind `available: false` until SmartAutoBid holds its
+ * own auction access codes. That flag gates *new requests* only — if a plan
+ * were ever withdrawn, existing holders would keep what they paid for.
+ *
+ * ── WHAT IS AND ISN'T CONFIRMED ─────────────────────────────────────────
+ * Confirmed by the owner: the four names, Bronze free with a $350/lot fee,
+ * and Silver/Gold/Platinum deposits of $1,500/$2,500/$5,000 with limits
+ * matching bidauto.online's published tiers.
+ *
+ * NOT confirmed: the per-lot service fee for the three paid tiers. bidauto
+ * doesn't publish one, so `feePerLotUsdCents` is null there rather than
+ * invented (invariant #4, and #5: absent data renders as absent, not as a
+ * number). Their cards simply show no fee line. Fill it in when the tiers
+ * go live.
  * ────────────────────────────────────────────────────────────────────────
- *
- * WHY THE KEYS ARE NUMBERED: `tier1`/`tier2`/`tier3` are stored in the
- * database (users.active_plan_key, deposits.plan_key). Names customers see
- * live in messages/*.json instead, so renaming "Standard" to "Gold" later is
- * a text edit in three JSON files rather than a data migration over rows that
- * already reference the old key. Only add or remove tiers here; don't rename
- * these keys casually.
- *
- * Other modelling decisions that are NOT placeholders:
- * - Money is integer cents (EUR) / whole dollars (USD bid caps), matching
- *   the schema's no-floats rule.
- * - `null` for a limit means "unlimited" — explicit, so a missing field is a
- *   type error rather than accidental infinity.
- * - `selfBiddingEligible` marks plans whose buyers MAY be granted live
- *   self-bidding. The grant itself is a per-user admin action
- *   (users.selfBiddingGrantedAt) after the mandatory contact step — the plan
- *   alone never unlocks it.
  */
 
-export const PLAN_KEYS = ["tier1", "tier2", "tier3"] as const;
+export const PLAN_KEYS = ["bronze", "silver", "gold", "platinum"] as const;
 export type PlanKey = (typeof PLAN_KEYS)[number];
 
 export interface Plan {
   key: PlanKey;
-  /** Refundable deposit, EUR cents. 0 = no deposit. PLACEHOLDER. */
-  depositCents: number;
-  /** Max USD amount of a single bid. null = unlimited. PLACEHOLDER. */
+  /** Refundable deposit, USD cents. 0 = no deposit required. */
+  depositUsdCents: number;
+  /** Max USD amount of a single bid. null = unlimited. */
   maxBidUsd: number | null;
-  /** How many bids may be live at once. null = unlimited. PLACEHOLDER. */
+  /** How many bids may be live at once. null = unlimited. */
   maxConcurrentBids: number | null;
-  /** Whether night-auction reserve prices are shown. PLACEHOLDER. */
+  /**
+   * Above this single-bid amount, the concurrency allowance shrinks to one —
+   * bidauto's "bid on up to N lots at a time (if bid not higher than $X)".
+   * null = concurrency is unconditional.
+   *
+   * ⚠️ NOT YET ENFORCED IN can(). Harmless today because every plan carrying
+   * a threshold is `available: false`, so nobody can hold one. Implementing
+   * the conditional in judgeBidRequest() is a PREREQUISITE for flipping any
+   * of them to available — see can.test.ts, which asserts exactly that.
+   */
+  concurrencyThresholdUsd: number | null;
+  /** Whether night-auction reserve prices are shown. */
   nightReserveVisible: boolean;
-  /** Whether the client may join live auctions (with us bidding). PLACEHOLDER. */
+  /** Whether the client may join live auctions (with us bidding). */
   liveAuctionAccess: boolean;
-  /** Service fee per purchased lot, EUR cents. PLACEHOLDER. */
-  feePerLotCents: number;
+  /** Service fee per purchased lot, USD cents. null = not yet published. */
+  feePerLotUsdCents: number | null;
   /** May an admin grant this user live self-bidding at all? */
   selfBiddingEligible: boolean;
+  /** False = shown on /plans but not selectable. See AVAILABILITY above. */
+  available: boolean;
   /** Highlighted as "most popular" on the plans page. Presentation only. */
   featured: boolean;
 }
 
 export const PLANS: Record<PlanKey, Plan> = {
-  tier1: {
-    key: "tier1",
-    depositCents: 0, // PLACEHOLDER
-    maxBidUsd: 5000, // PLACEHOLDER
-    maxConcurrentBids: 1, // PLACEHOLDER
+  /**
+   * Bronze — free, and today the only plan anyone can take. We find the car
+   * and place the bids together with the client, so there is no deposit and
+   * no bidding cap to enforce: every bid passes through us. Revenue is the
+   * per-lot fee on a successful purchase.
+   */
+  bronze: {
+    key: "bronze",
+    depositUsdCents: 0,
+    maxBidUsd: null,
+    maxConcurrentBids: null,
+    concurrencyThresholdUsd: null,
     nightReserveVisible: false,
     liveAuctionAccess: false,
-    feePerLotCents: 35000, // PLACEHOLDER
+    feePerLotUsdCents: 35000, // $350 per lot — confirmed by the owner
     selfBiddingEligible: false,
-    featured: false,
-  },
-  tier2: {
-    key: "tier2",
-    depositCents: 100000, // PLACEHOLDER
-    maxBidUsd: 15000, // PLACEHOLDER
-    maxConcurrentBids: 3, // PLACEHOLDER
-    nightReserveVisible: true,
-    liveAuctionAccess: true,
-    feePerLotCents: 25000, // PLACEHOLDER
-    selfBiddingEligible: false,
+    available: true,
     featured: true,
   },
-  tier3: {
-    key: "tier3",
-    depositCents: 300000, // PLACEHOLDER
-    maxBidUsd: null, // PLACEHOLDER (unlimited)
-    maxConcurrentBids: null, // PLACEHOLDER (unlimited)
+
+  /** Silver — bidauto's "Basic": $10k bidding power, one lot at a time. */
+  silver: {
+    key: "silver",
+    depositUsdCents: 150000, // $1,500
+    maxBidUsd: 10000,
+    maxConcurrentBids: 1,
+    concurrencyThresholdUsd: null,
     nightReserveVisible: true,
     liveAuctionAccess: true,
-    feePerLotCents: 25000, // PLACEHOLDER
+    feePerLotUsdCents: null, // not published by the source; see header
+    selfBiddingEligible: false,
+    available: false,
+    featured: false,
+  },
+
+  /** Gold — bidauto's "Professional": $25k power, 2 lots if each ≤ $10k. */
+  gold: {
+    key: "gold",
+    depositUsdCents: 250000, // $2,500
+    maxBidUsd: 25000,
+    maxConcurrentBids: 2,
+    concurrencyThresholdUsd: 10000,
+    nightReserveVisible: true,
+    liveAuctionAccess: true,
+    feePerLotUsdCents: null,
+    selfBiddingEligible: false,
+    available: false,
+    featured: false,
+  },
+
+  /** Platinum — bidauto's "Enterprise": $50k power, 5 lots if each ≤ $10k. */
+  platinum: {
+    key: "platinum",
+    depositUsdCents: 500000, // $5,000
+    maxBidUsd: 50000,
+    maxConcurrentBids: 5,
+    concurrencyThresholdUsd: 10000,
+    nightReserveVisible: true,
+    liveAuctionAccess: true,
+    feePerLotUsdCents: null,
     selfBiddingEligible: true,
+    available: false,
     featured: false,
   },
 };
@@ -101,11 +139,16 @@ export function isPlanKey(value: string): value is PlanKey {
   return (PLAN_KEYS as readonly string[]).includes(value);
 }
 
-/** €1,500 from 150000. Whole euros only — no tier is priced in cents. */
-export function formatDepositEur(cents: number): string {
+/** A plan a client may actually take right now. */
+export function isSelectable(key: PlanKey): boolean {
+  return PLANS[key].available;
+}
+
+/** $1,500 from 150000. Whole dollars — no tier is priced in cents. */
+export function formatUsd(cents: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "EUR",
+    currency: "USD",
     maximumFractionDigits: 0,
   }).format(cents / 100);
 }

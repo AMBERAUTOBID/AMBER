@@ -23,5 +23,8 @@ export async function POST(request: Request) {
   }
 
   const result = await requestPlan(user.id, planKey);
+  if (result.status === "unavailable") {
+    return NextResponse.json({ ok: false, error: "plan_unavailable" }, { status: 409 });
+  }
   return NextResponse.json({ ok: true, status: result.status });
 }

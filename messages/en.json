@@ -1166,9 +1166,10 @@
       "noPlanHint": "To start bidding, choose a plan and place your deposit — contact us and we'll guide you through it.",
       "logout": "Log out",
       "plans": {
-        "tier1": "Tier one",
-        "tier2": "Tier two",
-        "tier3": "Tier three"
+        "bronze": "Bronze",
+        "silver": "Silver",
+        "gold": "Gold",
+        "platinum": "Platinum"
       },
       "pendingPlan": "{plan} — awaiting confirmation",
       "pendingHint": "We've received your request. Once your {amount} deposit arrives, your plan activates automatically.",
@@ -1217,19 +1218,31 @@
       "fee": "Service fee: {amount} per lot",
       "nightReserve": "See night auction reserve prices",
       "liveAuction": "Take part in live auctions",
-      "selfBidding": "Self-bidding available on request"
+      "selfBidding": "Self-bidding available on request",
+      "consultant": "A dedicated consultant assigned to you",
+      "concurrentConditional": "Bid on up to {count} lots at a time (when each bid is under {threshold})"
     },
     "tiers": {
-      "tier1": {
-        "name": "Tier one"
+      "bronze": {
+        "name": "Bronze",
+        "tagline": "No deposit. We find the car and place the bids together with you — you pay only when you buy."
       },
-      "tier2": {
-        "name": "Tier two"
+      "silver": {
+        "name": "Silver",
+        "tagline": "Bid on your own, one lot at a time."
       },
-      "tier3": {
-        "name": "Tier three"
+      "gold": {
+        "name": "Gold",
+        "tagline": "More bidding power, two lots in play at once."
+      },
+      "platinum": {
+        "name": "Platinum",
+        "tagline": "Our highest limits, built for regular buyers."
       }
-    }
+    },
+    "comingSoon": "Coming soon",
+    "comingSoonHint": "This plan opens once our own auction access is live. Talk to us now and we'll tell you the moment it does.",
+    "contactUs": "Contact us"
   },
   "Admin": {
     "title": "Admin console",
@@ -1242,9 +1255,10 @@
     "alreadyHandled": "That deposit was already handled.",
     "actionFailed": "Action failed. Please try again.",
     "tiers": {
-      "tier1": "Tier one",
-      "tier2": "Tier two",
-      "tier3": "Tier three"
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold",
+      "platinum": "Platinum"
     }
   }
 }
