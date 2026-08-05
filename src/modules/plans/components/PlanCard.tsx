@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Check, WarningCircle, Lock } from "@phosphor-icons/react/dist/ssr";
+import { Check, Lock } from "@phosphor-icons/react/dist/ssr";
 import { clsx } from "clsx";
 import { Link } from "@/i18n/navigation";
 import { formatUsd, type Plan } from "../model/plans";
+import PlanConfirmDialog from "./PlanConfirmDialog";
 
 /**
  * One tier on the plans page. Feature lines are built from the plan table,
@@ -20,7 +21,9 @@ import { formatUsd, type Plan } from "../model/plans";
 export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boolean }) {
   const t = useTranslations("Plans");
   const locale = useLocale();
-  const [state, setState] = useState<"idle" | "sending" | "requested" | "already" | "error">("idle");
+  // The card no longer submits anything: it opens the confirmation dialog,
+  // which owns the terms agreement and the request itself.
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const features = [
     plan.maxBidUsd === null
@@ -44,24 +47,12 @@ export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boo
     ...(plan.selfBiddingEligible ? [t("features.selfBidding")] : []),
   ];
 
-  async function choose() {
+  function choose() {
     if (!signedIn) {
       window.location.assign(locale === "en" ? "/register" : `/${locale}/register`);
       return;
     }
-    setState("sending");
-    try {
-      const res = await fetch("/api/plans/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planKey: plan.key }),
-      });
-      const body = (await res.json().catch(() => ({}))) as { ok?: boolean; status?: string };
-      if (res.ok && body.ok) setState(body.status === "already_pending" ? "already" : "requested");
-      else setState("error");
-    } catch {
-      setState("error");
-    }
+    setDialogOpen(true);
   }
 
   return (
@@ -139,34 +130,17 @@ export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boo
           <button
             type="button"
             onClick={choose}
-            disabled={state === "sending" || state === "requested"}
             className={clsx(
-              "mt-7 inline-flex w-full items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-70",
+              "mt-7 inline-flex w-full items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold transition-colors",
               plan.featured
                 ? "bg-amber-500 text-white hover:bg-amber-600"
                 : "border border-char-200 bg-white text-char-800 hover:border-amber-400 hover:text-amber-700"
             )}
           >
-            {state === "sending"
-              ? t("choosing")
-              : state === "requested"
-                ? t("chosen")
-                : signedIn
-                  ? t("choose")
-                  : t("chooseSignedOut")}
+            {signedIn ? t("choose") : t("chooseSignedOut")}
           </button>
 
-          {(state === "requested" || state === "already") && (
-            <p className="mt-3 text-xs leading-relaxed text-green-800">
-              {state === "already" ? t("alreadyPending") : t("requestedHint")}
-            </p>
-          )}
-          {state === "error" && (
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-red-700">
-              <WarningCircle size={14} weight="fill" className="shrink-0" />
-              {t("requestError")}
-            </p>
-          )}
+          {dialogOpen && <PlanConfirmDialog plan={plan} onClose={() => setDialogOpen(false)} />}
         </>
       ) : (
         <>

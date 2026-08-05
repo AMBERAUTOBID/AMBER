@@ -26,7 +26,12 @@ export type RequestResult =
   /** Plan is shown on /plans but not yet selectable (Coming Soon). */
   | { status: "unavailable" };
 
-export async function requestPlan(userId: string, planKey: PlanKey): Promise<RequestResult> {
+export async function requestPlan(
+  userId: string,
+  planKey: PlanKey,
+  /** The client ticked the agreement box in the plan dialog. */
+  acceptedTerms = false
+): Promise<RequestResult> {
   // Checked here, not only in the UI. The Coming Soon cards render a Contact
   // link instead of a button, but a hand-crafted POST must fail too — a plan
   // we cannot yet service must never reach the deposit queue looking real.
@@ -48,10 +53,17 @@ export async function requestPlan(userId: string, planKey: PlanKey): Promise<Req
       // From the catalogue, never from the client. See rule 1 above.
       amountCents: PLANS[planKey].depositUsdCents,
       status: "pending",
+      // Stamped server-side: the client tells us *that* they agreed, never
+      // when. A timestamp supplied by the browser would be worthless as
+      // evidence.
+      termsAcceptedAt: acceptedTerms ? new Date() : null,
     })
     .returning({ id: schema.deposits.id });
 
-  await recordAudit(userId, "deposit.requested", "deposit", rows[0].id, { planKey });
+  await recordAudit(userId, "deposit.requested", "deposit", rows[0].id, {
+    planKey,
+    acceptedTerms,
+  });
   return { status: "requested", depositId: rows[0].id };
 }
 

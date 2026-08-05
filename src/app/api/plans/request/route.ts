@@ -16,13 +16,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "email_not_verified" }, { status: 403 });
   }
 
-  const body = (await request.json().catch(() => null)) as { planKey?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as {
+    planKey?: unknown;
+    acceptedTerms?: unknown;
+  } | null;
   const planKey = typeof body?.planKey === "string" ? body.planKey : "";
   if (!isPlanKey(planKey)) {
     return NextResponse.json({ ok: false, error: "unknown_plan" }, { status: 400 });
   }
 
-  const result = await requestPlan(user.id, planKey);
+  const result = await requestPlan(user.id, planKey, body?.acceptedTerms === true);
   if (result.status === "unavailable") {
     return NextResponse.json({ ok: false, error: "plan_unavailable" }, { status: 409 });
   }

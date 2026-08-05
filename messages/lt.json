@@ -1224,24 +1224,49 @@
     "tiers": {
       "bronze": {
         "name": "Bronza",
-        "tagline": "Be depozito. Automobilį surandame ir statymus atliekame kartu su jumis — mokate tik nusipirkę."
+        "tagline": "Be depozito. Automobilį surandame ir statymus atliekame kartu su jumis — mokate tik nusipirkę.",
+        "terms": "Bronzos plane depozitas nereikalingas. Automobilio aukcionuose ieškome kartu su jumis: padedame surasti ieškomą automobilį, apskaičiuojame visą savikainą su mokesčiais, gabenimu ir muitine, sąžiningai įvertiname automobilio būklę bei perpardavimo perspektyvas prieš jums apsisprendžiant. Visus statymus atliekame mes jūsų vardu. Aptarnavimo mokestis — {fee} už automobilį, mokamas tik sėkmingai nusipirkus: nenusipirkus nemokate nieko."
       },
       "silver": {
         "name": "Sidabras",
-        "tagline": "Statykite patys, po vieną lotą vienu metu."
+        "tagline": "Statykite patys, po vieną lotą vienu metu.",
+        "terms": "Sidabro planui reikalingas {deposit} depozitas, kuris visiškai grąžinamas pasibaigus bendradarbiavimui, jei nėra aktyvių statymų. Planas leidžia statyti iki $10,000, vienas aktyvus statymas vienu metu, aptarnavimo mokestis — {fee} už nupirktą automobilį. Planas atsidarys, kai pradės veikti mūsų pačių prieiga prie aukcionų."
       },
       "gold": {
         "name": "Auksas",
-        "tagline": "Daugiau galimybių: du lotai vienu metu."
+        "tagline": "Daugiau galimybių: du lotai vienu metu.",
+        "terms": "Aukso planui reikalingas {deposit} depozitas, kuris visiškai grąžinamas pasibaigus bendradarbiavimui, jei nėra aktyvių statymų. Planas leidžia statyti iki $25,000, du aktyvūs statymai vienu metu, aptarnavimo mokestis — {fee} už nupirktą automobilį. Planas atsidarys, kai pradės veikti mūsų pačių prieiga prie aukcionų."
       },
       "platinum": {
         "name": "Platina",
-        "tagline": "Didžiausi mūsų limitai — nuolat perkantiems klientams."
+        "tagline": "Didžiausi mūsų limitai — nuolat perkantiems klientams.",
+        "terms": "Platinos planui reikalingas {deposit} depozitas, kuris visiškai grąžinamas pasibaigus bendradarbiavimui, jei nėra aktyvių statymų. Planas leidžia statyti iki $50,000, penki aktyvūs statymai vienu metu, aptarnavimo mokestis — {fee} už nupirktą automobilį. Šiame plane savarankiškas statymas galimas iš anksto su mumis susitarus. Planas atsidarys, kai pradės veikti mūsų pačių prieiga prie aukcionų."
       }
     },
     "comingSoon": "Netrukus",
     "comingSoonHint": "Šis planas atsidarys, kai pradės veikti mūsų pačių prieiga prie aukcionų. Parašykite mums — pranešime iškart.",
-    "contactUs": "Susisiekite su mumis"
+    "contactUs": "Susisiekite su mumis",
+    "dialog": {
+      "eyebrow": "Pasirinktas planas",
+      "featuresHeading": "Ką apima šis planas",
+      "termsHeading": "Plano sąlygos",
+      "depositBadge": "grąžinamas depozitas {amount}",
+      "signOff": "Pagarbiai,",
+      "agree": "Perskaičiau ir sutinku su šio plano sąlygomis bei su",
+      "agreeLink": "paslaugų teikimo sąlygomis",
+      "cancel": "Atšaukti",
+      "continue": "Tęsti",
+      "submitting": "Siunčiame…",
+      "close": "Uždaryti",
+      "received": {
+        "title": "Užklausa gauta!",
+        "alreadyTitle": "Užklausa jau pateikta",
+        "subtitle": "Planas „{plan}“ — laukia patvirtinimo",
+        "body": "Jūsų užklausa gauta ir laukia administratoriaus patvirtinimo. Susisieksime su jumis per 1 darbo dieną el. paštu arba telefonu ir aktyvuosime jūsų paskyrą.",
+        "alreadyBody": "Jūs jau turite užklausą, laukiančią patvirtinimo. Susisieksime su jumis per 1 darbo dieną — siųsti iš naujo nereikia.",
+        "close": "Uždaryti"
+      }
+    }
   },
   "Admin": {
     "title": "Administratoriaus pultas",

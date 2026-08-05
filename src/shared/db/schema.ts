@@ -120,6 +120,13 @@ export const deposits = pgTable(
       .notNull()
       .default("pending"),
     /**
+     * When the client ticked "I have read and agree" in the plan dialog.
+     * Recorded because an agreement you cannot evidence later is not much of
+     * an agreement — this is the row that answers "did they accept, and
+     * when". Nullable only for rows created before the dialog existed.
+     */
+    termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
+    /**
      * Which admin confirmed/refunded — accountability, not decoration.
      *
      * `set null` rather than the default restrict: without it, deleting any

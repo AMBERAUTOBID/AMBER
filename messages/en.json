@@ -1224,24 +1224,49 @@
     "tiers": {
       "bronze": {
         "name": "Bronze",
-        "tagline": "No deposit. We find the car and place the bids together with you — you pay only when you buy."
+        "tagline": "No deposit. We find the car and place the bids together with you — you pay only when you buy.",
+        "terms": "The Bronze plan requires no deposit. We search the auctions together with you: we help you find the vehicle you are looking for, calculate the full landed cost including fees, shipping and customs, and give you our honest view of the car's condition and resale prospects before you commit. Every bid is placed by us on your behalf. Our service fee is {fee} per vehicle, payable only when you successfully buy — if you never buy, you owe us nothing."
       },
       "silver": {
         "name": "Silver",
-        "tagline": "Bid on your own, one lot at a time."
+        "tagline": "Bid on your own, one lot at a time.",
+        "terms": "The Silver plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $10,000 with one active bid at a time, and a service fee of {fee} per vehicle purchased. This plan opens once our own auction access is live."
       },
       "gold": {
         "name": "Gold",
-        "tagline": "More bidding power, two lots in play at once."
+        "tagline": "More bidding power, two lots in play at once.",
+        "terms": "The Gold plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $25,000 with two active bids at a time, and a service fee of {fee} per vehicle purchased. This plan opens once our own auction access is live."
       },
       "platinum": {
         "name": "Platinum",
-        "tagline": "Our highest limits, built for regular buyers."
+        "tagline": "Our highest limits, built for regular buyers.",
+        "terms": "The Platinum plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $50,000 with five active bids at a time, and a service fee of {fee} per vehicle purchased. Self-bidding can be arranged on this plan after speaking with us. This plan opens once our own auction access is live."
       }
     },
     "comingSoon": "Coming soon",
     "comingSoonHint": "This plan opens once our own auction access is live. Talk to us now and we'll tell you the moment it does.",
-    "contactUs": "Contact us"
+    "contactUs": "Contact us",
+    "dialog": {
+      "eyebrow": "Selected plan",
+      "featuresHeading": "What this plan includes",
+      "termsHeading": "Terms of this plan",
+      "depositBadge": "{amount} refundable deposit",
+      "signOff": "Kind regards,",
+      "agree": "I have read and agree to the terms of this plan and to the",
+      "agreeLink": "terms of service",
+      "cancel": "Cancel",
+      "continue": "Continue",
+      "submitting": "Sending…",
+      "close": "Close",
+      "received": {
+        "title": "Request received!",
+        "alreadyTitle": "Already requested",
+        "subtitle": "Plan “{plan}” — awaiting confirmation",
+        "body": "Your request has been received and is awaiting confirmation by an administrator. We will contact you within 1 business day by email or phone and activate your account.",
+        "alreadyBody": "You already have a plan request awaiting confirmation. We will contact you within 1 business day — there is no need to send it again.",
+        "close": "Close"
+      }
+    }
   },
   "Admin": {
     "title": "Admin console",
