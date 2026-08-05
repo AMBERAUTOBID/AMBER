@@ -222,14 +222,36 @@ array. The overview carries no "recent activity" panel for the same reason:
 there is no activity until 2.3, and an empty panel saying "nothing yet" only
 advertises the gap.
 
-**Two gates, and only one of them is real.** `(app)/layout.tsx` declares
-`force-dynamic` for the whole group, so nothing signed-in can ever be
-statically cached — including pages added later. `account/layout.tsx` calls
-`requireUser` to render the shell. **Neither is the security boundary**: every
-page calls `requireUser` itself, because a layout is shared and can be skipped
-on client-side navigation between siblings. Same rule as §7 — middleware and
-layouts are chrome, the page's own check is the check. `currentUser` is
-wrapped in React `cache`, so the layout's call and the page's cost one query.
+**The gate lives in the pages, and the layout deliberately stays out of it.**
+`(app)/layout.tsx` declares `force-dynamic` for the whole group, so nothing
+signed-in can ever be statically cached — including pages added later.
+`account/layout.tsx` reads the session only because the shell needs a name;
+when there is none it renders `children` bare and **does not redirect**.
+
+Two reasons, and both matter:
+
+1. A layout is not a security boundary — it is shared, and can be skipped on
+   client-side navigation between siblings. Same rule as §7: middleware and
+   layouts are chrome, the page's own `requireUser` is the check.
+2. A layout runs *before* its page, so a redirect there always wins the race
+   — and the layout has no idea which child is rendering, so it could only
+   send people to a generic `/login`. Standing aside is what lets an emailed
+   link to `/account/plan` survive the sign-in. This was found by testing:
+   the return path was silently swallowed until the layout stopped redirecting.
+
+`currentUser` is wrapped in React `cache`, so the layout's call and the page's
+cost one query.
+
+**Post-login return paths go through `safeReturnPath`, always.** Each page
+passes its own path to `requireUser` (a page knows where it is; Next gives a
+server component no reliable pathname without adding one in `proxy.ts`, which
+owns the pre-launch gate and isn't worth touching for this). That becomes
+`/login?next=…`, and **the login page validates it on the server before it
+reaches the browser** — an unchecked value there is a textbook open redirect,
+where an attacker links to our real domain, the victim signs in for real, and
+lands on a convincing copy that asks for the password again. The rule is a
+whitelist by shape: a path on this site, nothing else. `safeReturnPath.test.ts`
+is the specification — every case in it is a real bypass technique.
 
 Two entries on bidplius's sidebar are deliberately NOT ours: **Messages with
 the team** (the real channel is WhatsApp/Telegram — a second inbox somebody
@@ -297,6 +319,22 @@ the password. Three deliberate absences:
   (`passwordChangePerUser`): verifying the current password makes the endpoint
   an oracle for guessing it, and sharing `loginPerEmail`'s budget would let
   failed attempts lock the owner out of logging in.
+
+**Signed-in devices** lists the live sessions with a best-effort "Chrome on
+Windows" label, and offers `destroyOtherSessionsForUser` — every session
+*except* the caller's. That is a different lever from
+`destroyAllSessionsForUser`, which stays for the case where the credentials
+themselves are suspect: someone saying "I don't recognise that device" should
+not be logged out of the browser they're fixing it from. Two honesty
+constraints here: `describeUserAgent` is **presentation only** (user agents
+are self-reported and every browser impersonates several others — never
+decide anything on it), and the list says *"Signed in <date>"* rather than
+"last active", because `expiresAt` only slides forward past half-life and
+deriving activity from it would be wrong by up to fifteen days.
+
+**Plan history** (`decidedDepositsFor`) shows confirmed, cancelled and
+refunded rows, excluding `pending` — the open request has its own card above
+it, and listing it twice reads as two requests.
 
 Cancelling a plan request scopes ownership **in the SQL WHERE clause**, not in
 a check before it — `cancelPlanRequest(depositId, userId)` — so there is no

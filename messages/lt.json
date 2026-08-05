@@ -1211,7 +1211,14 @@
       "cancelError": "Nepavyko atšaukti — gali būti, kad užklausa jau patvirtinta. Atnaujinkite puslapį ir pamatysite jos būseną.",
       "none": "Planas dar nepasirinktas",
       "noneHint": "Pasirinkite planą ir pradėkite dalyvauti aukcionuose kartu su mumis.",
-      "choosePlan": "Pasirinkti planą"
+      "choosePlan": "Pasirinkti planą",
+      "historyHeading": "Istorija",
+      "historyStatus": {
+        "confirmed": "Patvirtinta",
+        "cancelled": "Jūsų atšaukta",
+        "refund_requested": "Pateiktas grąžinimo prašymas",
+        "refunded": "Grąžinta"
+      }
     },
     "details": {
       "title": "Mano duomenys",
@@ -1234,7 +1241,13 @@
       "passwordChanged": "Slaptažodis pakeistas. Visuose kituose įrenginiuose atsijungta.",
       "currentPasswordWrong": "Dabartinis slaptažodis neteisingas.",
       "passwordTooShort": "Naujas slaptažodis turi būti bent {min} simbolių.",
-      "passwordRateLimited": "Per daug bandymų. Palaukite kelias minutes ir bandykite dar kartą."
+      "passwordRateLimited": "Per daug bandymų. Palaukite kelias minutes ir bandykite dar kartą.",
+      "devicesHeading": "Prisijungę įrenginiai",
+      "devicesHint": "Kur šiuo metu esate prisijungę prie savo paskyros. Jei ko nors čia neatpažįstate, atsijunkite visuose kituose įrenginiuose ir pasikeiskite slaptažodį.",
+      "deviceCurrent": "Šis įrenginys",
+      "deviceSince": "Prisijungta {date}",
+      "deviceUnknown": "Neatpažinta naršyklė",
+      "signOutOthers": "{count, plural, =0 {Kitų prisijungusių įrenginių nėra} one {Atsijungti # kitame įrenginyje} few {Atsijungti # kituose įrenginiuose} other {Atsijungti # kituose įrenginiuose}}"
     }
   },
   "Plans": {

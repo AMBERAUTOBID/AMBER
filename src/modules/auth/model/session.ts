@@ -6,7 +6,7 @@
  * lives in. Deleting a row here IS revocation; nothing else needs to happen
  * anywhere for a user to be locked out.
  */
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, desc, eq, gt, lt, ne } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 import { generateToken, hashToken } from "./token";
 
@@ -99,6 +99,75 @@ export async function destroySession(token: string): Promise<void> {
 /** Revocation lever for admin actions (freeze account, withdraw deposit). */
 export async function destroyAllSessionsForUser(userId: string): Promise<void> {
   await db().delete(schema.sessions).where(eq(schema.sessions.userId, userId));
+}
+
+/**
+ * "Sign out everywhere else" — every session except the one asking.
+ *
+ * Distinct from destroyAllSessionsForUser because the two answer different
+ * questions. That one is used when the credentials themselves are suspect and
+ * *everything* must go. This one is the client saying "I don't recognise that
+ * device", where logging them out of the browser they're using to fix the
+ * problem would be a strange way to help.
+ *
+ * Returns how many were killed, so the UI can say something true.
+ */
+export async function destroyOtherSessionsForUser(
+  userId: string,
+  currentToken: string
+): Promise<number> {
+  const gone = await db()
+    .delete(schema.sessions)
+    .where(
+      and(
+        eq(schema.sessions.userId, userId),
+        ne(schema.sessions.tokenHash, hashToken(currentToken))
+      )
+    )
+    .returning({ id: schema.sessions.id });
+  return gone.length;
+}
+
+export interface SessionRow {
+  id: string;
+  userAgent: string | null;
+  ip: string | null;
+  createdAt: Date;
+  /** The browser making this request. */
+  current: boolean;
+}
+
+/**
+ * The signed-in devices list. Expired rows are excluded rather than shown as
+ * dead entries — a session that can't log anyone in isn't a device the client
+ * needs to make a decision about.
+ *
+ * There is no "last active" column and this deliberately doesn't invent one.
+ * `expiresAt` slides forward only once a session is past half-life, so
+ * deriving activity from it would be wrong by up to fifteen days. The honest
+ * fact we hold is when the session started.
+ */
+export async function listSessionsForUser(
+  userId: string,
+  currentToken: string | null
+): Promise<SessionRow[]> {
+  const currentHash = currentToken ? hashToken(currentToken) : null;
+  const rows = await db()
+    .select({
+      id: schema.sessions.id,
+      tokenHash: schema.sessions.tokenHash,
+      userAgent: schema.sessions.userAgent,
+      ip: schema.sessions.ip,
+      createdAt: schema.sessions.createdAt,
+    })
+    .from(schema.sessions)
+    .where(and(eq(schema.sessions.userId, userId), gt(schema.sessions.expiresAt, new Date())))
+    .orderBy(desc(schema.sessions.createdAt));
+
+  return rows.map(({ tokenHash, ...row }) => ({
+    ...row,
+    current: currentHash !== null && tokenHash === currentHash,
+  }));
 }
 
 /**

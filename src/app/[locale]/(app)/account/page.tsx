@@ -29,7 +29,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   setRequestLocale(locale);
   // The gate. The layout's identical call is for the shell's benefit; this
   // one is the check. See requireUser.
-  const user = await requireUser(locale);
+  const user = await requireUser(locale, "/account");
 
   const t = await getTranslations({ locale, namespace: "Account" });
   // Tier names come from Plans.tiers, the same strings the public plans page

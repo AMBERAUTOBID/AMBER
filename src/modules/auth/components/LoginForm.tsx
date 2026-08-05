@@ -8,7 +8,13 @@ import { errorBoxClass, inputClass, labelClass, submitClass } from "./formStyles
 
 type ErrorKind = "invalid_credentials" | "email_not_verified" | "rate_limited" | "generic";
 
-export default function LoginForm() {
+/**
+ * `next` arrives already validated by the server page (safeReturnPath) rather
+ * than being read from the URL here. Deliberate: a client component reading
+ * `?next=` itself would put the check on the browser's side of the line,
+ * where a determined caller simply doesn't run it.
+ */
+export default function LoginForm({ next }: { next?: string | null }) {
   const t = useTranslations("Auth.login");
   const locale = useLocale();
   const [submitting, setSubmitting] = useState(false);
@@ -26,9 +32,10 @@ export default function LoginForm() {
         body: JSON.stringify(data),
       });
       if (res.ok) {
+        const target = next ?? "/account";
         // Full navigation, not router.push: the account page renders on the
         // server from the new cookie, so the browser must send it.
-        window.location.assign(locale === "en" ? "/account" : `/${locale}/account`);
+        window.location.assign(locale === "en" ? target : `/${locale}${target}`);
         return;
       }
       const body = (await res.json().catch(() => ({}))) as { error?: string };

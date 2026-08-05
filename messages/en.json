@@ -1211,7 +1211,14 @@
       "cancelError": "We couldn't cancel that — it may already have been confirmed. Reload the page to see where it stands.",
       "none": "No plan yet",
       "noneHint": "Choose a plan to start bidding with us.",
-      "choosePlan": "Choose a plan"
+      "choosePlan": "Choose a plan",
+      "historyHeading": "History",
+      "historyStatus": {
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled by you",
+        "refund_requested": "Refund requested",
+        "refunded": "Refunded"
+      }
     },
     "details": {
       "title": "My details",
@@ -1234,7 +1241,13 @@
       "passwordChanged": "Your password has been changed. You've been signed out on all other devices.",
       "currentPasswordWrong": "That current password isn't right.",
       "passwordTooShort": "Your new password must be at least {min} characters.",
-      "passwordRateLimited": "Too many attempts. Please wait a few minutes and try again."
+      "passwordRateLimited": "Too many attempts. Please wait a few minutes and try again.",
+      "devicesHeading": "Signed-in devices",
+      "devicesHint": "Where your account is currently signed in. If you don't recognise something here, sign out everywhere else and change your password.",
+      "deviceCurrent": "This device",
+      "deviceSince": "Signed in {date}",
+      "deviceUnknown": "Unrecognised browser",
+      "signOutOthers": "{count, plural, =0 {No other devices signed in} one {Sign out on 1 other device} other {Sign out on # other devices}}"
     }
   },
   "Plans": {

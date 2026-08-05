@@ -15,7 +15,7 @@
  * 2. Confirming a deposit is the ONLY thing that sets users.activePlanKey.
  *    Requesting a plan grants nothing.
  */
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 import { PLANS, type PlanKey } from "./plans";
 
@@ -124,6 +124,32 @@ export async function pendingDepositFor(userId: string): Promise<DepositRow | nu
     .orderBy(desc(schema.deposits.createdAt))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * Everything that has already been decided, newest first.
+ *
+ * Excludes `pending` because the open request has its own card above the
+ * history on the plan page, and listing it twice reads as two requests. What
+ * this is for is the client who cancelled last month and wants to confirm
+ * that it happened — until now the row existed and nothing showed it.
+ */
+export async function decidedDepositsFor(userId: string): Promise<DepositRow[]> {
+  return db()
+    .select({
+      id: schema.deposits.id,
+      userId: schema.deposits.userId,
+      userEmail: schema.users.email,
+      userName: schema.users.name,
+      planKey: schema.deposits.planKey,
+      amountCents: schema.deposits.amountCents,
+      status: schema.deposits.status,
+      createdAt: schema.deposits.createdAt,
+    })
+    .from(schema.deposits)
+    .innerJoin(schema.users, eq(schema.deposits.userId, schema.users.id))
+    .where(and(eq(schema.deposits.userId, userId), ne(schema.deposits.status, "pending")))
+    .orderBy(desc(schema.deposits.createdAt));
 }
 
 export type CancelResult = "cancelled" | "not_pending";

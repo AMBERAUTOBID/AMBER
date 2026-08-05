@@ -4,7 +4,8 @@ import { Check } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/modules/account/model/requireUser";
 import { planStatusFor } from "@/modules/account/model/planStatus";
 import CancelPlanRequest from "@/modules/account/components/CancelPlanRequest";
-import { PLANS, formatUsd } from "@/modules/plans/model/plans";
+import { PLANS, formatUsd, isPlanKey } from "@/modules/plans/model/plans";
+import { decidedDepositsFor } from "@/modules/plans/model/deposits";
 import { planFeatureLines } from "@/modules/plans/model/planFeatures";
 import { Link } from "@/i18n/navigation";
 import { SITE, CONTACT_HREF } from "@/shared/config/site";
@@ -34,7 +35,7 @@ export default async function AccountPlanPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const user = await requireUser(locale);
+  const user = await requireUser(locale, "/account/plan");
 
   const t = await getTranslations({ locale, namespace: "Account.plan" });
   // Feature lines are generated from the plan table and live in the Plans
@@ -42,6 +43,7 @@ export default async function AccountPlanPage({
   const tPlans = await getTranslations({ locale, namespace: "Plans" });
   const format = await getFormatter({ locale });
   const status = await planStatusFor(user);
+  const history = await decidedDepositsFor(user.id);
 
   return (
     <div className="max-w-2xl">
@@ -115,6 +117,34 @@ export default async function AccountPlanPage({
           </div>
         </section>
       ) : null}
+
+      {/* Only when there is something to show. An empty "History" heading
+          tells a new client nothing except that a feature exists. */}
+      {history.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-char-500">
+            {t("historyHeading")}
+          </h2>
+          <ul className="mt-4 divide-y divide-char-200/70 rounded-2xl border border-char-200/70 bg-white px-6 dark:bg-char-100/5">
+            {history.map((row) => (
+              <li key={row.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3.5">
+                <span className="text-sm font-semibold text-char-900">
+                  {/* A plan key retired from the catalogue would have no
+                      translated name; show the raw key rather than crash a
+                      page whose whole job is showing what happened. */}
+                  {isPlanKey(row.planKey) ? tPlans(`tiers.${row.planKey}.name`) : row.planKey}
+                </span>
+                <span className="text-sm text-char-600">
+                  {t(`historyStatus.${row.status}`)}
+                </span>
+                <span className="ml-auto text-xs text-char-500">
+                  {format.dateTime(row.createdAt, { dateStyle: "medium" })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {!status.active && !status.pending ? (
         <section className="mt-8 rounded-2xl border border-char-200/70 bg-white p-6 dark:bg-char-100/5">

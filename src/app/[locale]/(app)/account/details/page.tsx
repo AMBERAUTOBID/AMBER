@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
+import { DeviceMobile } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/modules/account/model/requireUser";
 import { profileFor } from "@/modules/account/model/profile";
+import { signedInDevices } from "@/modules/account/model/devices";
 import ProfileForm from "@/modules/account/components/ProfileForm";
 import PasswordForm from "@/modules/account/components/PasswordForm";
+import SignOutOthersButton from "@/modules/account/components/SignOutOthersButton";
 
 export async function generateMetadata({
   params,
@@ -33,11 +36,14 @@ export default async function AccountDetailsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const user = await requireUser(locale);
+  const user = await requireUser(locale, "/account/details");
 
   const t = await getTranslations({ locale, namespace: "Account.details" });
+  const format = await getFormatter({ locale });
   // The session carries no phone number, so this is the one extra read.
   const profile = await profileFor(user.id);
+  const devices = await signedInDevices(user.id);
+  const otherCount = devices.filter((d) => !d.current).length;
 
   return (
     <div className="max-w-xl">
@@ -65,6 +71,44 @@ export default async function AccountDetailsPage({
         </h2>
         <div className="mt-5">
           <PasswordForm />
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-char-200/70 bg-white p-6 dark:bg-char-100/5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-char-500">
+          {t("devicesHeading")}
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-char-600">{t("devicesHint")}</p>
+
+        <ul className="mt-5 divide-y divide-char-200/70">
+          {devices.map((device) => (
+            <li key={device.id} className="flex items-start gap-3 py-3">
+              <DeviceMobile size={18} weight="fill" className="mt-0.5 shrink-0 text-char-400" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-char-900">
+                  {device.label || t("deviceUnknown")}
+                  {device.current && (
+                    <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                      {t("deviceCurrent")}
+                    </span>
+                  )}
+                </p>
+                <p className="mt-0.5 text-xs text-char-500">
+                  {/* Started, not "last active": expiresAt only slides forward
+                      past half-life, so deriving activity from it would be
+                      wrong by up to fifteen days. Say what we actually know. */}
+                  {t("deviceSince", {
+                    date: format.dateTime(device.createdAt, { dateStyle: "medium" }),
+                  })}
+                  {device.ip ? ` · ${device.ip}` : ""}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-4 border-t border-char-200/70 pt-4">
+          <SignOutOthersButton otherCount={otherCount} />
         </div>
       </section>
     </div>

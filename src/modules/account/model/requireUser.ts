@@ -20,10 +20,17 @@ import type { SessionUser } from "@/modules/auth/model/session";
  * The repeated lookup this implies costs nothing: `currentUser` is
  * request-deduplicated, so the layout and the page share one query.
  */
-export async function requireUser(locale: string): Promise<SessionUser> {
+export async function requireUser(locale: string, returnTo?: string): Promise<SessionUser> {
   const user = await currentUser();
   if (!user) {
-    redirect({ href: "/login", locale });
+    // Passed explicitly by each page rather than sniffed from a header:
+    // a page knows its own path, and Next gives a server component no
+    // reliable pathname without adding one in proxy.ts — which owns the
+    // pre-launch gate and is not worth touching for this.
+    redirect({
+      href: returnTo ? { pathname: "/login", query: { next: returnTo } } : "/login",
+      locale,
+    });
     // Unreachable: redirect() throws. next-intl types it as returning void
     // rather than never, so TypeScript still needs this to narrow `user`.
     throw new Error("unreachable");
