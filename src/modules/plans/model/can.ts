@@ -53,6 +53,16 @@ const allow: Decision = { allowed: true };
 const deny = (reason: DenyReason): Decision => ({ allowed: false, reason });
 
 export function can(actor: Actor, action: Action): Decision {
+  // A verified email is required of EVERYONE, admins included, and is checked
+  // before role. Today an unverified account cannot obtain a session at all
+  // (loginAccount refuses it), so this is defence in depth rather than a live
+  // hole — but the moment some future path creates a session another way,
+  // say auto-login straight after registration, an unverified address would
+  // otherwise reach the admin console with nothing failing loudly to say so.
+  // The account that approves deposits must have a mailbox someone proved
+  // they control, because that mailbox can reset its password.
+  if (!actor.emailVerified) return deny("email_not_verified");
+
   // Admins bypass plan limits — they place bids *for* clients, and their
   // actions are recorded in the audit log rather than constrained here.
   // They do not bypass the admin gate itself, which checks the role.
@@ -60,10 +70,6 @@ export function can(actor: Actor, action: Action): Decision {
     return actor.role === "admin" ? allow : deny("not_admin");
   }
   if (actor.role === "admin") return allow;
-
-  // Order matters: the most actionable problem first. An unverified email is
-  // fixable in one click; telling that user about plan limits helps nobody.
-  if (!actor.emailVerified) return deny("email_not_verified");
 
   const plan = actor.activePlanKey ? PLANS[actor.activePlanKey] : null;
   if (!plan) return deny("no_active_plan");

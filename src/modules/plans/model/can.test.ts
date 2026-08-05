@@ -171,6 +171,33 @@ describe("admin", () => {
     const d = can(admin, { type: "place_bid_request", amountUsd: 1_000_000, activeBidCount: 99 });
     expect(d.allowed).toBe(true);
   });
+
+  // Not reachable today — an unverified account cannot obtain a session, so
+  // can() is never called for one. These exist so that if some future path
+  // ever does create a session earlier (auto-login after registration, an
+  // admin-created account, an SSO bridge), the failure is a red test rather
+  // than an unverified mailbox quietly holding the deposit-approval button.
+  it("an UNVERIFIED admin is refused the admin area", () => {
+    expect(can({ ...admin, emailVerified: false }, { type: "access_admin" })).toEqual({
+      allowed: false,
+      reason: "email_not_verified",
+    });
+  });
+
+  it("an UNVERIFIED admin gets no plan-limit bypass either", () => {
+    const d = can(
+      { ...admin, emailVerified: false },
+      { type: "place_bid_request", amountUsd: 1, activeBidCount: 0 }
+    );
+    expect(d).toEqual({ allowed: false, reason: "email_not_verified" });
+  });
+
+  it("verification is checked before role, so the reason names the real problem", () => {
+    // A client hitting /admin unverified should hear "verify your email",
+    // not "not_admin" — the first is fixable, the second is a dead end.
+    const d = can(client({ emailVerified: false }), { type: "access_admin" });
+    expect(d).toEqual({ allowed: false, reason: "email_not_verified" });
+  });
 });
 
 describe("catalogue sanity — these fail if a plans.ts edit breaks an invariant", () => {
