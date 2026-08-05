@@ -67,7 +67,9 @@ export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boo
   return (
     <div
       className={clsx(
-        "relative flex flex-col rounded-2xl border p-7 transition-shadow",
+        // Padding eases off at the 4-across breakpoint, where each card is
+        // roughly 220px wide and every pixel of content width counts.
+        "relative flex flex-col rounded-2xl border p-6 xl:p-7 transition-shadow",
         !plan.available
           ? "border-char-200/60 bg-char-50/40"
           : plan.featured

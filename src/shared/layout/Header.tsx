@@ -68,7 +68,12 @@ export default function Header() {
           </span>
         </Link>
 
-        <div className="hidden flex-1 items-center gap-1.5 xl:flex">
+        {/* 2xl, not xl. Six nav links plus language, Log in and the CTA need
+            ~1,100px in English and ~1,120px in Lithuanian, against roughly
+            945px available at 1280px — so the row overflowed the viewport and
+            gave every page a horizontal scrollbar. Below 1536px the burger
+            menu carries the identical set, so nothing is unreachable. */}
+        <div className="hidden flex-1 items-center gap-1 2xl:flex">
           {links.map((link) => {
             const active = pathname === link.href;
             return (
@@ -76,7 +81,10 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 className={clsx(
-                  "whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-medium transition-colors",
+                  // px-2 not px-2.5: Lithuanian labels are long enough that
+                  // the row cleared 1536px by only 7px, which a scrollbar
+                  // swallows. The tighter padding buys ~35px of headroom.
+                  "whitespace-nowrap rounded-full px-2 py-2 text-sm font-medium transition-colors",
                   active
                     ? "bg-amber-50 text-amber-700"
                     : "text-char-600 hover:bg-char-100 hover:text-char-900"
@@ -86,9 +94,13 @@ export default function Header() {
               </Link>
             );
           })}
+          {/* The phone needs another 162px that even 1536px doesn't have once
+              Lithuanian labels are in play, so it appears only on genuinely
+              wide screens. It is still one tap away in the burger menu, and
+              in the footer, on every screen below that. */}
           <a
             href={CONTACT_HREF.tel}
-            className="hidden items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-medium text-char-600 transition-colors hover:bg-char-100 hover:text-char-900 xl:flex"
+            className="hidden items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-medium text-char-600 transition-colors hover:bg-char-100 hover:text-char-900 min-[1750px]:flex"
           >
             <Phone size={16} weight="fill" className="text-amber-500" />
             {SITE.phone.display}
@@ -121,14 +133,14 @@ export default function Header() {
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-char-700 hover:bg-char-100 xl:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-char-700 hover:bg-char-100 2xl:hidden"
         >
           {open ? <X size={22} /> : <List size={22} />}
         </button>
       </div>
 
       {open && (
-        <div className="border-t border-char-200/70 bg-background px-5 pb-6 pt-2 xl:hidden">
+        <div className="border-t border-char-200/70 bg-background px-5 pb-6 pt-2 2xl:hidden">
           <nav className="flex flex-col gap-1">
             {links.map((link) => {
               const active = pathname === link.href;
@@ -147,6 +159,15 @@ export default function Header() {
                 </Link>
               );
             })}
+            {/* Carries the phone at every width where the desktop row hides
+                it — which, since the 2xl change, is most screens. */}
+            <a
+              href={CONTACT_HREF.tel}
+              className="flex items-center gap-2 rounded-lg px-3 py-3 text-base font-medium text-char-700 hover:bg-char-100"
+            >
+              <Phone size={18} weight="fill" className="text-amber-500" />
+              {SITE.phone.display}
+            </a>
           </nav>
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-char-200/70 pt-4">
             <LanguageSwitcher />

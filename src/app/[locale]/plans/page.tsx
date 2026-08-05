@@ -38,7 +38,10 @@ export default async function PlansPage({ params }: { params: Promise<{ locale: 
           chip above a Plans heading said the same word twice. */}
       <SectionHeading title={t("title")} subtitle={t("intro")} align="center" />
 
-      <div className="mt-14 grid gap-6 lg:grid-cols-3">
+      {/* One column per plan on desktop, so the catalogue reads as a single
+          row to compare across. Two-up on tablets; the count is driven by
+          PLANS_IN_ORDER, so adding a fifth tier means revisiting this. */}
+      <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {PLANS_IN_ORDER.map((plan) => (
           <PlanCard key={plan.key} plan={plan} signedIn={Boolean(user)} />
         ))}
