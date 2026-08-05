@@ -9,6 +9,7 @@ import Header from "@/shared/layout/Header";
 import Footer from "@/shared/layout/Footer";
 import WhatsAppButton from "@/shared/layout/WhatsAppButton";
 import CookieConsent from "@/modules/consent/components/CookieConsent";
+import HeaderAccount from "@/modules/auth/components/HeaderAccount";
 import "../globals.css";
 
 const inter = Inter({
@@ -78,7 +79,12 @@ export default async function LocaleLayout({
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <NextIntlClientProvider>
-          <Header />
+          {/* The account button is injected rather than imported: Header
+              lives in shared/, which may not depend on modules/. */}
+          <Header
+            account={<HeaderAccount variant="desktop" />}
+            accountMobile={<HeaderAccount variant="mobile" />}
+          />
           <main className="flex-1">{children}</main>
           <Footer />
           <WhatsAppButton />

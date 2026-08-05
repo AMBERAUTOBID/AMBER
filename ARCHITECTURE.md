@@ -156,8 +156,9 @@ reset, DB sessions, rate limiting), `modules/plans/` (catalogue, `can()`,
 deposits, the confirmation dialog), `/plans`, and the admin deposit queue at
 `app/[locale]/admin`.
 
-**Next:** the client account area — see §6a. Then `modules/bidding/` (2.3) and
-order history (2.4).
+`modules/account/` (the signed-in dashboard) is built — see §6a.
+
+**Next:** `modules/bidding/` (2.3), then order history (2.4).
 
 Decisions now settled — do not relitigate casually:
 
@@ -191,11 +192,11 @@ Decisions now settled — do not relitigate casually:
 
 ---
 
-## 6a. The client account area — designed, not built
+## 6a. The client account area
 
 The signed-in client dashboard. Shape agreed 2026-08-05 after reviewing how
-bidplius.lt and vinas.lt present theirs; build it in `modules/account/` under
-an `(app)` route group.
+bidplius.lt and vinas.lt present theirs; **built 2026-08-05** in
+`modules/account/` under the `(app)` route group.
 
 ### Layout: sidebar, not tabs
 
@@ -205,17 +206,30 @@ every section then has its own URL — so an email can link a client straight to
 their plan. Collapses to a horizontal scroller on mobile.
 
 ```
-/account            overview — plan status, recent activity
-/account/details    name, phone, language, change password
-/account/plan       current plan, or pending request + cancel
+/account            overview — plan status and the one next step   BUILT
+/account/plan       current plan, or pending request + cancel      BUILT
+/account/details    name, phone, language, change password         BUILT
 /account/bids       Phase 2.3
 /account/watchlist  Phase 2.4
 /account/orders     Phase 2.4
 ```
 
 **Build a section only when it has real data behind it.** An empty "Carfax
-reports" tab promises a product that doesn't exist. Today that means overview,
-details and plan; the rest appear with their features.
+reports" tab promises a product that doesn't exist. The sidebar's contents are
+`modules/account/model/sections.ts` — one list, so the nav and the pages can't
+drift; the three unbuilt routes are named in its comment and absent from the
+array. The overview carries no "recent activity" panel for the same reason:
+there is no activity until 2.3, and an empty panel saying "nothing yet" only
+advertises the gap.
+
+**Two gates, and only one of them is real.** `(app)/layout.tsx` declares
+`force-dynamic` for the whole group, so nothing signed-in can ever be
+statically cached — including pages added later. `account/layout.tsx` calls
+`requireUser` to render the shell. **Neither is the security boundary**: every
+page calls `requireUser` itself, because a layout is shared and can be skipped
+on client-side navigation between siblings. Same rule as §7 — middleware and
+layouts are chrome, the page's own check is the check. `currentUser` is
+wrapped in React `cache`, so the layout's call and the page's cost one query.
 
 Two entries on bidplius's sidebar are deliberately NOT ours: **Messages with
 the team** (the real channel is WhatsApp/Telegram — a second inbox somebody
@@ -223,18 +237,28 @@ must remember to check is worse than none) and **Carfax reports** (a paid
 integration, not a dashboard page). One IS worth copying: **cancel a pending
 plan request**, which keeps the admin queue free of abandoned ones.
 
-### The header problem — decide before writing code
+### The header problem — solved with a client-side slot
 
 `Header.tsx` is **static on purpose**: it never reads the session, which is
-what lets the marketing pages pre-render. Showing "Nojus ▾" instead of "Log
-in" means knowing who is asking, and that would make the homepage, About and
-Terms render per-request — losing static generation on exactly the pages SEO
-depends on.
+what lets the marketing pages pre-render. Showing "Nojus" instead of "Log in"
+means knowing who is asking, and that would make the homepage, About and Terms
+render per-request — losing static generation on exactly the pages SEO depends
+on.
 
-Chosen approach: **a client-side account widget.** The header stays static; a
-small component calls a lightweight `/api/auth/me` once and swaps the button.
-Render *nothing* in that slot until it resolves (~100ms) — showing "Log in" to
-someone who is signed in is what looks broken, not a brief gap.
+Built: **`modules/auth/components/HeaderAccount.tsx`**, a client component that
+calls `/api/auth/me` after hydration and swaps the button. It renders *nothing*
+in that slot until the answer arrives — showing "Log in" to someone who is
+signed in is what looks broken, not a ~100ms gap. `/api/auth/me` returns the
+display name and nothing else, under `Cache-Control: private, no-store`.
+
+It reaches the header as a **prop, not an import**: `Header` lives in
+`shared/`, which may not depend on `modules/` (§2), so `[locale]/layout.tsx` —
+which sits above both — passes `account` and `accountMobile` slots in. Two
+slots rather than one because the desktop row and the burger menu style the
+button differently, and the desktop row's padding is load-bearing against the
+overflow noted in that file. Both instances share one request via a
+module-scoped promise; login and logout each do a full navigation, which is
+what drops it.
 
 Rejected: server-rendering the header everywhere (costs static generation on
 every marketing page), and splitting headers per route group (correct, but two
@@ -253,26 +277,55 @@ Likewise vinas.lt's phone-verified ✓/✗ marker: phone verification means SMS,
 a paid provider and a per-signup cost. Show the number, don't verify it, until
 there is a reason.
 
-### Suggested build order
+### Editing details: what the forms do and don't touch
 
-1. `/api/auth/me` + the header account widget — unblocks everything else
-2. `(app)` route group and the sidebar shell
-3. `/account/plan` — move today's plan panel there, add cancel-request
-4. `/account/details` — name, phone, language, change password
-5. Notification emails on plan request (see below)
+`/account/details` edits name, phone and notification language, and changes
+the password. Three deliberate absences:
 
-Steps 1–2 are the architectural ones; the rest is filling in pages.
+- **Email is not editable.** Changing it needs proof of the new address;
+  without that it either locks someone out of their own password reset or
+  hands the account to whoever typed it. That is a verification flow, not a
+  form field.
+- **Language is labelled as the language we write to you in**, because that is
+  all `users.locale` does. Site language follows the URL and the header
+  switcher; claiming otherwise on this form would be a lie.
+- **The password change revokes every session and issues a fresh one** for the
+  browser that made the change (`changePassword` returns the token, the route
+  sets the cookie). Same reasoning as `resetPassword` — if the old password
+  leaked, whoever has it is probably signed in somewhere — but the person
+  doing the right thing isn't logged out for it. It has **its own rate limit**
+  (`passwordChangePerUser`): verifying the current password makes the endpoint
+  an oracle for guessing it, and sharing `loginPerEmail`'s budget would let
+  failed attempts lock the owner out of logging in.
 
-### Known gap: nobody is told a request arrived
+Cancelling a plan request scopes ownership **in the SQL WHERE clause**, not in
+a check before it — `cancelPlanRequest(depositId, userId)` — so there is no
+window between checking who owns a row and updating it, and it is guarded on
+`status = 'pending'` so a cancel racing an admin's confirmation loses cleanly.
+`"cancelled"` needed no migration: `deposits.status` is a `text` column and
+that enum is a TypeScript constraint only.
 
-A plan request writes a pending row and appears in the admin queue — **no
-email is sent to anyone**. The client is promised contact "within 1 business
-day" while nothing tells the admin the clock started. Two emails close it,
-both reusing the working `nodemailer` + DKIM setup: one to
-`info@smartautobid.com` with the client's details and a link to the queue, one
-to the client with a copy of the terms they accepted. Build the notification
-path properly here, because **bid requests in 2.3 need the same thing and are
-far more time-critical** — an auction closes whether or not anyone checked.
+### Notification emails — the gap is closed
+
+A plan request used to write a pending row and appear in the admin queue while
+**no email went to anyone**, with the client promised contact "within 1
+business day" and nothing starting the admin's clock.
+`modules/plans/api/sendPlanRequestEmails.ts` sends two: one to
+`info@smartautobid.com` with the client's details, whether they accepted terms
+and a link to the queue (always English — staff, not customers); one to the
+client in their own language with their copy of what they agreed to.
+
+Three properties to preserve, because **bid requests in 2.3 need the same path
+and are far more time-critical** — an auction closes whether or not anyone
+checked the console:
+
+- **Never fatal.** The deposit row is already committed; a mail outage must
+  not turn a successful request into an error the client retries.
+- **Awaited, not fired and forgotten.** Serverless may freeze the function the
+  moment the response is sent, so a dangling promise is a notification that
+  silently never happens.
+- **Only on `status === "requested"`.** A double-submitted dialog returns
+  `already_pending` and must not mail the admin twice about one request.
 
 ---
 

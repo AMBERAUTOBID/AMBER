@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { errorBoxClass, inputClass, labelClass, submitClass, successBoxClass } from "./formStyles";
+// The policy module, not model/password — that one imports node:crypto.
+import { MIN_PASSWORD_LENGTH } from "../model/passwordPolicy";
 
 type Status = "idle" | "submitting" | "done";
 type ErrorKind = "invalid_email" | "invalid_password" | "invalid_name" | "rate_limited" | "generic";
@@ -82,7 +84,7 @@ export default function RegisterForm() {
           type="password"
           autoComplete="new-password"
           required
-          minLength={10}
+          minLength={MIN_PASSWORD_LENGTH}
           className={`mt-1.5 ${inputClass}`}
         />
         <p className="mt-1.5 text-xs text-char-500">{t("passwordHint")}</p>

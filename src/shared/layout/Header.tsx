@@ -13,7 +13,23 @@ import { SITE, CONTACT_HREF } from "@/shared/config/site";
 const BRAND_PART_1 = "Smart";
 const BRAND_PART_2 = "AutoBid";
 
-export default function Header() {
+interface HeaderProps {
+  /**
+   * The account button, injected as a slot rather than imported.
+   *
+   * It has to know who is signed in, which is a `modules/auth` concern, and
+   * `shared/` may not import from `modules/` (ARCHITECTURE.md §2). The locale
+   * layout sits above both and can import either, so it passes them in.
+   *
+   * Two slots, not one: the desktop row and the burger menu style the button
+   * differently, and the desktop row's padding is load-bearing — see the
+   * width note above it.
+   */
+  account?: React.ReactNode;
+  accountMobile?: React.ReactNode;
+}
+
+export default function Header({ account, accountMobile }: HeaderProps) {
   const t = useTranslations("Nav");
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -106,15 +122,10 @@ export default function Header() {
             {SITE.phone.display}
           </a>
           <LanguageSwitcher />
-          {/* Static on purpose: reading the session cookie in the header
-              would force every marketing page to render dynamically. The
-              account page is where logged-in state gets decided. */}
-          <Link
-            href="/login"
-            className="whitespace-nowrap rounded-full border border-char-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-char-800 transition-colors hover:border-amber-400 hover:text-amber-700"
-          >
-            {t("login")}
-          </Link>
+          {/* This header is still static: the slot resolves the session on
+              the client after hydration, so every marketing page keeps its
+              pre-rendered HTML. See HeaderAccount. */}
+          {account}
           <Link
             href="/contact"
             className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-amber-900/20 transition-all hover:bg-amber-600 hover:shadow-md"
@@ -172,12 +183,7 @@ export default function Header() {
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-char-200/70 pt-4">
             <LanguageSwitcher />
             <div className="flex items-center gap-2">
-              <Link
-                href="/login"
-                className="rounded-full border border-char-200 bg-white px-4 py-2.5 text-sm font-semibold text-char-800"
-              >
-                {t("login")}
-              </Link>
+              {accountMobile}
               <Link
                 href="/contact"
                 className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white"

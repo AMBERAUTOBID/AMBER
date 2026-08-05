@@ -14,6 +14,11 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 
+// Re-exported so server-side callers keep one import. Client components must
+// import from passwordPolicy directly — see the warning in that file; pulling
+// it through here would bundle node:crypto into the browser.
+export { MIN_PASSWORD_LENGTH, passwordMeetsPolicy } from "./passwordPolicy";
+
 const scrypt = promisify(scryptCb) as (
   password: string,
   salt: Buffer,
@@ -57,13 +62,3 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
-/**
- * Minimum bar for new passwords. Deliberately just a length rule: composition
- * rules ("one uppercase, one symbol") are security theater per NIST 800-63B,
- * and length is the only factor that reliably matters.
- */
-export const MIN_PASSWORD_LENGTH = 10;
-
-export function passwordMeetsPolicy(password: string): boolean {
-  return password.length >= MIN_PASSWORD_LENGTH && password.length <= 200;
-}

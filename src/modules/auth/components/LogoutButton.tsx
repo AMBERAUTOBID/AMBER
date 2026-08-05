@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 export default function LogoutButton() {
-  const t = useTranslations("Auth.account");
+  const t = useTranslations("Account");
   const locale = useLocale();
   const [busy, setBusy] = useState(false);
 
@@ -24,7 +24,7 @@ export default function LogoutButton() {
       type="button"
       onClick={handleLogout}
       disabled={busy}
-      className="inline-flex items-center justify-center rounded-full border border-char-200 bg-white px-6 py-3 text-sm font-semibold text-char-800 transition-colors hover:border-amber-400 hover:text-amber-700 disabled:opacity-60"
+      className="text-sm font-semibold text-char-600 underline-offset-4 transition-colors hover:text-char-900 hover:underline disabled:opacity-60"
     >
       {t("logout")}
     </button>

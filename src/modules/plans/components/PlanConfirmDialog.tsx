@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { Check, CheckCircle, WarningCircle, X } from "@phosphor-icons/react/dist/ssr";
 import { SITE, CONTACT_HREF } from "@/shared/config/site";
 import { formatUsd, type Plan } from "../model/plans";
+import { planCoreLines } from "../model/planFeatures";
 
 /**
  * The commitment step between choosing a plan and requesting it.
@@ -69,15 +70,11 @@ export default function PlanConfirmDialog({
   }
 
   const planName = t(`tiers.${plan.key}.name`);
-  const features = [
-    plan.maxBidUsd === null
-      ? t("features.bidUnlimited")
-      : t("features.bidLimit", { amount: formatUsd(plan.maxBidUsd * 100) }),
-    plan.maxConcurrentBids === null
-      ? t("features.concurrentUnlimited")
-      : t("features.concurrent", { count: plan.maxConcurrentBids }),
-    t("features.consultant"),
-  ];
+  // Core lines only; fees are rendered separately below with their own
+  // emphasis, because the fee is the thing being agreed to. Sharing the
+  // generator with PlanCard also restored the conditional-concurrency
+  // wording this dialog used to drop.
+  const features = planCoreLines(plan, t);
 
   return (
     <div

@@ -1158,24 +1158,6 @@
       "failedHint": "Links are valid for 24 hours. Register again or contact us and we'll sort it out.",
       "toLogin": "Log in"
     },
-    "account": {
-      "title": "My account",
-      "greeting": "Hello, {name}",
-      "planHeading": "Your plan",
-      "noPlan": "No plan yet",
-      "noPlanHint": "To start bidding, choose a plan and place your deposit — contact us and we'll guide you through it.",
-      "logout": "Log out",
-      "plans": {
-        "bronze": "Bronze",
-        "silver": "Silver",
-        "gold": "Gold",
-        "platinum": "Platinum"
-      },
-      "pendingPlan": "{plan} — awaiting confirmation",
-      "pendingHint": "We've received your request. Once your {amount} deposit arrives, your plan activates automatically.",
-      "viewPlans": "View plans",
-      "adminConsole": "Admin console"
-    },
     "emails": {
       "verify": {
         "subject": "Confirm your SmartAutoBid email",
@@ -1190,6 +1172,69 @@
         "expiry": "The link is valid for 1 hour."
       },
       "signature": "— The {site} team"
+    }
+  },
+  "Account": {
+    "title": "My account",
+    "greeting": "Hello, {name}",
+    "logout": "Log out",
+    "adminConsole": "Admin console",
+    "planHeading": "Your plan",
+    "noPlan": "No plan yet",
+    "noPlanHint": "Choose a plan to start bidding with us. Bronze costs nothing up front — you pay only when you buy.",
+    "viewPlans": "View plans",
+    "managePlan": "Manage your plan",
+    "pendingPlan": "{plan} — awaiting confirmation",
+    "pendingHint": "We've received your request. Once your {amount} deposit arrives, your plan activates automatically.",
+    "pendingHintNoDeposit": "We've received your request. There's no deposit to pay on this plan — we'll confirm it and be in touch shortly.",
+    "pendingUpgrade": "You also have a pending request for {plan}.",
+    "nav": {
+      "label": "Account sections",
+      "overview": "Overview",
+      "plan": "Plan",
+      "details": "My details"
+    },
+    "plan": {
+      "title": "Your plan",
+      "currentHeading": "Current plan",
+      "changeHint": "To change or cancel your plan, <contact>get in touch</contact> and we'll sort it out with you.",
+      "pendingHeading": "Awaiting confirmation",
+      "pendingUpgradeHeading": "Requested plan change",
+      "requestedOn": "Requested",
+      "depositDue": "Deposit",
+      "pendingExplainer": "Your plan activates as soon as we confirm your deposit has arrived. If you haven't received transfer details from us yet, email {email} and we'll send them.",
+      "pendingExplainerNoDeposit": "We've received your request. There's no deposit to pay on this plan — we'll confirm it and be in touch shortly. Any questions, email {email}.",
+      "cancelRequest": "Cancel this request",
+      "cancelConfirm": "This withdraws your request. Nothing is charged, and you can request a plan again whenever you like.",
+      "cancelYes": "Yes, cancel it",
+      "cancelNo": "Keep it",
+      "cancelError": "We couldn't cancel that — it may already have been confirmed. Reload the page to see where it stands.",
+      "none": "No plan yet",
+      "noneHint": "Choose a plan to start bidding with us.",
+      "choosePlan": "Choose a plan"
+    },
+    "details": {
+      "title": "My details",
+      "profileHeading": "Your details",
+      "passwordHeading": "Password",
+      "name": "Full name",
+      "phone": "Phone",
+      "phoneHint": "So we can reach you quickly about a lot. WhatsApp works on this number too.",
+      "language": "Language",
+      "languageHint": "The language we write to you in. To change the site's language, use the switcher in the header.",
+      "email": "Email",
+      "emailHint": "Your email can't be changed here yet — write to us and we'll change it for you.",
+      "save": "Save changes",
+      "saved": "Your details have been saved.",
+      "saveError": "We couldn't save that. Please try again.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "passwordHint": "At least {min} characters.",
+      "changePassword": "Change password",
+      "passwordChanged": "Your password has been changed. You've been signed out on all other devices.",
+      "currentPasswordWrong": "That current password isn't right.",
+      "passwordTooShort": "Your new password must be at least {min} characters.",
+      "passwordRateLimited": "Too many attempts. Please wait a few minutes and try again."
     }
   },
   "Plans": {
@@ -1266,6 +1311,15 @@
         "alreadyBody": "You already have a plan request awaiting confirmation. We will contact you within 1 business day — there is no need to send it again.",
         "close": "Close"
       }
+    },
+    "requestEmail": {
+      "subject": "Your {plan} plan request",
+      "greeting": "Hello {name},",
+      "received": "We've received your request for the {plan} plan.",
+      "depositDue": "Refundable deposit: {amount}. We'll send you the transfer details separately.",
+      "nextStep": "One of our team will be in touch within one business day. Your plan activates as soon as we confirm your deposit has arrived.",
+      "termsRecorded": "You accepted our terms when you made this request. You can read them again here: {url}",
+      "signature": "— The {site} team"
     }
   },
   "Admin": {

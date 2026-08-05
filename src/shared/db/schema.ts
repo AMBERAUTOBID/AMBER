@@ -116,7 +116,17 @@ export const deposits = pgTable(
     planKey: text("plan_key").notNull(),
     /** Integer euro cents. €1500 = 150000. */
     amountCents: integer("amount_cents").notNull(),
-    status: text("status", { enum: ["pending", "confirmed", "refund_requested", "refunded"] })
+    /**
+     * "cancelled" is the client withdrawing their own request before anyone
+     * acted on it — a terminal state like the others, kept rather than
+     * deleted so the queue's history stays honest about what was asked for.
+     *
+     * No migration needed to add a value here: the column is `text`, and this
+     * enum is a TypeScript-level constraint only. Postgres never saw a CHECK.
+     */
+    status: text("status", {
+      enum: ["pending", "confirmed", "cancelled", "refund_requested", "refunded"],
+    })
       .notNull()
       .default("pending"),
     /**

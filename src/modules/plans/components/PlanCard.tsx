@@ -6,6 +6,7 @@ import { Check, Lock } from "@phosphor-icons/react/dist/ssr";
 import { clsx } from "clsx";
 import { Link } from "@/i18n/navigation";
 import { formatUsd, type Plan } from "../model/plans";
+import { planFeatureLines } from "../model/planFeatures";
 import PlanConfirmDialog from "./PlanConfirmDialog";
 
 /**
@@ -25,27 +26,8 @@ export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boo
   // which owns the terms agreement and the request itself.
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const features = [
-    plan.maxBidUsd === null
-      ? t("features.bidUnlimited")
-      : t("features.bidLimit", { amount: formatUsd(plan.maxBidUsd * 100) }),
-    plan.maxConcurrentBids === null
-      ? t("features.concurrentUnlimited")
-      : plan.concurrencyThresholdUsd !== null
-        ? t("features.concurrentConditional", {
-            count: plan.maxConcurrentBids,
-            threshold: formatUsd(plan.concurrencyThresholdUsd * 100),
-          })
-        : t("features.concurrent", { count: plan.maxConcurrentBids }),
-    t("features.consultant"),
-    // One line per published fee; an empty list renders nothing at all.
-    ...plan.feesPerVehicleUsdCents.map((cents) =>
-      t("features.fee", { amount: formatUsd(cents) })
-    ),
-    ...(plan.nightReserveVisible ? [t("features.nightReserve")] : []),
-    ...(plan.liveAuctionAccess ? [t("features.liveAuction")] : []),
-    ...(plan.selfBiddingEligible ? [t("features.selfBidding")] : []),
-  ];
+  // Generated from the plan table, never written per-card — see planFeatures.
+  const features = planFeatureLines(plan, t);
 
   function choose() {
     if (!signedIn) {

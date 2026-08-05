@@ -31,6 +31,11 @@ export const LIMITS = {
   loginPerEmail: { max: 10, windowSeconds: 15 * 60 },
   registerPerIp: { max: 5, windowSeconds: 60 * 60 },
   resetPerEmail: { max: 3, windowSeconds: 60 * 60 },
+  /** Keyed by user id. Changing your password verifies the current one, which
+   * makes that endpoint an oracle for guessing it — someone who borrows an
+   * unlocked laptop gets ten tries, not unlimited. Separate from
+   * loginPerEmail so failures here can't lock the owner out of logging in. */
+  passwordChangePerUser: { max: 10, windowSeconds: 15 * 60 },
   contactPerIp: { max: 10, windowSeconds: 60 * 60 },
 } as const satisfies Record<string, LimitRule>;
 

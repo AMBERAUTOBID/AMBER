@@ -97,7 +97,16 @@ export async function pendingDeposits(): Promise<DepositRow[]> {
     .orderBy(schema.deposits.createdAt);
 }
 
-export async function latestDepositFor(userId: string): Promise<DepositRow | null> {
+/**
+ * The client's open request, if they have one. "Do I have a request in
+ * flight" is the only question the account area asks — a decided deposit is
+ * answered by `users.activePlanKey`, and a cancelled or refunded one is
+ * history nobody is waiting on.
+ *
+ * At most one can exist: requestPlan() refuses a second while one is
+ * undecided. Ordering is defensive, not load-bearing.
+ */
+export async function pendingDepositFor(userId: string): Promise<DepositRow | null> {
   const rows = await db()
     .select({
       id: schema.deposits.id,
@@ -111,10 +120,51 @@ export async function latestDepositFor(userId: string): Promise<DepositRow | nul
     })
     .from(schema.deposits)
     .innerJoin(schema.users, eq(schema.deposits.userId, schema.users.id))
-    .where(eq(schema.deposits.userId, userId))
+    .where(and(eq(schema.deposits.userId, userId), eq(schema.deposits.status, "pending")))
     .orderBy(desc(schema.deposits.createdAt))
     .limit(1);
   return rows[0] ?? null;
+}
+
+export type CancelResult = "cancelled" | "not_pending";
+
+/**
+ * The client withdraws their own request. Worth having: without it, someone
+ * who changes their mind leaves a row sitting in the admin queue forever, and
+ * a queue full of requests nobody intends to honour is a queue people stop
+ * reading.
+ *
+ * Scoped to `userId` in the WHERE clause, not merely checked before it — the
+ * route hands us an id from the browser, so this query is what guarantees a
+ * client cannot cancel somebody else's request. Guarded on `pending` for the
+ * same reason confirmDeposit is: a cancel racing an admin's confirmation must
+ * lose cleanly rather than un-confirm a paid plan.
+ */
+export async function cancelPlanRequest(
+  depositId: string,
+  userId: string
+): Promise<CancelResult> {
+  const claimed = await db()
+    .update(schema.deposits)
+    // reviewedBy/reviewedAt stay null on purpose: they mean "an admin decided
+    // this", and nobody did. When it happened is in audit_log, which is where
+    // "who did what, when" belongs anyway.
+    .set({ status: "cancelled" })
+    .where(
+      and(
+        eq(schema.deposits.id, depositId),
+        eq(schema.deposits.userId, userId),
+        eq(schema.deposits.status, "pending")
+      )
+    )
+    .returning({ planKey: schema.deposits.planKey });
+
+  if (!claimed[0]) return "not_pending";
+
+  await recordAudit(userId, "deposit.cancelled", "deposit", depositId, {
+    planKey: claimed[0].planKey,
+  });
+  return "cancelled";
 }
 
 export type ConfirmResult = "confirmed" | "not_pending";

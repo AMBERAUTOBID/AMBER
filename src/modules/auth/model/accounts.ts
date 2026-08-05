@@ -157,6 +157,100 @@ export async function resetPassword(token: string, newPassword: string): Promise
   return "reset";
 }
 
+export interface ProfileUpdate {
+  name: string;
+  phone: string;
+  /** Which language this account's emails are written in. */
+  locale: string;
+}
+
+export type UpdateProfileResult =
+  | { status: "updated" }
+  | { status: "invalid"; field: "name" | "phone" };
+
+/**
+ * The client edits their own details.
+ *
+ * Email is deliberately NOT editable here. Changing it means re-proving
+ * ownership of the new address, and an unverified change would either lock
+ * someone out of their own password reset or hand their account to whoever
+ * typed the address — that is a verification flow, not a form field, and it
+ * belongs with the work that needs it.
+ *
+ * Nothing sensitive is collected either (ARCHITECTURE.md §6a): no national
+ * identity number, no IBAN. Both would change our GDPR obligations
+ * materially, and neither is needed until invoices are actually issued.
+ */
+export async function updateProfile(
+  userId: string,
+  input: ProfileUpdate
+): Promise<UpdateProfileResult> {
+  const name = input.name.replace(/\s+/g, " ").trim();
+  if (!name || name.length > 200) return { status: "invalid", field: "name" };
+
+  const phone = input.phone.replace(/\s+/g, " ").trim();
+  // Loose on purpose. These are international numbers written however the
+  // owner writes them, and a strict pattern would reject valid ones — the
+  // only thing that matters is that a human can dial what is stored.
+  if (phone.length > 50) return { status: "invalid", field: "phone" };
+
+  await db()
+    .update(schema.users)
+    .set({
+      name,
+      phone: phone || null,
+      locale: ["en", "ru", "lt"].includes(input.locale) ? input.locale : "en",
+    })
+    .where(eq(schema.users.id, userId));
+
+  return { status: "updated" };
+}
+
+export type ChangePasswordResult =
+  | { status: "changed"; sessionToken: string; expiresAt: Date }
+  | { status: "invalid_current" }
+  | { status: "weak_password" };
+
+/**
+ * Change password while signed in. Requires the current one — a session left
+ * open on a shared machine must not be enough to take the account over.
+ *
+ * Every session dies, including this browser's, for the same reason
+ * resetPassword kills them: if the old password leaked, whoever has it is
+ * probably signed in somewhere. A fresh session is then issued for the
+ * browser that made the change, so the person doing the right thing isn't
+ * punished by being logged out — the caller must set the returned cookie.
+ */
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+  context: { userAgent?: string; ip?: string }
+): Promise<ChangePasswordResult> {
+  const rows = await db()
+    .select({ passwordHash: schema.users.passwordHash })
+    .from(schema.users)
+    .where(eq(schema.users.id, userId))
+    .limit(1);
+
+  const stored = rows[0]?.passwordHash;
+  if (!stored || !(await verifyPassword(currentPassword, stored))) {
+    return { status: "invalid_current" };
+  }
+  // Checked after the current password, so a stranger poking at the endpoint
+  // learns nothing about our policy without valid credentials.
+  if (!passwordMeetsPolicy(newPassword)) return { status: "weak_password" };
+
+  await db()
+    .update(schema.users)
+    .set({ passwordHash: await hashPassword(newPassword) })
+    .where(eq(schema.users.id, userId));
+
+  await destroyAllSessionsForUser(userId);
+  const session = await createSession(userId, context);
+  return { status: "changed", sessionToken: session.token, expiresAt: session.expiresAt };
+}
+
 async function issueActionToken(
   userId: string,
   purpose: "verify_email" | "reset_password",

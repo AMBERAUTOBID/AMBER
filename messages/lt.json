@@ -1158,24 +1158,6 @@
       "failedHint": "Nuorodos galioja 24 valandas. Registruokitės iš naujo arba susisiekite — padėsime.",
       "toLogin": "Prisijungti"
     },
-    "account": {
-      "title": "Mano paskyra",
-      "greeting": "Sveiki, {name}",
-      "planHeading": "Jūsų planas",
-      "noPlan": "Planas dar nepasirinktas",
-      "noPlanHint": "Norėdami pradėti statyti, pasirinkite planą ir įneškite depozitą — susisiekite, viską paaiškinsime.",
-      "logout": "Atsijungti",
-      "plans": {
-        "bronze": "Bronza",
-        "silver": "Sidabras",
-        "gold": "Auksas",
-        "platinum": "Platina"
-      },
-      "pendingPlan": "{plan} — laukiama patvirtinimo",
-      "pendingHint": "Jūsų užklausą gavome. Gavus {amount} depozitą, planas aktyvuosis automatiškai.",
-      "viewPlans": "Peržiūrėti planus",
-      "adminConsole": "Administratoriaus pultas"
-    },
     "emails": {
       "verify": {
         "subject": "Patvirtinkite savo SmartAutoBid el. paštą",
@@ -1190,6 +1172,69 @@
         "expiry": "Nuoroda galioja 1 valandą."
       },
       "signature": "— {site} komanda"
+    }
+  },
+  "Account": {
+    "title": "Mano paskyra",
+    "greeting": "Sveiki, {name}",
+    "logout": "Atsijungti",
+    "adminConsole": "Administratoriaus pultas",
+    "planHeading": "Jūsų planas",
+    "noPlan": "Planas dar nepasirinktas",
+    "noPlanHint": "Pasirinkite planą ir pradėkite dalyvauti aukcionuose kartu su mumis. Bronze nereikalauja jokio išankstinio mokėjimo — mokate tik nusipirkę.",
+    "viewPlans": "Peržiūrėti planus",
+    "managePlan": "Tvarkyti planą",
+    "pendingPlan": "{plan} — laukiama patvirtinimo",
+    "pendingHint": "Gavome jūsų užklausą. Kai tik gausime {amount} depozitą, planas bus aktyvuotas automatiškai.",
+    "pendingHintNoDeposit": "Gavome jūsų užklausą. Šiam planui depozito mokėti nereikia — ją patvirtinsime ir netrukus su jumis susisieksime.",
+    "pendingUpgrade": "Taip pat turite laukiančią {plan} plano užklausą.",
+    "nav": {
+      "label": "Paskyros skiltys",
+      "overview": "Apžvalga",
+      "plan": "Planas",
+      "details": "Mano duomenys"
+    },
+    "plan": {
+      "title": "Jūsų planas",
+      "currentHeading": "Dabartinis planas",
+      "changeHint": "Norėdami pakeisti ar atšaukti planą, <contact>susisiekite su mumis</contact> — viską sutvarkysime kartu.",
+      "pendingHeading": "Laukiama patvirtinimo",
+      "pendingUpgradeHeading": "Pateikta plano keitimo užklausa",
+      "requestedOn": "Pateikta",
+      "depositDue": "Depozitas",
+      "pendingExplainer": "Planas aktyvuojamas, kai tik patvirtiname, kad depozitas gautas. Jei dar negavote iš mūsų mokėjimo rekvizitų, parašykite {email} ir juos atsiųsime.",
+      "pendingExplainerNoDeposit": "Gavome jūsų užklausą. Šiam planui depozito mokėti nereikia — ją patvirtinsime ir netrukus su jumis susisieksime. Jei turite klausimų, parašykite {email}.",
+      "cancelRequest": "Atšaukti šią užklausą",
+      "cancelConfirm": "Užklausa bus atšaukta. Niekas nenuskaičiuojama, o naują užklausą galėsite pateikti bet kada.",
+      "cancelYes": "Taip, atšaukti",
+      "cancelNo": "Palikti",
+      "cancelError": "Nepavyko atšaukti — gali būti, kad užklausa jau patvirtinta. Atnaujinkite puslapį ir pamatysite jos būseną.",
+      "none": "Planas dar nepasirinktas",
+      "noneHint": "Pasirinkite planą ir pradėkite dalyvauti aukcionuose kartu su mumis.",
+      "choosePlan": "Pasirinkti planą"
+    },
+    "details": {
+      "title": "Mano duomenys",
+      "profileHeading": "Jūsų duomenys",
+      "passwordHeading": "Slaptažodis",
+      "name": "Vardas ir pavardė",
+      "phone": "Telefonas",
+      "phoneHint": "Kad galėtume greitai su jumis susisiekti dėl loto. Šiuo numeriu veikia ir WhatsApp.",
+      "language": "Kalba",
+      "languageHint": "Kalba, kuria jums rašome. Svetainės kalbą keiskite viršuje esančiu jungikliu.",
+      "email": "El. paštas",
+      "emailHint": "El. pašto adreso čia kol kas pakeisti negalima — parašykite mums ir pakeisime jį už jus.",
+      "save": "Išsaugoti",
+      "saved": "Duomenys išsaugoti.",
+      "saveError": "Nepavyko išsaugoti. Bandykite dar kartą.",
+      "currentPassword": "Dabartinis slaptažodis",
+      "newPassword": "Naujas slaptažodis",
+      "passwordHint": "Bent {min} simbolių.",
+      "changePassword": "Keisti slaptažodį",
+      "passwordChanged": "Slaptažodis pakeistas. Visuose kituose įrenginiuose atsijungta.",
+      "currentPasswordWrong": "Dabartinis slaptažodis neteisingas.",
+      "passwordTooShort": "Naujas slaptažodis turi būti bent {min} simbolių.",
+      "passwordRateLimited": "Per daug bandymų. Palaukite kelias minutes ir bandykite dar kartą."
     }
   },
   "Plans": {
@@ -1266,6 +1311,15 @@
         "alreadyBody": "Jūs jau turite užklausą, laukiančią patvirtinimo. Susisieksime su jumis per 1 darbo dieną — siųsti iš naujo nereikia.",
         "close": "Uždaryti"
       }
+    },
+    "requestEmail": {
+      "subject": "Jūsų {plan} plano užklausa",
+      "greeting": "Sveiki, {name},",
+      "received": "Gavome jūsų {plan} plano užklausą.",
+      "depositDue": "Grąžinamas depozitas: {amount}. Mokėjimo rekvizitus atsiųsime atskirai.",
+      "nextStep": "Mūsų specialistas susisieks su jumis per vieną darbo dieną. Planas aktyvuojamas, kai tik patvirtiname, kad depozitas gautas.",
+      "termsRecorded": "Pateikdami užklausą sutikote su mūsų sąlygomis. Jas galite dar kartą perskaityti čia: {url}",
+      "signature": "— {site} komanda"
     }
   },
   "Admin": {

@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { CheckCircle, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { errorBoxClass, inputClass, labelClass, submitClass, successBoxClass } from "./formStyles";
+// The policy module, not model/password — that one imports node:crypto.
+import { MIN_PASSWORD_LENGTH } from "../model/passwordPolicy";
 
 export default function ResetPasswordForm({ token }: { token: string }) {
   const t = useTranslations("Auth.reset");
@@ -62,7 +64,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           type="password"
           autoComplete="new-password"
           required
-          minLength={10}
+          minLength={MIN_PASSWORD_LENGTH}
           className={`mt-1.5 ${inputClass}`}
         />
       </div>
