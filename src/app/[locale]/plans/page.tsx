@@ -34,12 +34,9 @@ export default async function PlansPage({ params }: { params: Promise<{ locale: 
 
   return (
     <Container className="py-16 sm:py-24">
-      <SectionHeading
-        eyebrow={t("eyebrow")}
-        title={t("title")}
-        subtitle={t("intro")}
-        align="center"
-      />
+      {/* No eyebrow chip: the heading is now simply "Plans", and a PLANS
+          chip above a Plans heading said the same word twice. */}
+      <SectionHeading title={t("title")} subtitle={t("intro")} align="center" />
 
       <div className="mt-14 grid gap-6 lg:grid-cols-3">
         {PLANS_IN_ORDER.map((plan) => (

@@ -35,9 +35,10 @@ export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boo
           })
         : t("features.concurrent", { count: plan.maxConcurrentBids }),
     t("features.consultant"),
-    ...(plan.feePerLotUsdCents !== null
-      ? [t("features.fee", { amount: formatUsd(plan.feePerLotUsdCents) })]
-      : []),
+    // One line per published fee; an empty list renders nothing at all.
+    ...plan.feesPerVehicleUsdCents.map((cents) =>
+      t("features.fee", { amount: formatUsd(cents) })
+    ),
     ...(plan.nightReserveVisible ? [t("features.nightReserve")] : []),
     ...(plan.liveAuctionAccess ? [t("features.liveAuction")] : []),
     ...(plan.selfBiddingEligible ? [t("features.selfBidding")] : []),

@@ -16,15 +16,19 @@
  * were ever withdrawn, existing holders would keep what they paid for.
  *
  * ── WHAT IS AND ISN'T CONFIRMED ─────────────────────────────────────────
- * Confirmed by the owner: the four names, Bronze free with a $350/lot fee,
- * and Silver/Gold/Platinum deposits of $1,500/$2,500/$5,000 with limits
- * matching bidauto.online's published tiers.
+ * Confirmed by the owner: the four names, Bronze free with $350 and $200
+ * per-vehicle service fees, and Silver/Gold/Platinum deposits of
+ * $1,500/$2,500/$5,000 with limits matching bidauto.online's published tiers.
  *
- * NOT confirmed: the per-lot service fee for the three paid tiers. bidauto
- * doesn't publish one, so `feePerLotUsdCents` is null there rather than
- * invented (invariant #4, and #5: absent data renders as absent, not as a
- * number). Their cards simply show no fee line. Fill it in when the tiers
- * go live.
+ * OPEN: Bronze quotes two service fees and nothing yet says which applies
+ * when. They render as two plain lines, so a customer reading the card will
+ * ask the same question. Once the distinguishing condition is known, give
+ * each fee its own message key rather than a bare amount.
+ *
+ * NOT confirmed: any service fee for the three paid tiers. bidauto publishes
+ * none, so their lists are empty rather than invented (invariant #4, and #5:
+ * absent data renders as absent, not as a number). Their cards simply show
+ * no fee line. Fill them in when the tiers go live.
  * ────────────────────────────────────────────────────────────────────────
  */
 
@@ -54,8 +58,13 @@ export interface Plan {
   nightReserveVisible: boolean;
   /** Whether the client may join live auctions (with us bidding). */
   liveAuctionAccess: boolean;
-  /** Service fee per purchased lot, USD cents. null = not yet published. */
-  feePerLotUsdCents: number | null;
+  /**
+   * Service fees per purchased vehicle, USD cents — one card line each, in
+   * order. A list rather than a single number because a tier may quote more
+   * than one rate; an empty list means no fee is published yet and the card
+   * shows no fee line at all (invariant #5: absent, not zero).
+   */
+  feesPerVehicleUsdCents: number[];
   /** May an admin grant this user live self-bidding at all? */
   selfBiddingEligible: boolean;
   /** False = shown on /plans but not selectable. See AVAILABILITY above. */
@@ -79,7 +88,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: null,
     nightReserveVisible: false,
     liveAuctionAccess: false,
-    feePerLotUsdCents: 35000, // $350 per lot — confirmed by the owner
+    feesPerVehicleUsdCents: [35000, 20000], // $350 and $200 per vehicle — confirmed by the owner
     selfBiddingEligible: false,
     available: true,
     featured: true,
@@ -94,7 +103,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: null,
     nightReserveVisible: true,
     liveAuctionAccess: true,
-    feePerLotUsdCents: null, // not published by the source; see header
+    feesPerVehicleUsdCents: [], // not published by the source; see header
     selfBiddingEligible: false,
     available: false,
     featured: false,
@@ -109,7 +118,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: 10000,
     nightReserveVisible: true,
     liveAuctionAccess: true,
-    feePerLotUsdCents: null,
+    feesPerVehicleUsdCents: [],
     selfBiddingEligible: false,
     available: false,
     featured: false,
@@ -124,7 +133,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: 10000,
     nightReserveVisible: true,
     liveAuctionAccess: true,
-    feePerLotUsdCents: null,
+    feesPerVehicleUsdCents: [],
     selfBiddingEligible: true,
     available: false,
     featured: false,

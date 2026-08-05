@@ -204,9 +204,19 @@ describe("catalogue sanity — these fail if a plans.ts edit breaks an invariant
   it("every plan has sane money fields", () => {
     for (const key of PLAN_KEYS) {
       expect(PLANS[key].depositUsdCents).toBeGreaterThanOrEqual(0);
-      const fee = PLANS[key].feePerLotUsdCents;
-      // null is legitimate — a fee we haven't published is absent, not zero.
-      if (fee !== null) expect(fee).toBeGreaterThan(0);
+      // An empty list is legitimate — a fee we haven't published is absent,
+      // not zero. Any fee that IS listed must be a real amount.
+      for (const fee of PLANS[key].feesPerVehicleUsdCents) {
+        expect(fee).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("the only selectable plan quotes at least one fee — it's how we get paid", () => {
+    for (const key of PLAN_KEYS) {
+      if (PLANS[key].available) {
+        expect(PLANS[key].feesPerVehicleUsdCents.length).toBeGreaterThan(0);
+      }
     }
   });
 
