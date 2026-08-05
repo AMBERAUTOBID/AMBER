@@ -15,20 +15,15 @@
  * own auction access codes. That flag gates *new requests* only — if a plan
  * were ever withdrawn, existing holders would keep what they paid for.
  *
- * ── WHAT IS AND ISN'T CONFIRMED ─────────────────────────────────────────
- * Confirmed by the owner: the four names, Bronze free with $350 and $200
- * per-vehicle service fees, and Silver/Gold/Platinum deposits of
- * $1,500/$2,500/$5,000 with limits matching bidauto.online's published tiers.
+ * ── ALL FIGURES CONFIRMED BY THE OWNER ──────────────────────────────────
+ * The four names; Bronze free at $350 per vehicle; Silver/Gold/Platinum
+ * deposits of $1,500/$2,500/$5,000 at $200 per vehicle, with limits matching
+ * bidauto.online's published tiers.
  *
- * OPEN: Bronze quotes two service fees and nothing yet says which applies
- * when. They render as two plain lines, so a customer reading the card will
- * ask the same question. Once the distinguishing condition is known, give
- * each fee its own message key rather than a bare amount.
- *
- * NOT confirmed: any service fee for the three paid tiers. bidauto publishes
- * none, so their lists are empty rather than invented (invariant #4, and #5:
- * absent data renders as absent, not as a number). Their cards simply show
- * no fee line. Fill them in when the tiers go live.
+ * The fee is the whole commercial shape of the offer: a deposit buys the
+ * reduced $200 rate, and Bronze trades that discount for costing nothing up
+ * front. Change one of those numbers and the reason to pay a deposit changes
+ * with it.
  * ────────────────────────────────────────────────────────────────────────
  */
 
@@ -88,7 +83,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: null,
     nightReserveVisible: false,
     liveAuctionAccess: false,
-    feesPerVehicleUsdCents: [35000, 20000], // $350 and $200 per vehicle — confirmed by the owner
+    feesPerVehicleUsdCents: [35000], // $350 per vehicle — the no-deposit rate
     selfBiddingEligible: false,
     available: true,
     featured: true,
@@ -103,7 +98,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: null,
     nightReserveVisible: true,
     liveAuctionAccess: true,
-    feesPerVehicleUsdCents: [], // not published by the source; see header
+    feesPerVehicleUsdCents: [20000], // $200 — the reduced rate a deposit buys
     selfBiddingEligible: false,
     available: false,
     featured: false,
@@ -118,7 +113,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: 10000,
     nightReserveVisible: true,
     liveAuctionAccess: true,
-    feesPerVehicleUsdCents: [],
+    feesPerVehicleUsdCents: [20000],
     selfBiddingEligible: false,
     available: false,
     featured: false,
@@ -133,7 +128,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: 10000,
     nightReserveVisible: true,
     liveAuctionAccess: true,
-    feesPerVehicleUsdCents: [],
+    feesPerVehicleUsdCents: [20000],
     selfBiddingEligible: true,
     available: false,
     featured: false,
