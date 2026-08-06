@@ -1192,6 +1192,7 @@
     "nav": {
       "label": "Account sections",
       "overview": "Overview",
+      "bids": "My bids",
       "favorites": "Favourites",
       "plan": "Plan",
       "details": "My details"
@@ -1282,6 +1283,17 @@
     "noPhoto": "No photo",
     "noPrice": "No bids yet",
     "asOf": "As saved on {date}"
+  },
+  "Bids": {
+    "title": "My bids",
+    "comingBanner": "Bidding straight from your account arrives with one of our next updates. For now it works like this: once your plan is active, send us the car you want — the lot link or VIN — by email or WhatsApp, and we'll place the bid together.",
+    "whatsappCta": "WhatsApp us the car",
+    "whatsappPrefill": "Hello! I'd like to bid on this car: ",
+    "emailCta": "Email us the car",
+    "activeHeading": "Active bids",
+    "activeEmpty": "No active bids yet.",
+    "historyHeading": "Bid history",
+    "historyEmpty": "Your finished bids will appear here."
   },
   "Plans": {
     "metaTitle": "Plans & deposits",
@@ -1411,6 +1423,21 @@
     "deleteUserEmail": "Client email address",
     "deleteUserFind": "Find account",
     "deleteUserNotFound": "No account with that email address.",
-    "deleteAnother": "Erase another account"
+    "deleteAnother": "Erase another account",
+    "maintenance": {
+      "heading": "Maintenance mode",
+      "statusOff": "The site is live",
+      "statusOn": "The site is CLOSED for maintenance",
+      "hintOff": "Closing the site shows visitors a “we'll be back shortly” page while you make changes. You keep full access in this browser, and admin login keeps working from other devices.",
+      "hintOn": "Visitors currently see the maintenance page. You're browsing through your bypass — remember to go live once you're done.",
+      "goMaintenance": "Go to maintenance",
+      "goLive": "Go live",
+      "confirmPassword": "Your password, to confirm",
+      "working": "Working…",
+      "cancel": "Cancel",
+      "wrongPassword": "That password isn't right.",
+      "rateLimited": "Too many attempts. Wait a few minutes.",
+      "failed": "That didn't work. Please try again."
+    }
   }
 }

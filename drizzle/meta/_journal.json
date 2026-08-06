@@ -43,6 +43,13 @@
       "when": 1786026473014,
       "tag": "0005_next_bulldozer",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786031544902,
+      "tag": "0006_slim_bulldozer",
+      "breakpoints": true
     }
   ]
 }

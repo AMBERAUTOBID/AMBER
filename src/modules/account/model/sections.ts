@@ -4,16 +4,18 @@
  *
  * ⚠️ A section goes in here only once it has real data behind it
  * (ARCHITECTURE.md §6a). An entry that opens onto "nothing yet" advertises a
- * product that doesn't exist, and is worse than no entry at all. The rest are
- * known and deliberately absent until their features land:
+ * product that doesn't exist, and is worse than no entry at all. Still
+ * deliberately absent until its feature lands:
  *
- *   /account/bids    Phase 2.3
  *   /account/orders  Phase 2.4
  *
- * Favourites is the exception that proves the rule: it ships with a genuinely
- * empty first state, but the feature behind it works from the first visit —
- * the empty panel explains how to fill it and links to the search. That is
- * different from a tab describing a product we cannot yet deliver.
+ * Two entries bend the rule, differently:
+ *
+ * - Favourites ships with an empty first state but the feature works from the
+ *   first visit — the empty panel explains how to fill it.
+ * - Bids is a PLACEHOLDER, added ahead of 2.3 at the owner's explicit request
+ *   (2026-08-06). Its empty states stay honest by describing the real flow
+ *   today — active plan, then the car sent by email or WhatsApp. When 2.3 lands it becomes the real thing.
  */
 export interface AccountSection {
   /** Message key under `Account.nav`. */
@@ -23,6 +25,7 @@ export interface AccountSection {
 
 export const ACCOUNT_SECTIONS: AccountSection[] = [
   { key: "overview", href: "/account" },
+  { key: "bids", href: "/account/bids" },
   { key: "favorites", href: "/account/favorites" },
   { key: "plan", href: "/account/plan" },
   { key: "details", href: "/account/details" },

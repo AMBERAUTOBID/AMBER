@@ -3,6 +3,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { currentAdmin } from "@/modules/admin/model/currentAdmin";
 import { activeClients } from "@/modules/admin/model/clients";
+import { getMaintenanceState } from "@/modules/admin/model/maintenance";
+import MaintenancePanel from "@/modules/admin/components/MaintenancePanel";
 import { pendingDeposits } from "@/modules/plans/model/deposits";
 import { PLAN_KEYS } from "@/modules/plans/model/plans";
 import AdminSection from "@/modules/admin/components/AdminSection";
@@ -51,7 +53,11 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
     PLAN_KEYS.map((key) => [key, tPlans(`tiers.${key}.name`)])
   );
 
-  const [queue, clients] = await Promise.all([pendingDeposits(), activeClients()]);
+  const [queue, clients, maintenance] = await Promise.all([
+    pendingDeposits(),
+    activeClients(),
+    getMaintenanceState(),
+  ]);
 
   return (
     <Container className="py-16">
@@ -73,6 +79,10 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
           {/* No count: this is a tool, not a list of things needing action. */}
           <AdminSection title={t("deleteUserHeading")}>
             <DeleteUserPanel planNames={planNames} />
+          </AdminSection>
+
+          <AdminSection title={t("maintenance.heading")}>
+            <MaintenancePanel initiallyOn={maintenance.on} />
           </AdminSection>
         </div>
       </div>

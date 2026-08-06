@@ -2,13 +2,20 @@ import createMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import { routing } from "./i18n/routing";
 import { preLaunchGate } from "./shared/gate/preLaunchGate";
+import { maintenanceGate } from "./shared/gate/maintenanceGate";
 
 const intlProxy = createMiddleware(routing);
 
-export default function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   // The gate runs first so a locked-out visitor never reaches locale routing.
   const locked = preLaunchGate(request);
   if (locked) return locked;
+
+  // Maintenance second: pre-launch privacy outranks the closed sign while
+  // both exist, and when the gate is deleted at launch this becomes the
+  // first check. DB-backed flag behind a short in-memory cache; fails open.
+  const closed = await maintenanceGate(request);
+  if (closed) return closed;
 
   // These carry no locale prefix, so next-intl must not touch them. They are
   // inside the matcher below only so the gate can cover them; without this

@@ -36,6 +36,11 @@ export const LIMITS = {
    * unlocked laptop gets ten tries, not unlimited. Separate from
    * loginPerEmail so failures here can't lock the owner out of logging in. */
   passwordChangePerUser: { max: 10, windowSeconds: 15 * 60 },
+  /** The maintenance switch verifies the admin's password, so it is the same
+   * kind of oracle the password-change endpoint is — and it takes the whole
+   * site up or down, which nobody needs to do ten times in a quarter hour
+   * unless something is wrong. */
+  maintenanceTogglePerUser: { max: 10, windowSeconds: 15 * 60 },
   contactPerIp: { max: 10, windowSeconds: 60 * 60 },
   /** Keyed by user id. Refreshing a saved car is the only action a client can
    * take that spends Apibara quota on demand, and that quota is shared with

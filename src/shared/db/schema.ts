@@ -19,6 +19,7 @@
  */
 import { sql, type SQL } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -259,6 +260,29 @@ export const auditLog = pgTable(
   },
   (t) => [index("audit_log_actor_idx").on(t.actorId), index("audit_log_action_idx").on(t.action)]
 );
+
+/**
+ * Site-wide operator switches. One row, id fixed at 1 — this is a settings
+ * record, not a collection.
+ *
+ * Maintenance mode lives in the database rather than an env var for one
+ * reason: the owner flips it with a button, and an env var change means a
+ * redeploy — the exact thing you don't want to wait for when the site needs
+ * to go quiet NOW. The proxy reads this row with a short in-memory cache
+ * (see shared/gate/maintenanceGate.ts), so the toggle takes effect within
+ * seconds without costing a query per request.
+ *
+ * `bypassTokenHash` follows the session-token rule: the admin's browser
+ * carries the random token, the row stores only its SHA-256.
+ */
+export const siteSettings = pgTable("site_settings", {
+  id: integer("id").primaryKey(),
+  maintenance: boolean("maintenance").notNull().default(false),
+  /** Hash of the cookie that lets admins browse the site while it's down. */
+  bypassTokenHash: text("bypass_token_hash"),
+  updatedBy: uuid("updated_by").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 /**
  * Rate-limit counters (login attempts, contact form, password resets), keyed

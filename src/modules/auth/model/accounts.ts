@@ -76,7 +76,9 @@ export async function registerAccount(input: NewAccount): Promise<RegisterResult
 }
 
 export type LoginResult =
-  | { status: "ok"; sessionToken: string; expiresAt: Date }
+  /** `role` rides along so the route can hand admins a maintenance-bypass
+   * cookie without a second lookup. It is NOT part of the auth decision. */
+  | { status: "ok"; sessionToken: string; expiresAt: Date; userId: string; role: "client" | "admin" }
   | { status: "invalid_credentials" }
   | { status: "email_not_verified" };
 
@@ -92,6 +94,7 @@ export async function loginAccount(
       passwordHash: schema.users.passwordHash,
       emailVerifiedAt: schema.users.emailVerifiedAt,
       deletedAt: schema.users.deletedAt,
+      role: schema.users.role,
     })
     .from(schema.users)
     .where(sql`lower(${schema.users.email}) = ${email}`)
@@ -117,7 +120,13 @@ export async function loginAccount(
 
   await pruneExpiredSessions();
   const session = await createSession(user.id, context);
-  return { status: "ok", sessionToken: session.token, expiresAt: session.expiresAt };
+  return {
+    status: "ok",
+    sessionToken: session.token,
+    expiresAt: session.expiresAt,
+    userId: user.id,
+    role: user.role,
+  };
 }
 
 export type VerifyEmailResult = "verified" | "invalid_or_expired";

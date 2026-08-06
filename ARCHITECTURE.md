@@ -210,12 +210,18 @@ their plan. Collapses to a horizontal scroller on mobile.
 
 ```
 /account            overview — plan status and the one next step   BUILT
+/account/bids       PLACEHOLDER until 2.3 — see note below
 /account/favorites  saved lots, refreshable on demand (§6d)        BUILT
 /account/plan       current plan, or pending request + cancel      BUILT
 /account/details    name, phone, language, change password         BUILT
-/account/bids       Phase 2.3
 /account/orders     Phase 2.4
 ```
+
+`/account/bids` shipped ahead of its feature at the owner's explicit request
+(2026-08-06), bending the no-empty-sections rule. Kept honest: its empty
+states describe the real flow today — register, take a plan, then send us the
+car (lot link or VIN) by email or WhatsApp — rather than pretending a quiet
+feature exists. When 2.3 lands, its two sections become the real lists.
 
 (The slot reserved as `/account/watchlist` shipped as `/account/favorites` —
 the owner's word, and the one clients use.)
@@ -530,6 +536,41 @@ returned 302 while `smartautobid.vercel.app` still served the full homepage.
   revocation. Phase 2's `modules/auth` must not be built on top of it.
 - **Delete it at launch** once the site is public for good: this file plus its
   two call sites in `proxy.ts`, and restore `api` to the matcher exclusion.
+
+## 7a. Maintenance mode — the operator's switch
+
+A button in the admin console closes the site behind a branded 503 page and
+reopens it, no deploy involved. Design decisions, in order of importance:
+
+- **The flag is a `site_settings` row, not an env var.** An env var change
+  means a redeploy — the exact wait you don't want when the site needs to go
+  quiet now. The proxy reads the row through a ~10s in-memory cache, so the
+  toggle is effectively instant without costing a query per request.
+- **It fails OPEN.** If the settings row can't be read, the site stays up.
+  The pre-launch gate (§7) makes the opposite choice; hiding an unlaunched
+  site is its whole point. Different stakes, different defaults.
+- **The closed sign is raw HTML built in `maintenanceGate.ts`, not a Next
+  route.** Maintenance exists for exactly the moments the app is mid-change;
+  a page rendered by the app could be broken by the very deploy it covers
+  for. Raw response also allows a true 503 + `Retry-After: 300`, which App
+  Router pages can't send — crawlers read that as temporary and never index
+  the closed sign. Its three translations live in the file (a documented
+  exception to invariant #2: importing three 600-key message files into the
+  proxy for one sentence each would be absurd).
+- **Both directions require the admin's password**, not just a session — a
+  console tab left open must not be one click from an outage. Same oracle
+  logic as password-change, so it carries its own rate limit.
+- **Bypass = one token, hash in the settings row, cookie in the admin's
+  browser.** Enabling mints a fresh token (revoking all previous ones);
+  an ADMIN logging in mid-window gets a fresh one too, which rotates the
+  hash — deliberately favouring the newest device, because this is a
+  one-operator business and a bypass-token table would be machinery for a
+  problem it doesn't have.
+- **Exempt while closed:** `/api/auth/*` (so admins can sign in),
+  `/api/admin/*` (so the off switch stays reachable), robots.txt and
+  sitemap.xml (a 503 robots.txt halts crawling site-wide). Everything else —
+  including client-facing APIs — gets the 503: a client mid-session must not
+  keep writing into a database the owner is changing.
 
 ## 8. Verification
 

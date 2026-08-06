@@ -1192,6 +1192,7 @@
     "nav": {
       "label": "Paskyros skiltys",
       "overview": "Apžvalga",
+      "bids": "Mano statymai",
       "favorites": "Išsaugoti",
       "plan": "Planas",
       "details": "Mano duomenys"
@@ -1282,6 +1283,17 @@
     "noPhoto": "Nuotraukos nėra",
     "noPrice": "Statymų dar nėra",
     "asOf": "Išsaugota {date}"
+  },
+  "Bids": {
+    "title": "Mano statymai",
+    "comingBanner": "Galimybė teikti statymus tiesiai iš paskyros atsiras viename iš artimiausių atnaujinimų. Kol kas tai veikia taip: kai jūsų planas aktyvus, atsiųskite mums automobilį — loto nuorodą arba VIN — el. paštu arba per WhatsApp, ir statymą pateiksime kartu.",
+    "whatsappCta": "Siųsti per WhatsApp",
+    "whatsappPrefill": "Sveiki! Norėčiau pateikti statymą už šį automobilį: ",
+    "emailCta": "Siųsti el. paštu",
+    "activeHeading": "Aktyvūs statymai",
+    "activeEmpty": "Aktyvių statymų kol kas nėra.",
+    "historyHeading": "Statymų istorija",
+    "historyEmpty": "Čia matysite savo pasibaigusius statymus."
   },
   "Plans": {
     "metaTitle": "Planai ir depozitai",
@@ -1411,6 +1423,21 @@
     "deleteUserEmail": "Kliento el. pašto adresas",
     "deleteUserFind": "Rasti paskyrą",
     "deleteUserNotFound": "Paskyros tokiu el. pašto adresu nėra.",
-    "deleteAnother": "Ištrinti kitą paskyrą"
+    "deleteAnother": "Ištrinti kitą paskyrą",
+    "maintenance": {
+      "heading": "Techninės priežiūros režimas",
+      "statusOff": "Svetainė veikia",
+      "statusOn": "Svetainė UŽDARYTA priežiūrai",
+      "hintOff": "Uždarius svetainę lankytojai matys puslapį „netrukus grįšime“, kol atliekate pakeitimus. Šioje naršyklėje prieiga išlieka, o administratorių prisijungimas iš kitų įrenginių toliau veikia.",
+      "hintOn": "Lankytojai šiuo metu mato priežiūros puslapį. Jūs naršote per apėjimą — baigę nepamirškite atidaryti svetainės.",
+      "goMaintenance": "Uždaryti priežiūrai",
+      "goLive": "Atidaryti svetainę",
+      "confirmPassword": "Jūsų slaptažodis patvirtinimui",
+      "working": "Vykdoma…",
+      "cancel": "Atšaukti",
+      "wrongPassword": "Slaptažodis neteisingas.",
+      "rateLimited": "Per daug bandymų. Palaukite kelias minutes.",
+      "failed": "Nepavyko. Bandykite dar kartą."
+    }
   }
 }
