@@ -8,6 +8,9 @@ import LotCard from "@/modules/inventory/components/LotCard";
 import { Link } from "@/i18n/navigation";
 import { searchVehicles, searchVehiclesAcrossTypes, type AuctionPlatform } from "@/modules/inventory/api";
 import { parseFreeTextQuery, CATEGORY_TYPE_GROUPS } from "@/modules/inventory/model/searchQuery";
+import { currentUser } from "@/modules/auth/model/currentUser";
+import { savedLotKeys, lotKey } from "@/modules/favorites/model/favorites";
+import SaveLotButton from "@/modules/favorites/components/SaveLotButton";
 import {
   Info,
   ChatCircleDots,
@@ -105,6 +108,13 @@ export default async function SearchPage({
     error = e instanceof Error ? e.message : "Unknown error";
   }
 
+  // Who is looking, and which of these lots they already hold. ONE query for
+  // the whole grid — resolving it per card would mean twenty round trips for
+  // a twenty-result page. Signed-out visitors cost nothing extra: no session,
+  // no lookup.
+  const viewer = await currentUser();
+  const savedKeys = viewer ? await savedLotKeys(viewer.id) : new Set<string>();
+
   const basePageQuery: Record<string, string> = {};
   if (q) basePageQuery.q = q;
   if (make) basePageQuery.make = make;
@@ -188,6 +198,16 @@ export default async function SearchPage({
                     priceNA: t("results.priceNA"),
                     damagePrefix: t("results.damagePrefix"),
                   }}
+                  saveSlot={
+                    <SaveLotButton
+                      // VIN when there is one, else the lot number: the
+                      // server resolves either, and salvage rows sometimes
+                      // arrive without a VIN.
+                      lot={v.vin || v.lot_number}
+                      initiallySaved={savedKeys.has(lotKey(v.platform, v.lot_number))}
+                      signedIn={viewer !== null}
+                    />
+                  }
                 />
               ))}
             </Reveal>

@@ -210,12 +210,15 @@ their plan. Collapses to a horizontal scroller on mobile.
 
 ```
 /account            overview — plan status and the one next step   BUILT
+/account/favorites  saved lots, refreshable on demand (§6d)        BUILT
 /account/plan       current plan, or pending request + cancel      BUILT
 /account/details    name, phone, language, change password         BUILT
 /account/bids       Phase 2.3
-/account/watchlist  Phase 2.4
 /account/orders     Phase 2.4
 ```
+
+(The slot reserved as `/account/watchlist` shipped as `/account/favorites` —
+the owner's word, and the one clients use.)
 
 **Build a section only when it has real data behind it.** An empty "Carfax
 reports" tab promises a product that doesn't exist. The sidebar's contents are
@@ -417,6 +420,50 @@ is cancelled**. Kept: deposit rows and the audit log, neither naming anyone.
 - Both entry points share one function; `audit_log.detail.selfService`
   records which. An admin may erase their own account — special-casing it
   would mean the one unerasable account is the one with the most access.
+
+---
+
+## 6d. Favourites — why the table is denormalised
+
+`modules/favorites/` lets an approved client save a lot and come back to it.
+The whole design turns on one number: **a favourites page costs zero calls to
+Apibara, however many cars are on it.**
+
+Storing only a VIN and re-fetching on view would mean N upstream requests per
+page load, against a quota the Telegram bot shares and an API that throws
+intermittent 502s — a page that gets slower and more fragile the more a client
+uses it. So everything needed to draw the card is copied into the row at save
+time: title, year/make/model, thumbnail, price, sale date.
+
+**The snapshot is a record of a moment, and the UI says so** ("As saved on
+…"). It never renders a live badge or a countdown, and that is not caution:
+auction fields in Apibara *list* responses are batch-stamped and routinely
+report long-sold lots as open (§ inventory/api/types.ts). A card claiming
+status from saved data would be repeating a known lie. Only the lot page
+knows, and it is one click away.
+
+Rules worth keeping:
+
+- **The server builds the snapshot from its own fetch, never from the request
+  body.** A client that could supply the title and price could save
+  "Ferrari — $1". Same rule as `deposits.amountCents`.
+- **A null price means "no bids yet", never zero.** Copart lots routinely have
+  no current bid before bidding opens; `snapshot.test.ts` pins this, and the
+  €1,656 BMW in the Telegram history is why.
+- **Ownership is scoped in the SQL WHERE clause**, not checked before it —
+  same as `cancelPlanRequest`. Verified: signed in as a second account,
+  deleting another user's favourite by id returns 404 and changes nothing.
+- **`getVehicleDetail` throws on any non-2xx**, so callers must catch. Found
+  by testing — saving an invented lot number returned a 500 until
+  `fetchLotSnapshot` wrapped it. Anything reaching for that function directly
+  needs the same care.
+- **Losing a plan makes favourites read-only, not inaccessible.** Listing and
+  removing need only a session; saving and refreshing need `can(…,
+  save_favorite)`. Refresh sits on the plan side because it spends quota —
+  reading a stored snapshot costs nothing, asking the auction site again does,
+  and it carries its own rate limit for the same reason.
+- The save button renders **outside** the card's `<Link>`: a button nested in
+  an anchor is invalid HTML and would navigate as well as save.
 
 ---
 

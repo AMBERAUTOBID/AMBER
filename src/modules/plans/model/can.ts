@@ -32,6 +32,19 @@ export type Action =
   | { type: "view_night_reserve" }
   | { type: "join_live_auction" }
   | { type: "self_bid" }
+  /**
+   * Saving a car to favourites. Gates *writing* only — reading the list
+   * deliberately does not come through here, so a client whose deposit is
+   * refunded keeps their collection and can still open and prune it. Losing
+   * a plan should not read as losing everything you collected.
+   *
+   * Every plan allows it, so this is currently equivalent to "has a plan".
+   * It is still an action rather than an inline `activePlanKey` check,
+   * because that inline check is exactly how limits start being re-derived
+   * outside can() — and a future plan that caps saved cars needs a hook that
+   * already exists.
+   */
+  | { type: "save_favorite" }
   | { type: "access_admin" };
 
 export type Decision =
@@ -81,6 +94,9 @@ export function can(actor: Actor, action: Action): Decision {
       return plan.nightReserveVisible ? allow : deny("plan_lacks_night_reserve");
     case "join_live_auction":
       return plan.liveAuctionAccess ? allow : deny("plan_lacks_live_auction");
+    case "save_favorite":
+      // Reaching here means a plan exists, which is the whole requirement.
+      return allow;
     case "self_bid":
       // Eligibility (plan) and grant (admin action) are both required —
       // in that order, so the deny reason tells the user their real next

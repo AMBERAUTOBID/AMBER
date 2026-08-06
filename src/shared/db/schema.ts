@@ -168,6 +168,71 @@ export const deposits = pgTable(
 );
 
 /**
+ * Cars a client has saved. One row per (user, lot).
+ *
+ * **Deliberately denormalised.** Everything needed to draw the card is copied
+ * in at save time, so opening the favourites page costs zero calls to Apibara
+ * no matter how many entries it holds. Storing only a VIN and re-fetching
+ * would mean N upstream calls per page view — a page that gets slower and
+ * more fragile the more useful it becomes, against a quota the Telegram bot
+ * shares and an API that throws intermittent 502s.
+ *
+ * The snapshot is a record of what the lot looked like **when saved**, and
+ * the UI must say so rather than implying it is current. That is not just
+ * caution: auction fields in Apibara *list* responses are batch-stamped and
+ * routinely report a long-sold lot as live (see inventory/api/types.ts), so a
+ * card claiming live status from saved data would be repeating a known lie.
+ * Only the detail endpoint knows the truth, and only a refresh asks it.
+ *
+ * These rows are written from the SERVER's own fetch, never from the request
+ * body — same rule as deposits.amountCents. A client that could supply the
+ * title and price could save "Ferrari — $1".
+ */
+export const favorites = pgTable(
+  "favorites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+
+    /** Identity. `/vehicles/{vinOrLot}` resolves either, and keeps resolving
+     * after the lot sells — a saved car is never unrecoverable. */
+    platform: text("platform", { enum: ["copart", "iaai"] }).notNull(),
+    lotNumber: text("lot_number").notNull(),
+    /** Nullable: salvage rows occasionally lack one, and it is not the key. */
+    vin: text("vin"),
+
+    // ── snapshot, for rendering without an upstream call ──────────────
+    title: text("title").notNull(),
+    year: integer("year"),
+    make: text("make"),
+    model: text("model"),
+    /** Thumbnail URL on the source CDN. Nullable, and may 404 later — the
+     * card must degrade to a placeholder rather than a broken image. */
+    imageUrl: text("image_url"),
+    /**
+     * USD cents at save time. **Null means "no bid recorded", never zero** —
+     * Copart lots commonly have no current bid before bidding opens, and
+     * printing $0 would state a price nobody has offered (invariant #5).
+     */
+    priceUsdCents: integer("price_usd_cents"),
+    /** Scheduled sale time as known at save time. */
+    auctionAt: timestamp("auction_at", { withTimezone: true }),
+    /** Last time the snapshot was re-fetched; null = never refreshed. */
+    refreshedAt: timestamp("refreshed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // Keyed on the lot, not the VIN: lot numbers are unique per platform and
+    // always present. Makes a double-clicked save a no-op instead of a
+    // duplicate row.
+    uniqueIndex("favorites_user_lot_idx").on(t.userId, t.platform, t.lotNumber),
+    index("favorites_user_id_idx").on(t.userId),
+  ]
+);
+
+/**
  * Append-only record of consequential actions: who did what to whom, when.
  * Written by the code paths that change money- or access-relevant state
  * (deposit confirmation, plan assignment, self-bidding grant, admin login).

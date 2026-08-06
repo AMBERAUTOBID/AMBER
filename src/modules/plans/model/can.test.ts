@@ -148,6 +148,47 @@ describe("self-bidding: plan eligibility AND per-user grant, in that order", () 
   }
 });
 
+/**
+ * Saving a favourite. The rule is "any plan will do", which makes it look too
+ * trivial to test — and that is exactly why it is tested. The behaviour that
+ * matters is at the edges, not the middle:
+ *
+ * - a planless client must be refused, because saving is the thing an
+ *   approved account gets;
+ * - but only *saving* goes through can(). Reading the list deliberately does
+ *   not, so a client whose deposit is refunded keeps their collection. There
+ *   is no "read_favorites" action, and its absence is a decision — if one
+ *   ever appears, this comment is where to argue about it.
+ */
+describe("saving favourites", () => {
+  for (const key of PLAN_KEYS) {
+    it(`${key}: any active plan may save`, () => {
+      expect(can(client({ activePlanKey: key }), { type: "save_favorite" })).toEqual({
+        allowed: true,
+      });
+    });
+  }
+
+  it("a verified client with no plan is refused, and told why", () => {
+    expect(can(client({ activePlanKey: null }), { type: "save_favorite" })).toEqual({
+      allowed: false,
+      reason: "no_active_plan",
+    });
+  });
+
+  it("an unverified email is refused before the plan is even considered", () => {
+    expect(
+      can(client({ emailVerified: false, activePlanKey: null }), { type: "save_favorite" })
+    ).toEqual({ allowed: false, reason: "email_not_verified" });
+  });
+
+  it("admins may save without holding a plan", () => {
+    expect(
+      can(client({ role: "admin", activePlanKey: null }), { type: "save_favorite" })
+    ).toEqual({ allowed: true });
+  });
+});
+
 describe("admin", () => {
   const admin: Actor = {
     role: "admin",

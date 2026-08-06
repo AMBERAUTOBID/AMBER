@@ -37,6 +37,12 @@ export const LIMITS = {
    * loginPerEmail so failures here can't lock the owner out of logging in. */
   passwordChangePerUser: { max: 10, windowSeconds: 15 * 60 },
   contactPerIp: { max: 10, windowSeconds: 60 * 60 },
+  /** Keyed by user id. Refreshing a saved car is the only action a client can
+   * take that spends Apibara quota on demand, and that quota is shared with
+   * the Telegram bot — which posts on a schedule and cannot back off. Sixty
+   * an hour is far more than reading a list needs and far less than a held-
+   * down button would manage. */
+  favoriteRefreshPerUser: { max: 60, windowSeconds: 60 * 60 },
 } as const satisfies Record<string, LimitRule>;
 
 export type LimitName = keyof typeof LIMITS;

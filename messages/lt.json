@@ -1192,6 +1192,7 @@
     "nav": {
       "label": "Paskyros skiltys",
       "overview": "Apžvalga",
+      "favorites": "Išsaugoti",
       "plan": "Planas",
       "details": "Mano duomenys"
     },
@@ -1259,6 +1260,28 @@
       "deleteNo": "Atšaukti",
       "deleting": "Trinama…"
     }
+  },
+  "Favorites": {
+    "title": "Išsaugoti",
+    "intro": "Jūsų išsaugoti automobiliai. Kiekvienas rodomas toks, koks buvo išsaugojimo metu — atidarykite, kad pamatytumėte dabartinius statymus.",
+    "readOnly": "Išsaugotus automobilius galite peržiūrėti ir pašalinti, tačiau naujiems pridėti reikia aktyvaus plano. <plans>Peržiūrėti planus</plans>.",
+    "emptyTitle": "Kol kas nieko neišsaugota",
+    "emptyHint": "Radę automobilį, prie kurio norėsite grįžti, spustelėkite širdelę — jis lauks čia.",
+    "browse": "Ieškoti automobilių",
+    "save": "Išsaugoti",
+    "saved": "Išsaugota",
+    "saveTitle": "Įtraukti į išsaugotus",
+    "savedTitle": "Jau tarp išsaugotų",
+    "saveError": "Nepavyko",
+    "needsPlan": "Pasirinkite planą, kad galėtumėte išsaugoti",
+    "remove": "Pašalinti",
+    "refresh": "Atnaujinti",
+    "refreshing": "Atnaujinama…",
+    "refreshUnavailable": "Šiuo metu nepavyko pasiekti šio loto. Išsaugota kopija liko nepakitusi.",
+    "actionFailed": "Nepavyko. Bandykite dar kartą.",
+    "noPhoto": "Nuotraukos nėra",
+    "noPrice": "Statymų dar nėra",
+    "asOf": "Išsaugota {date}"
   },
   "Plans": {
     "metaTitle": "Planai ir depozitai",

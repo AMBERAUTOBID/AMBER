@@ -9,6 +9,9 @@ import AuctionCountdown from "@/modules/inventory/components/AuctionCountdown";
 import VehicleCostPanel from "@/modules/pricing/components/VehicleCostPanel";
 import PastSalesTable from "@/modules/inventory/components/PastSalesTable";
 import LotCard from "@/modules/inventory/components/LotCard";
+import SaveLotButton from "@/modules/favorites/components/SaveLotButton";
+import { currentUser } from "@/modules/auth/model/currentUser";
+import { savedLotKeys, lotKey } from "@/modules/favorites/model/favorites";
 import {
   getVehicleDetail,
   getRelatedVehicles,
@@ -145,6 +148,13 @@ export default async function VehicleDetailPage({
   // as closed on either signal, since `state` and `diff_minutes` are computed
   // independently by the source and either one alone can lag.
   const saleClosed = detail.auction?.state === "finished" || !isUpcoming;
+  // One query, and only when somebody is signed in. This page is noindex and
+  // already dynamic, so reading the session costs it nothing.
+  const viewer = await currentUser();
+  const alreadySaved = viewer
+    ? (await savedLotKeys(viewer.id)).has(lotKey(detail.platform, detail.lot_number))
+    : false;
+
   const soldPriceUsd = detail.pricing?.last_sold_price_usd ?? null;
   const soldDay = detail.auction?.last_sold_day ?? null;
   const wasSold =
@@ -213,6 +223,19 @@ export default async function VehicleDetailPage({
                     <Info size={15} className="text-char-400" /> {detail.sale_document.name}
                   </span>
                 )}
+              </div>
+
+              {/* Offered on sold lots too, deliberately. Someone comparing
+                  what similar cars actually went for still wants to keep the
+                  reference, and the saved card is dated — so it never implies
+                  a closed lot is still available. */}
+              <div className="mt-4">
+                <SaveLotButton
+                  lot={detail.vin || detail.lot_number}
+                  initiallySaved={alreadySaved}
+                  signedIn={viewer !== null}
+                  variant="detail"
+                />
               </div>
             </div>
 

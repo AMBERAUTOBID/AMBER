@@ -1192,6 +1192,7 @@
     "nav": {
       "label": "Account sections",
       "overview": "Overview",
+      "favorites": "Favourites",
       "plan": "Plan",
       "details": "My details"
     },
@@ -1259,6 +1260,28 @@
       "deleteNo": "Cancel",
       "deleting": "Deleting…"
     }
+  },
+  "Favorites": {
+    "title": "Favourites",
+    "intro": "Cars you've saved. Each one is kept as it looked when you saved it — open it to see where the bidding stands now.",
+    "readOnly": "You can still open and tidy your saved cars, but adding new ones needs an active plan. <plans>See plans</plans>.",
+    "emptyTitle": "Nothing saved yet",
+    "emptyHint": "When you find a car worth coming back to, tap the heart on it and it'll be waiting here.",
+    "browse": "Search inventory",
+    "save": "Save",
+    "saved": "Saved",
+    "saveTitle": "Save to favourites",
+    "savedTitle": "Already in your favourites",
+    "saveError": "Failed",
+    "needsPlan": "Choose a plan to save",
+    "remove": "Remove",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
+    "refreshUnavailable": "We couldn't reach this lot just now. Your saved copy is unchanged.",
+    "actionFailed": "That didn't work. Please try again.",
+    "noPhoto": "No photo",
+    "noPrice": "No bids yet",
+    "asOf": "As saved on {date}"
   },
   "Plans": {
     "metaTitle": "Plans & deposits",

@@ -22,9 +22,19 @@ function formatPrice(value: number | null | undefined) {
 export default function LotCard({
   vehicle,
   labels,
+  saveSlot,
 }: {
   vehicle: VehicleListItem;
   labels: { noPhoto: string; priceNA: string; damagePrefix: string };
+  /**
+   * The save-to-favourites control, injected rather than imported.
+   *
+   * It has to be a client component (it posts and holds state) while this
+   * card stays a synchronous server component, and it must render OUTSIDE
+   * the Link below — a button nested inside an anchor is invalid HTML, and
+   * clicking it would navigate to the lot as well as saving it.
+   */
+  saveSlot?: React.ReactNode;
 }) {
   const photo = vehicle.media?.thumbs?.[0];
   const priceLabel =
@@ -33,10 +43,11 @@ export default function LotCard({
     labels.priceNA;
 
   return (
-    <Link
-      href={`/vehicle/${vehicle.vin}`}
-      className="group overflow-hidden rounded-2xl border border-char-200 bg-white transition-all hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-900/5"
-    >
+    // The wrapper carries the hover treatment and `group`, so hovering the
+    // save button lifts the card too rather than fighting it.
+    <div className="group relative overflow-hidden rounded-2xl border border-char-200 bg-white transition-all hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-900/5">
+      {saveSlot && <div className="absolute right-2.5 top-2.5 z-10">{saveSlot}</div>}
+      <Link href={`/vehicle/${vehicle.vin}`} className="block">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-char-100">
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -75,7 +86,8 @@ export default function LotCard({
             {labels.damagePrefix} {vehicle.condition.primary_damage}
           </p>
         )}
-      </div>
-    </Link>
+        </div>
+      </Link>
+    </div>
   );
 }
