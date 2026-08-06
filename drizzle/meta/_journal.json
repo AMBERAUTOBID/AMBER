@@ -57,6 +57,13 @@
       "when": 1786048007004,
       "tag": "0007_tidy_mole_man",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786049595668,
+      "tag": "0008_normal_miss_america",
+      "breakpoints": true
     }
   ]
 }

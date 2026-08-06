@@ -497,6 +497,68 @@ export const auctionLots = pgTable(
 );
 
 /**
+ * One row per ingest run — the log that makes `auctionLots.lastSeenAt`
+ * interpretable.
+ *
+ * WHY THIS IS NOT OPTIONAL: the catalogue is a continuous feed, not a snapshot.
+ * Copart and IAAI add lots every day (~6,500/day measured), and the vendor
+ * offers no "updated since" filter, so freshness comes from repeated sweeps.
+ * A stale `lastSeenAt` is how we know a lot has left the active set — but "stale"
+ * only means anything relative to when a sweep actually ran and whether it
+ * finished. Without this table, `lastSeenAt` is an undated fact.
+ *
+ * A lot is still live when `lastSeenAt >= startedAt` of the most recent
+ * **complete** full sweep.
+ *
+ * ⚠️ THE `isPartial` FLAG IS A CORRECTNESS GUARD, NOT BOOKKEEPING. A partial
+ * sweep — a development run over 300 of 2,850 pages, or one that hit a request
+ * budget or crashed halfway — has NOT seen most of the catalogue. Using it as
+ * the reference point would mark ~90% of live lots as ended and empty the
+ * search results. Only a run with `isPartial = false` AND a non-null
+ * `finishedAt` may ever be used to conclude a lot has disappeared.
+ *
+ * `skipped` earns its place too: mapping rejects lots it cannot understand
+ * (unsupported auctions, missing identity) rather than throwing, and a silent
+ * rise in that number is how a vendor schema change would first show up.
+ */
+export const auctionIngestRuns = pgTable(
+  "auction_ingest_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /**
+     * `full_sweep` walks everything and is the only kind that can date
+     * disappearance. `incremental` uses `created_at_from` to pick up new
+     * arrivals cheaply and deliberately sees only a slice. `backfill` is
+     * historical import, which says nothing about what is live now.
+     */
+    kind: text("kind", { enum: ["full_sweep", "incremental", "backfill"] }).notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Null while running, or forever if the run died. Either way: unusable as
+     * a reference point. */
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    /** See the warning above. Defaults to true so a run must *earn* the right to
+     * be treated as complete — a crash between the first page and the final
+     * update leaves the safe value in place. */
+    isPartial: boolean("is_partial").notNull().default(true),
+    /** The `created_at_from` value an incremental run used, so the next one can
+     * resume from it instead of guessing an overlap window. */
+    watermark: timestamp("watermark", { withTimezone: true }),
+    pagesFetched: integer("pages_fetched").notNull().default(0),
+    lotsSeen: integer("lots_seen").notNull().default(0),
+    lotsWritten: integer("lots_written").notNull().default(0),
+    /** Rows the mapper refused. A jump here means the vendor changed shape. */
+    lotsSkipped: integer("lots_skipped").notNull().default(0),
+    /** Populated when the run failed or stopped early, so a silent no-op sweep
+     * is distinguishable from a healthy one that found nothing. */
+    note: text("note"),
+  },
+  (t) => [
+    // "the most recent complete full sweep" is the query this exists to serve.
+    index("auction_ingest_runs_kind_started_idx").on(t.kind, t.startedAt),
+  ]
+);
+
+/**
  * Lot photography, one row per image.
  *
  * The vendor passes through URLs on the auction's own CDN rather than
