@@ -1247,7 +1247,16 @@
       "deviceCurrent": "This device",
       "deviceSince": "Signed in {date}",
       "deviceUnknown": "Unrecognised browser",
-      "signOutOthers": "{count, plural, =0 {No other devices signed in} one {Sign out on 1 other device} other {Sign out on # other devices}}"
+      "signOutOthers": "{count, plural, =0 {No other devices signed in} one {Sign out on 1 other device} other {Sign out on # other devices}}",
+      "dangerHeading": "Delete account",
+      "deleteAccount": "Delete my account",
+      "deleteHeading": "Delete your account?",
+      "deleteExplainer": "Your name, email address and phone number are erased, and you're signed out everywhere. Records of any deposits you made are kept for our accounting, with no name attached to them.",
+      "deleteIrreversible": "This cannot be undone.",
+      "deleteConfirmPassword": "Enter your password to confirm",
+      "deleteYes": "Delete my account",
+      "deleteNo": "Cancel",
+      "deleting": "Deleting…"
     }
   },
   "Plans": {
@@ -1333,23 +1342,51 @@
       "nextStep": "One of our team will be in touch within one business day. Your plan activates as soon as we confirm your deposit has arrived.",
       "termsRecorded": "You accepted our terms when you made this request. You can read them again here: {url}",
       "signature": "— The {site} team"
+    },
+    "decisionEmail": {
+      "greeting": "Hello {name},",
+      "signature": "— The {site} team",
+      "confirmed": {
+        "subject": "Your {plan} plan is active",
+        "body": "Good news — we've confirmed your deposit and your {plan} plan is now active.",
+        "nextStep": "You can see it any time here: {url}\nIf anything looks wrong, reply to this email or write to {email} and we'll sort it out."
+      },
+      "refunded": {
+        "subject": "Your {plan} deposit has been refunded",
+        "body": "We've refunded your deposit for the {plan} plan. The plan is no longer active on your account.",
+        "nextStep": "You can choose a plan again whenever you like: {url}\nIf you weren't expecting this, write to {email} and we'll explain what happened."
+      }
     }
   },
   "Admin": {
     "title": "Admin console",
-    "subtitle": "Confirm deposits and activate client plans.",
-    "queueHeading": "Pending deposits ({count})",
+    "subtitle": "Confirm deposits, activate plans, and see who is on one.",
+    "queueHeading": "Pending deposits",
     "queueEmpty": "No deposits awaiting confirmation.",
     "confirmDeposit": "Confirm deposit",
     "confirming": "Confirming…",
     "requestedOn": "Requested {date}",
     "alreadyHandled": "That deposit was already handled.",
     "actionFailed": "Action failed. Please try again.",
-    "tiers": {
-      "bronze": "Bronze",
-      "silver": "Silver",
-      "gold": "Gold",
-      "platinum": "Platinum"
-    }
+    "clientsHeading": "Active clients",
+    "clientsEmpty": "Nobody is on a plan yet.",
+    "activeSince": "Active since {date}",
+    "refund": "Refund",
+    "refunding": "Refunding…",
+    "refundConfirm": "This refunds the deposit and removes {name}'s plan immediately. They'll be emailed about it. Transferring the money back is a separate, manual step.",
+    "refundYes": "Yes, refund it",
+    "refundNo": "Cancel",
+    "deleteUser": "Delete account",
+    "deleting": "Deleting…",
+    "deleteConfirm": "This erases {name}'s personal details and signs them out everywhere. Their deposit records are kept, without a name attached. This cannot be undone.",
+    "deleteYes": "Yes, delete",
+    "deleteNo": "Cancel",
+    "deleted": "Account deleted.",
+    "deleteUserHeading": "Erase an account",
+    "deleteUserHint": "For GDPR erasure requests. Find the account by email address, check it's the right person, then erase it.",
+    "deleteUserEmail": "Client email address",
+    "deleteUserFind": "Find account",
+    "deleteUserNotFound": "No account with that email address.",
+    "deleteAnother": "Erase another account"
   }
 }

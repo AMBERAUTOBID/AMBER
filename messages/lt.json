@@ -1247,7 +1247,16 @@
       "deviceCurrent": "Šis įrenginys",
       "deviceSince": "Prisijungta {date}",
       "deviceUnknown": "Neatpažinta naršyklė",
-      "signOutOthers": "{count, plural, =0 {Kitų prisijungusių įrenginių nėra} one {Atsijungti # kitame įrenginyje} few {Atsijungti # kituose įrenginiuose} other {Atsijungti # kituose įrenginiuose}}"
+      "signOutOthers": "{count, plural, =0 {Kitų prisijungusių įrenginių nėra} one {Atsijungti # kitame įrenginyje} few {Atsijungti # kituose įrenginiuose} other {Atsijungti # kituose įrenginiuose}}",
+      "dangerHeading": "Paskyros ištrynimas",
+      "deleteAccount": "Ištrinti mano paskyrą",
+      "deleteHeading": "Ištrinti paskyrą?",
+      "deleteExplainer": "Jūsų vardas, el. pašto adresas ir telefono numeris bus ištrinti, o visuose įrenginiuose atsijungsite. Įrašai apie sumokėtus depozitus išliks mūsų buhalterijai — be jokio vardo.",
+      "deleteIrreversible": "Šio veiksmo atšaukti negalima.",
+      "deleteConfirmPassword": "Įveskite slaptažodį patvirtinimui",
+      "deleteYes": "Ištrinti paskyrą",
+      "deleteNo": "Atšaukti",
+      "deleting": "Trinama…"
     }
   },
   "Plans": {
@@ -1333,23 +1342,51 @@
       "nextStep": "Mūsų specialistas susisieks su jumis per vieną darbo dieną. Planas aktyvuojamas, kai tik patvirtiname, kad depozitas gautas.",
       "termsRecorded": "Pateikdami užklausą sutikote su mūsų sąlygomis. Jas galite dar kartą perskaityti čia: {url}",
       "signature": "— {site} komanda"
+    },
+    "decisionEmail": {
+      "greeting": "Sveiki, {name},",
+      "signature": "— {site} komanda",
+      "confirmed": {
+        "subject": "Jūsų {plan} planas aktyvuotas",
+        "body": "Geros naujienos — patvirtinome jūsų depozitą ir {plan} planas nuo šiol aktyvus.",
+        "nextStep": "Peržiūrėti jį galite bet kada čia: {url}\nJei kas nors atrodo ne taip, atsakykite į šį laišką arba parašykite {email} — viską sutvarkysime."
+      },
+      "refunded": {
+        "subject": "Jūsų {plan} depozitas grąžintas",
+        "body": "Grąžinome jūsų {plan} plano depozitą. Planas jūsų paskyroje nebeaktyvus.",
+        "nextStep": "Naują planą galite pasirinkti bet kada: {url}\nJei to nesitikėjote, parašykite {email} ir paaiškinsime, kas įvyko."
+      }
     }
   },
   "Admin": {
     "title": "Administratoriaus pultas",
-    "subtitle": "Patvirtinkite depozitus ir aktyvuokite klientų planus.",
-    "queueHeading": "Laukiantys depozitai ({count})",
+    "subtitle": "Patvirtinkite depozitus, aktyvuokite planus ir matykite, kas juos turi.",
+    "queueHeading": "Laukiantys depozitai",
     "queueEmpty": "Nėra depozitų, laukiančių patvirtinimo.",
     "confirmDeposit": "Patvirtinti depozitą",
-    "confirming": "Patvirtiname…",
-    "requestedOn": "Užklausa {date}",
+    "confirming": "Patvirtinama…",
+    "requestedOn": "Pateikta {date}",
     "alreadyHandled": "Šis depozitas jau apdorotas.",
-    "actionFailed": "Nepavyko atlikti veiksmo. Bandykite dar kartą.",
-    "tiers": {
-      "bronze": "Bronza",
-      "silver": "Sidabras",
-      "gold": "Auksas",
-      "platinum": "Platina"
-    }
+    "actionFailed": "Veiksmo atlikti nepavyko. Bandykite dar kartą.",
+    "clientsHeading": "Aktyvūs klientai",
+    "clientsEmpty": "Kol kas niekas neturi plano.",
+    "activeSince": "Aktyvus nuo {date}",
+    "refund": "Grąžinti depozitą",
+    "refunding": "Grąžinama…",
+    "refundConfirm": "Depozitas bus grąžintas, o {name} planas nedelsiant panaikintas. Klientas gaus pranešimą el. paštu. Pinigų pervedimas atliekamas atskirai, rankiniu būdu.",
+    "refundYes": "Taip, grąžinti",
+    "refundNo": "Atšaukti",
+    "deleteUser": "Ištrinti paskyrą",
+    "deleting": "Trinama…",
+    "deleteConfirm": "Bus ištrinti {name} asmens duomenys ir atjungti visi įrenginiai. Depozitų įrašai išliks, bet be vardo. Šio veiksmo atšaukti negalima.",
+    "deleteYes": "Taip, ištrinti",
+    "deleteNo": "Atšaukti",
+    "deleted": "Paskyra ištrinta.",
+    "deleteUserHeading": "Paskyros ištrynimas",
+    "deleteUserHint": "BDAR duomenų ištrynimo prašymams. Suraskite paskyrą pagal el. pašto adresą, įsitikinkite, kad tai tas žmogus, ir ištrinkite.",
+    "deleteUserEmail": "Kliento el. pašto adresas",
+    "deleteUserFind": "Rasti paskyrą",
+    "deleteUserNotFound": "Paskyros tokiu el. pašto adresu nėra.",
+    "deleteAnother": "Ištrinti kitą paskyrą"
   }
 }

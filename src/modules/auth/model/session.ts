@@ -6,7 +6,7 @@
  * lives in. Deleting a row here IS revocation; nothing else needs to happen
  * anywhere for a user to be locked out.
  */
-import { and, desc, eq, gt, lt, ne } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, lt, ne } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 import { generateToken, hashToken } from "./token";
 
@@ -64,7 +64,15 @@ export async function getSessionUser(token: string): Promise<SessionUser | null>
     .from(schema.sessions)
     .innerJoin(schema.users, eq(schema.sessions.userId, schema.users.id))
     .where(
-      and(eq(schema.sessions.tokenHash, hashToken(token)), gt(schema.sessions.expiresAt, new Date()))
+      and(
+        eq(schema.sessions.tokenHash, hashToken(token)),
+        gt(schema.sessions.expiresAt, new Date()),
+        // An erased account authenticates nobody. Its sessions are deleted at
+        // the moment of erasure, so this should never match — but session
+        // lookup is the gate every authenticated request passes through, and
+        // it is the right place to be certain rather than confident.
+        isNull(schema.users.deletedAt)
+      )
     )
     .limit(1);
 

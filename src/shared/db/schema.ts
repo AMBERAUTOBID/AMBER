@@ -63,6 +63,20 @@ export const users = pgTable(
     /** Which plan row is active. Null = registered but no plan chosen yet. */
     activePlanKey: text("active_plan_key"),
     selfBiddingGrantedAt: timestamp("self_bidding_granted_at", { withTimezone: true }),
+    /**
+     * Set when the account is erased. The row survives **anonymised** — name,
+     * email and phone scrubbed, password made unusable — rather than being
+     * deleted outright, because `deposits.user_id` cascades and a real
+     * deletion would take the financial history with it. GDPR grants erasure
+     * of personal data; it does not require destroying accounting records,
+     * and Art. 17(3) explicitly permits keeping what a legal obligation
+     * needs.
+     *
+     * So this column is what separates "a person who left" from "a person".
+     * Anything that reads a user must treat a non-null value as gone: login
+     * refuses it, and no session may survive it.
+     */
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

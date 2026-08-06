@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { currentUser } from "@/modules/auth/model/currentUser";
-import { can } from "@/modules/plans/model/can";
+import { currentAdmin } from "@/modules/admin/model/currentAdmin";
+import { activeClients } from "@/modules/admin/model/clients";
 import { pendingDeposits } from "@/modules/plans/model/deposits";
-import type { PlanKey } from "@/modules/plans/model/plans";
-import DepositQueue from "@/modules/plans/components/DepositQueue";
+import { PLAN_KEYS } from "@/modules/plans/model/plans";
+import AdminSection from "@/modules/admin/components/AdminSection";
+import DepositQueue from "@/modules/admin/components/DepositQueue";
+import ActiveClients from "@/modules/admin/components/ActiveClients";
+import DeleteUserPanel from "@/modules/admin/components/DeleteUserPanel";
 import Container from "@/shared/ui/Container";
 
 export async function generateMetadata({
@@ -21,32 +24,34 @@ export async function generateMetadata({
 export const dynamic = "force-dynamic";
 
 /**
- * Admin console, v1: the deposit approval queue.
+ * The admin console: requests waiting, and clients already on a plan.
  *
- * Non-admins get a 404 rather than a redirect or a 403. A redirect to /login
- * would tell a curious client that /admin exists and is worth returning to
- * with better credentials; 404 says nothing at all.
+ * Structured as a list of `AdminSection`s rather than a bespoke page, because
+ * this is going to grow — a searchable users view, bid requests (2.3), orders
+ * (2.4). Adding one should mean adding a section, not rewriting the page.
+ *
+ * Authorization goes through `currentAdmin()`, which is now the single place
+ * the admin check lives; the API route calls the same function. Non-admins
+ * get a 404 rather than a redirect or a 403 — see that file for why.
  */
 export default async function AdminPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const user = await currentUser();
+  const user = await currentAdmin();
   if (!user) notFound();
 
-  const decision = can(
-    {
-      role: user.role,
-      emailVerified: user.emailVerified,
-      activePlanKey: user.activePlanKey as PlanKey | null,
-      selfBiddingGranted: user.selfBiddingGranted,
-    },
-    { type: "access_admin" }
-  );
-  if (!decision.allowed) notFound();
-
   const t = await getTranslations({ locale, namespace: "Admin" });
-  const queue = await pendingDeposits();
+  const tPlans = await getTranslations({ locale, namespace: "Plans" });
+
+  // Resolved once here and handed to both lists, so tier names have exactly
+  // one source (Plans.tiers) instead of the parallel Admin.tiers copy these
+  // components used to read — which was free to drift from the plans page.
+  const planNames = Object.fromEntries(
+    PLAN_KEYS.map((key) => [key, tPlans(`tiers.${key}.name`)])
+  );
+
+  const [queue, clients] = await Promise.all([pendingDeposits(), activeClients()]);
 
   return (
     <Container className="py-16">
@@ -56,11 +61,19 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
         </h1>
         <p className="mt-2 text-sm text-char-600">{t("subtitle")}</p>
 
-        <h2 className="mt-10 text-sm font-semibold uppercase tracking-wide text-char-500">
-          {t("queueHeading", { count: queue.length })}
-        </h2>
-        <div className="mt-4">
-          <DepositQueue rows={queue} />
+        <div className="mt-10">
+          <AdminSection title={t("queueHeading")} count={queue.length}>
+            <DepositQueue rows={queue} planNames={planNames} />
+          </AdminSection>
+
+          <AdminSection title={t("clientsHeading")} count={clients.length}>
+            <ActiveClients rows={clients} planNames={planNames} />
+          </AdminSection>
+
+          {/* No count: this is a tool, not a list of things needing action. */}
+          <AdminSection title={t("deleteUserHeading")}>
+            <DeleteUserPanel planNames={planNames} />
+          </AdminSection>
         </div>
       </div>
     </Container>

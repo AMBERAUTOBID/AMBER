@@ -15,7 +15,7 @@
  * 2. Confirming a deposit is the ONLY thing that sets users.activePlanKey.
  *    Requesting a plan grants nothing.
  */
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, desc, eq, isNull, ne } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 import { PLANS, type PlanKey } from "./plans";
 
@@ -93,7 +93,11 @@ export async function pendingDeposits(): Promise<DepositRow[]> {
     })
     .from(schema.deposits)
     .innerJoin(schema.users, eq(schema.deposits.userId, schema.users.id))
-    .where(eq(schema.deposits.status, "pending"))
+    // Erasure already cancels open requests, so a deleted user's row should
+    // never be pending. Excluded here too because this list drives an action
+    // with consequences: confirming a request from an account that no longer
+    // exists would activate a plan for nobody.
+    .where(and(eq(schema.deposits.status, "pending"), isNull(schema.users.deletedAt)))
     .orderBy(schema.deposits.createdAt);
 }
 
@@ -193,14 +197,23 @@ export async function cancelPlanRequest(
   return "cancelled";
 }
 
-export type ConfirmResult = "confirmed" | "not_pending";
+/**
+ * Carries the affected user back to the caller, which the route needs in
+ * order to tell them what happened. Previously just a string, which meant the
+ * one place that knew a plan had gone live had no way to say so — the client
+ * found out by logging in and looking.
+ */
+export type DecisionResult =
+  | { status: "applied"; userId: string; planKey: string }
+  /** Already decided, or never in the right state. */
+  | { status: "not_applicable" };
 
 /**
  * The moment a plan becomes real. Guarded on status = "pending" so a double
  * click, or two admins acting at once, can't confirm the same deposit twice
  * — the UPDATE claims it atomically and the second attempt matches no row.
  */
-export async function confirmDeposit(depositId: string, adminId: string): Promise<ConfirmResult> {
+export async function confirmDeposit(depositId: string, adminId: string): Promise<DecisionResult> {
   const claimed = await db()
     .update(schema.deposits)
     .set({ status: "confirmed", reviewedBy: adminId, reviewedAt: new Date() })
@@ -208,7 +221,7 @@ export async function confirmDeposit(depositId: string, adminId: string): Promis
     .returning({ userId: schema.deposits.userId, planKey: schema.deposits.planKey });
 
   const row = claimed[0];
-  if (!row) return "not_pending";
+  if (!row) return { status: "not_applicable" };
 
   await db()
     .update(schema.users)
@@ -219,20 +232,20 @@ export async function confirmDeposit(depositId: string, adminId: string): Promis
     userId: row.userId,
     planKey: row.planKey,
   });
-  return "confirmed";
+  return { status: "applied", userId: row.userId, planKey: row.planKey };
 }
 
 /** Marks a deposit refunded and removes the plan it was paying for. Sessions
  * are NOT killed here: losing a plan isn't losing the account. */
-export async function refundDeposit(depositId: string, adminId: string): Promise<ConfirmResult> {
+export async function refundDeposit(depositId: string, adminId: string): Promise<DecisionResult> {
   const claimed = await db()
     .update(schema.deposits)
     .set({ status: "refunded", reviewedBy: adminId, reviewedAt: new Date() })
     .where(and(eq(schema.deposits.id, depositId), eq(schema.deposits.status, "confirmed")))
-    .returning({ userId: schema.deposits.userId });
+    .returning({ userId: schema.deposits.userId, planKey: schema.deposits.planKey });
 
   const row = claimed[0];
-  if (!row) return "not_pending";
+  if (!row) return { status: "not_applicable" };
 
   await db()
     .update(schema.users)
@@ -240,7 +253,7 @@ export async function refundDeposit(depositId: string, adminId: string): Promise
     .where(eq(schema.users.id, row.userId));
 
   await recordAudit(adminId, "deposit.refunded", "deposit", depositId, { userId: row.userId });
-  return "confirmed";
+  return { status: "applied", userId: row.userId, planKey: row.planKey };
 }
 
 /** Append-only. Never let an audit failure break the action it describes —

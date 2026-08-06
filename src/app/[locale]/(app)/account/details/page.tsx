@@ -7,6 +7,7 @@ import { signedInDevices } from "@/modules/account/model/devices";
 import ProfileForm from "@/modules/account/components/ProfileForm";
 import PasswordForm from "@/modules/account/components/PasswordForm";
 import SignOutOthersButton from "@/modules/account/components/SignOutOthersButton";
+import DeleteAccountForm from "@/modules/account/components/DeleteAccountForm";
 
 export async function generateMetadata({
   params,
@@ -109,6 +110,18 @@ export default async function AccountDetailsPage({
 
         <div className="mt-4 border-t border-char-200/70 pt-4">
           <SignOutOthersButton otherCount={otherCount} />
+        </div>
+      </section>
+
+      {/* Last on the page, and visually quieter than everything above it.
+          Nobody arrives here meaning to delete their account, and a red panel
+          competing with "save changes" would be the wrong emphasis. */}
+      <section className="mt-8 rounded-2xl border border-char-200/70 bg-white p-6 dark:bg-char-100/5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-char-500">
+          {t("dangerHeading")}
+        </h2>
+        <div className="mt-5">
+          <DeleteAccountForm />
         </div>
       </section>
     </div>

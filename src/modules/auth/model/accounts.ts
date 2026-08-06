@@ -91,6 +91,7 @@ export async function loginAccount(
       id: schema.users.id,
       passwordHash: schema.users.passwordHash,
       emailVerifiedAt: schema.users.emailVerifiedAt,
+      deletedAt: schema.users.deletedAt,
     })
     .from(schema.users)
     .where(sql`lower(${schema.users.email}) = ${email}`)
@@ -101,6 +102,13 @@ export async function loginAccount(
   const hashToCheck = user?.passwordHash ?? (await DECOY_HASH_PROMISE);
   const passwordOk = await verifyPassword(password, hashToCheck);
   if (!user || !passwordOk) return { status: "invalid_credentials" };
+
+  // Belt and braces. An erased account's password hash is already a value no
+  // password can match, and its email was rewritten so this lookup shouldn't
+  // find it — but "shouldn't" is not a thing to leave authentication resting
+  // on. Same undifferentiated answer as a wrong password: whether an account
+  // was deleted is not something a stranger gets to learn.
+  if (user.deletedAt) return { status: "invalid_credentials" };
 
   // Verification gates login outright: an unverified account can't do
   // anything a plan governs anyway (can() denies first on email), and

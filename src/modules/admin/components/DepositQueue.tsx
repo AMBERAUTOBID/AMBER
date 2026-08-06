@@ -2,15 +2,26 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { formatUsd } from "../model/plans";
-import type { DepositRow } from "../model/deposits";
+import { formatUsd } from "@/modules/plans/model/plans";
+import type { DepositRow } from "@/modules/plans/model/deposits";
 
 /**
  * The admin's work queue. Confirming is the moment a client's plan becomes
  * real, so the button says what will happen and the row disappears only
  * after the server agrees.
+ *
+ * Lives in `modules/admin` rather than `modules/plans`: it is a screen for
+ * staff, not part of the plan catalogue, and the console it belongs to is
+ * going to grow views that have nothing to do with plans.
  */
-export default function DepositQueue({ rows }: { rows: DepositRow[] }) {
+export default function DepositQueue({
+  rows,
+  planNames,
+}: {
+  rows: DepositRow[];
+  /** Resolved server-side from Plans.tiers, so tier names have one source. */
+  planNames: Record<string, string>;
+}) {
   const t = useTranslations("Admin");
   const [busy, setBusy] = useState<string | null>(null);
   const [done, setDone] = useState<Set<string>>(new Set());
@@ -53,7 +64,9 @@ export default function DepositQueue({ rows }: { rows: DepositRow[] }) {
             <p className="truncate font-semibold text-char-900">{row.userName}</p>
             <p className="truncate text-sm text-char-600">{row.userEmail}</p>
             <p className="mt-1 text-sm text-char-700">
-              {t(`tiers.${row.planKey}`)} — <strong>{formatUsd(row.amountCents)}</strong>
+              {planNames[row.planKey] ?? row.planKey}
+              {/* Bronze is free; printing "— $0" states an amount nobody owes. */}
+              {row.amountCents > 0 && <> — <strong>{formatUsd(row.amountCents)}</strong></>}
             </p>
             <p className="mt-0.5 text-xs text-char-500">
               {t("requestedOn", { date: row.createdAt.toISOString().slice(0, 10) })}

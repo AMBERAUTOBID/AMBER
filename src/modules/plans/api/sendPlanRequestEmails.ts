@@ -24,10 +24,10 @@
  * out. Plain text on purpose — HTML mail buys spam-filter surface and
  * rendering bugs for content that is four lines and a link.
  */
-import nodemailer from "nodemailer";
 import { getTranslations } from "next-intl/server";
 import { SITE, siteUrl } from "@/shared/config/site";
 import { formatUsd, type Plan } from "../model/plans";
+import { deliver, deliverQuietly } from "./deliver";
 
 interface PlanRequestMail {
   user: { name: string; email: string; locale: string };
@@ -37,13 +37,11 @@ interface PlanRequestMail {
 }
 
 export async function sendPlanRequestEmails(mail: PlanRequestMail): Promise<void> {
-  try {
-    await Promise.all([sendAdminNotification(mail), sendClientCopy(mail)]);
-  } catch (e) {
-    // Caught here rather than by the caller so neither email can take the
-    // other down, and so no caller has to remember this rule.
-    console.error("[plans] plan request notification failed:", e);
-  }
+  // Caught here rather than by the caller so neither email can take the other
+  // down, and so no caller has to remember the rule.
+  await deliverQuietly("plan request", () =>
+    Promise.all([sendAdminNotification(mail), sendClientCopy(mail)]).then(() => undefined)
+  );
 }
 
 async function sendAdminNotification({ user, plan, acceptedTerms }: PlanRequestMail): Promise<void> {
@@ -93,32 +91,4 @@ async function sendClientCopy({ user, plan }: PlanRequestMail): Promise<void> {
   ].join("\n");
 
   await deliver({ to: user.email, subject: t("subject", { plan: planName }), text: body });
-}
-
-interface Outgoing {
-  to: string;
-  subject: string;
-  text: string;
-  replyTo?: string;
-}
-
-async function deliver(message: Outgoing): Promise<void> {
-  const gmailUser = process.env.GMAIL_USER;
-  const gmailPass = process.env.GMAIL_APP_PASSWORD;
-  if (!gmailUser || !gmailPass) {
-    console.warn(`[plans] mail credentials unset — would send to ${message.to}:\n${message.text}`);
-    return;
-  }
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: gmailUser, pass: gmailPass },
-  });
-  await transporter.sendMail({
-    from: `"${SITE.name}" <${gmailUser}>`,
-    to: message.to,
-    replyTo: message.replyTo,
-    subject: message.subject,
-    text: message.text,
-  });
 }

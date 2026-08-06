@@ -367,6 +367,56 @@ checked the console:
 
 ---
 
+## 6b. The admin console, and erasing an account
+
+**`modules/admin/` owns staff screens**, not `modules/plans/` — the console is
+going to grow views that have nothing to do with the plan catalogue, so
+`DepositQueue` moved here alongside the clients list.
+
+- **`currentAdmin()` is the only admin check.** The `can()` block it wraps was
+  previously copy-pasted between the page and the API route; the console will
+  grow more of both, and one that forgets the `emailVerified` half would be an
+  admin surface guarded differently from the rest with nothing to flag it. It
+  returns null rather than throwing so pages can `notFound()` and routes can
+  return a 404 body. **404 everywhere, never 403** — a redirect to login tells
+  a curious client that /admin is worth returning to with better credentials.
+- **The page is a list of `AdminSection`s.** Adding a view should mean adding
+  a section, not rewriting the page; that component is also the seam where
+  tabs or a sidebar go once the list outgrows one scroll.
+- **Tier names come from `Plans.tiers` only.** The parallel `Admin.tiers` copy
+  is gone — the page resolves names once server-side and passes them down.
+- Confirming and refunding now **email the client** (§6a's notification path,
+  other half). Refund had no button anywhere before this: the queue listed
+  only *pending* rows, so a confirmed client vanished from every screen.
+
+### Erasure is anonymisation, not deletion
+
+`deleteAccount()` implements GDPR Art. 17 by **scrubbing the user row and
+keeping the money**. `deposits.user_id` cascades, so a real `DELETE FROM
+users` would destroy the record that a person paid us, how much and when.
+Art. 17(3) permits retaining what a legal obligation needs, and accounting
+records are the textbook case.
+
+Erased: name, email, phone, password (set to a value no password can match),
+`activePlanKey`, every session, every action token, and **any pending deposit
+is cancelled**. Kept: deposit rows and the audit log, neither naming anyone.
+
+- **The email is rewritten, not nulled** — the column is NOT NULL and unique,
+  and making the replacement unique per user frees the person's real address
+  so they can register again. An erasure that permanently banned someone would
+  be a strange reading of a privacy right.
+- **`deletedAt` is checked in `loginAccount` and `getSessionUser` too.** Both
+  are belt-and-braces — the hash can't match and the email no longer resolves
+  — but authentication is not where "shouldn't happen" is good enough.
+- **Cancelling pending deposits was found by testing**: without it an erased
+  user's request sat in the admin queue as a row labelled "Deleted user", and
+  confirming it would have activated a plan for nobody.
+- Both entry points share one function; `audit_log.detail.selfService`
+  records which. An admin may erase their own account — special-casing it
+  would mean the one unerasable account is the one with the most access.
+
+---
+
 ## 7. The pre-launch gate — temporary by design
 
 `shared/gate/preLaunchGate.ts` replaces the whole site with a "coming soon"
