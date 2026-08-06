@@ -545,7 +545,8 @@
       "submitting": "Sending...",
       "success": "Thanks — we've received your message and will reply within one business day.",
       "error": "Something went wrong. Please try again, or reach us directly using the details on this page.",
-      "required": "Required"
+      "required": "Required",
+      "planPrefill": "I'm interested in the {plan} plan. Please tell me how we can arrange it."
     },
     "channels": {
       "title": "Direct channels",
@@ -1275,7 +1276,7 @@
     "requestedHint": "Request received. We'll contact you with transfer details and activate your plan once the deposit arrives.",
     "alreadyPending": "You already have a plan request awaiting confirmation. We'll be in touch.",
     "requestError": "Something went wrong. Please try again or contact us.",
-    "footnote": "Deposits are refunded within one working day of finishing your cooperation with us, provided no bids are active. Placeholder figures shown while pricing is finalised.",
+    "footnote": "Deposits are refunded within one working day of finishing your cooperation with us, provided no bids are active.",
     "features": {
       "bidLimit": "Bidding limit up to {amount}",
       "bidUnlimited": "Unlimited bidding power",
@@ -1311,7 +1312,7 @@
       }
     },
     "comingSoon": "Coming soon",
-    "comingSoonHint": "This plan opens once our own auction access is live. Talk to us now and we'll tell you the moment it does.",
+    "comingSoonHint": "Need this plan now? Talk to us and we'll arrange it for you while self-service is being built.",
     "contactUs": "Contact us",
     "dialog": {
       "eyebrow": "Selected plan",

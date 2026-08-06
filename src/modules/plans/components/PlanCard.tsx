@@ -126,8 +126,11 @@ export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boo
         </>
       ) : (
         <>
+          {/* Carries which tier they were looking at. Without it a Platinum
+              enquiry lands in the inbox indistinguishable from any other, and
+              answering it starts with "which plan did you mean?" */}
           <Link
-            href="/contact"
+            href={{ pathname: "/contact", query: { plan: plan.key } }}
             className="mt-7 inline-flex w-full items-center justify-center rounded-full border border-char-300 bg-white px-6 py-3.5 text-sm font-semibold text-char-700 transition-colors hover:border-amber-400 hover:text-amber-700"
           >
             {t("contactUs")}

@@ -4,9 +4,19 @@ import { SITE } from "@/shared/config/site";
 
 const BASE_URL = SITE.url;
 
+/**
+ * ⚠️ Must agree with each page's own `robots` metadata. A path listed here
+ * but marked noindex tells crawlers to find a page and then not list it —
+ * half a decision, and the confusing half. Every entry below is indexable.
+ *
+ * Deliberately absent: /login, /register, /account/*, /admin and the
+ * password-reset pages (personal doorways, all noindex), and /vehicle/[vin]
+ * (expiring auction lots, also disallowed in robots.ts).
+ */
 const PATHS = [
   "",
   "/search",
+  "/plans",
   "/shipping",
   "/about",
   "/contact",

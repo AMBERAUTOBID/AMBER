@@ -23,6 +23,14 @@ export async function generateMetadata({
   return { title: t("hero.title") };
 }
 
+/**
+ * Note what this page does NOT read: `searchParams`. The Coming Soon plan
+ * cards link here with `?plan=<key>`, but touching searchParams on the server
+ * opts the whole page out of static generation — measured, not assumed: it
+ * flipped /contact from ● to ƒ in the build output the moment it was added.
+ * This is a page SEO depends on, so ContactForm reads the parameter on the
+ * client after hydration instead, the same trade the header makes (§6a).
+ */
 export default async function ContactPage({
   params,
 }: {

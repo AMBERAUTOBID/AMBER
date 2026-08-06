@@ -13,13 +13,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Plans" });
+  // Indexable. It was noindex while every figure was a placeholder, so no
+  // search engine could cache numbers we had invented; those figures are now
+  // owner-confirmed, and this is a page buyers search for by name.
+  //
+  // The three Coming Soon tiers are a reason TO index it, not against: they
+  // advertise the full range and route anyone who needs one into a
+  // conversation, which is the whole point of the page.
+  //
+  // ⚠️ Indexing lives in two places. This controls whether a crawler that
+  // reaches the page may list it; `app/sitemap.ts` controls whether it is
+  // told the page exists. Changing one without the other half-applies the
+  // decision — /plans is listed in both.
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
-    // PLACEHOLDER PRICING: noindex until the real figures land, so a search
-    // engine never caches numbers we invented. Remove alongside the
-    // placeholders in plans.ts.
-    robots: { index: false },
   };
 }
 

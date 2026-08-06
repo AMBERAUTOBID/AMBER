@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+// A pure whitelist check over a fixed list — no next/* imports, so it costs
+// the client bundle almost nothing.
+import { isPlanKey } from "@/modules/plans/model/plans";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -34,8 +37,41 @@ async function getRecaptchaToken(): Promise<string> {
 
 export default function ContactForm() {
   const t = useTranslations("Contact.form");
+  const tPlans = useTranslations("Plans");
   const locale = useLocale();
   const [status, setStatus] = useState<Status>("idle");
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+
+  /**
+   * Prefills the message when someone arrives from a Coming Soon plan card,
+   * so their enquiry says which tier they wanted instead of arriving blank.
+   *
+   * Read from `window.location` in an effect rather than from `searchParams`
+   * on the server, or `useSearchParams` here — both opt this page out of
+   * static generation, and /contact is one of the pages SEO depends on.
+   * Measured: adding server-side searchParams flipped it from ● to ƒ in the
+   * build output. Same trade the header account widget makes.
+   *
+   * ⚠️ The value is validated against the plan catalogue and never rendered
+   * as text. `?plan=` comes from the URL, so anyone can write one — echoing
+   * it straight into the textarea would let a crafted link put words in a
+   * visitor's mouth and send them to us over their own name. Only a known
+   * plan key resolves, and what it resolves to is one of our own sentences.
+   *
+   * Written through a ref rather than held in state, which keeps the field
+   * uncontrolled: state set from an effect would either mismatch hydration
+   * (the server renders an empty box, the client a filled one) or need the
+   * value during the prerender, where `window` doesn't exist. It also leaves
+   * `form.reset()` working on submit, which a controlled field would not.
+   */
+  useEffect(() => {
+    const field = messageRef.current;
+    // Never overwrite something already typed — the visitor wins.
+    if (!field || field.value) return;
+    const plan = new URLSearchParams(window.location.search).get("plan");
+    if (!plan || !isPlanKey(plan)) return;
+    field.value = t("planPrefill", { plan: tPlans(`tiers.${plan}.name`) });
+  }, [t, tPlans]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -122,7 +158,11 @@ export default function ContactForm() {
         <label htmlFor="message" className={labelClass}>
           {t("message")}
         </label>
+        {/* Uncontrolled: the prefill is written straight to the node after
+            hydration, and the visitor is free to delete or rewrite every word
+            of it. A starting point, not a statement we put in their name. */}
         <textarea
+          ref={messageRef}
           id="message"
           name="message"
           rows={4}

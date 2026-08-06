@@ -140,7 +140,8 @@ These are not style preferences. Breaking one causes a real defect.
    "not reported"; a `$0` bid means "bidding hasn't opened". Printing either as
    a real value states something the source never claimed.
 6. **Vehicle pages stay `noindex`.** Aggregator terms, plus crawlers burn API
-   quota.
+   quota. **Indexing lives in two files** — a page's `robots` metadata and
+   `app/sitemap.ts` — and they must always agree. See §6c.
 7. **Comments explain why, not what.** The non-obvious constraint — the API
    gotcha, the business reason — is the part worth writing down.
 
@@ -173,8 +174,10 @@ Decisions now settled — do not relitigate casually:
   other code may hard-code a plan name or limit; every gate — UI, API route,
   admin console — calls `can()`, and API routes must call it server-side
   regardless of what the UI already checked. Its tests are exhaustive because
-  they test the real security boundary. All plan *numbers* are PLACEHOLDERS
-  (invariant #4) until the owner supplies real ones.
+  they test the real security boundary. Every plan *number* is now
+  owner-confirmed — the file header says so, and `/plans` was un-noindexed on
+  that basis (§6c). If figures ever go back to being provisional, the page's
+  indexing has to go with them.
 - **Sessions are database rows, not JWTs** — withdrawing a deposit must kill
   access instantly, and a signed token can't be recalled. Cookies hold a
   random token; the DB stores only its SHA-256 (same for email-verification
@@ -414,6 +417,50 @@ is cancelled**. Kept: deposit rows and the audit log, neither naming anyone.
 - Both entry points share one function; `audit_log.detail.selfService`
   records which. An admin may erase their own account — special-casing it
   would mean the one unerasable account is the one with the most access.
+
+---
+
+## 6c. What search engines may list, and the /plans decision
+
+**Two files, one decision, and they must agree.** A page's `robots` metadata
+(`robots: { index: false }` in `generateMetadata`) controls whether a crawler
+that reaches the page may list it. `app/sitemap.ts` controls whether crawlers
+are told the page exists. Changing one without the other half-applies the
+decision — a sitemapped page marked noindex asks crawlers to find it and then
+ignore it. `app/robots.ts` is a third, coarser lever: it blocks *fetching*
+(`/api/`, `/vehicle/`) rather than listing.
+
+Indexed: home, `/search`, `/plans`, `/shipping`, `/about`, `/contact`,
+`/privacy`, `/terms`. Noindex: every auth page, everything under `/account`,
+`/admin`, and `/vehicle/[vin]`.
+
+**`/plans` was un-noindexed 2026-08-06.** It had been hidden while every
+figure was a placeholder, so no search engine could cache invented numbers.
+Those figures are owner-confirmed now, and the page is one buyers search for
+by name.
+
+The three Coming Soon tiers are a reason **to** index it. The owner's stated
+intent at launch is that all four plans show, Bronze is self-service, and the
+paid tiers advertise the range while routing anyone who needs one into a
+conversation — so the page is a lead-generation surface, not an apology. Two
+copy changes went with the decision, and both matter more than they look:
+
+- The footnote used to end *"Placeholder figures shown while pricing is
+  finalised."* That sentence had quietly become false, and it was the one a
+  search engine would have cached and shown to the first organic visitor.
+  **When indexing a page, read what is actually on it first.**
+- The Coming Soon hint promised to *tell you when it opens* — a mailing list.
+  It now offers to arrange the tier by hand, which is the real offer.
+
+**What did NOT change: `available: false` still refuses requests server-side.**
+The paid tiers cannot be self-served; a human works out how to deliver them.
+`requestPlan` must keep rejecting them and `deposits.test.ts` asserts it. The
+contact route is the only way in, by design.
+
+The Coming Soon link now carries `?plan=<key>`, and the contact page
+**validates it against the catalogue** before use. It is never echoed as text
+— an unvalidated value there would let a crafted link put words into a
+visitor's message and send them to us over their own name.
 
 ---
 

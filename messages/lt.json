@@ -545,7 +545,8 @@
       "submitting": "Siunčiama...",
       "success": "Ačiū — gavome jūsų žinutę ir atsakysime per vieną darbo dieną.",
       "error": "Kažkas nepavyko. Bandykite dar kartą arba susisiekite su mumis tiesiogiai naudodami šiame puslapyje nurodytus kontaktus.",
-      "required": "Privaloma"
+      "required": "Privaloma",
+      "planPrefill": "Domina {plan} planas. Parašykite, kaip galėtume tai suorganizuoti."
     },
     "channels": {
       "title": "Tiesioginiai kanalai",
@@ -1275,7 +1276,7 @@
     "requestedHint": "Užklausą gavome. Susisieksime su jumis ir atsiųsime rekvizitus — planas aktyvuojamas gavus depozitą.",
     "alreadyPending": "Jau turite plano užklausą, laukiančią patvirtinimo. Su jumis susisieksime.",
     "requestError": "Įvyko klaida. Bandykite dar kartą arba susisiekite su mumis.",
-    "footnote": "Depozitas grąžinamas per vieną darbo dieną pasibaigus bendradarbiavimui, jei nėra aktyvių statymų. Rodomi preliminarūs skaičiai — kainos tikslinamos.",
+    "footnote": "Depozitas grąžinamas per vieną darbo dieną po bendradarbiavimo su mumis pabaigos, jei nėra aktyvių statymų.",
     "features": {
       "bidLimit": "Statymų limitas iki {amount}",
       "bidUnlimited": "Neribota statymų galia",
@@ -1311,7 +1312,7 @@
       }
     },
     "comingSoon": "Netrukus",
-    "comingSoonHint": "Šis planas atsidarys, kai pradės veikti mūsų pačių prieiga prie aukcionų. Parašykite mums — pranešime iškart.",
+    "comingSoonHint": "Reikia šio plano jau dabar? Susisiekite su mumis — viską suorganizuosime, kol kuriamas savitarnos variantas.",
     "contactUs": "Susisiekite su mumis",
     "dialog": {
       "eyebrow": "Pasirinktas planas",
