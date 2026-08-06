@@ -66,22 +66,30 @@ export default async function SearchPage({
   // more specific came through.
   let effectiveMake = make;
   let effectiveModel = model;
+  let effectiveType = type;
   let s: string | undefined;
+  // A year or body style read out of the typed text is only a default — an
+  // explicit dropdown value always wins over something we inferred.
+  let parsedYearFrom: number | undefined;
+  let parsedYearTo: number | undefined;
   if (!make && !model && !type && q) {
     const parsed = parseFreeTextQuery(q);
     effectiveMake = parsed.make;
     effectiveModel = parsed.model;
+    effectiveType = parsed.type;
     s = parsed.s;
+    parsedYearFrom = parsed.yearFrom;
+    parsedYearTo = parsed.yearTo;
   }
 
   const baseSearchParams = {
     s,
     make: effectiveMake,
     model: effectiveModel,
-    type,
+    type: effectiveType,
     platform,
-    year_from: num(sp.yearFrom),
-    year_to: num(sp.yearTo),
+    year_from: num(sp.yearFrom) ?? parsedYearFrom,
+    year_to: num(sp.yearTo) ?? parsedYearTo,
     odometer_from: num(sp.odoMin),
     odometer_to: num(sp.odoMax),
     lot_status: sp.buyNow === "1" ? ("Buy Now" as const) : undefined,
@@ -96,13 +104,19 @@ export default async function SearchPage({
   // model is chosen there's no ambiguity left (no motorcycle is named
   // "Civic"), so the type fan-out is only needed for a broad, model-less
   // browse.
-  const needsTypeFanOut = category && !model && !type;
+  //
+  // Guarded by a lookup rather than by `category` being truthy: `category=more`
+  // is reachable by hand-editing the URL and has no entry in
+  // CATEGORY_TYPE_GROUPS, which used to hand `undefined` to the fan-out and
+  // throw a TypeError that surfaced as "search is unavailable".
+  const fanOutTypes =
+    !effectiveModel && !effectiveType && category ? CATEGORY_TYPE_GROUPS[category] : undefined;
 
   let results: Awaited<ReturnType<typeof searchVehicles>> | null = null;
   let error: string | null = null;
   try {
-    results = needsTypeFanOut
-      ? await searchVehiclesAcrossTypes(baseSearchParams, CATEGORY_TYPE_GROUPS[category])
+    results = fanOutTypes
+      ? await searchVehiclesAcrossTypes(baseSearchParams, fanOutTypes)
       : await searchVehicles(baseSearchParams);
   } catch (e) {
     error = e instanceof Error ? e.message : "Unknown error";

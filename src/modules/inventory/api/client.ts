@@ -77,21 +77,27 @@ export async function searchVehiclesAcrossTypes(
   typeValues: string[]
 ): Promise<VehicleSearchResponse> {
   const perType = Math.max(4, Math.ceil((params.per_page ?? 20) / typeValues.length));
-  const results = await Promise.all(
-    typeValues.map((type) =>
-      searchVehicles({ ...params, type, per_page: perType }).catch(
-        (): VehicleSearchResponse => ({
-          ok: true,
-          data: [],
-          meta: { next_cursor: null, prev_cursor: null },
-        })
-      )
-    )
+  const results = await Promise.allSettled(
+    typeValues.map((type) => searchVehicles({ ...params, type, per_page: perType }))
   );
+
+  // One type failing is tolerable — the others still carry a useful page, and a
+  // type with genuinely no matching lots is indistinguishable from a hiccup.
+  // ALL of them failing is not: swallowing that rendered a confident "no
+  // vehicles found" during an API outage, which reads as "nothing matches your
+  // filters" and sends the visitor off to change filters that were fine.
+  const fulfilled = results.filter(
+    (r): r is PromiseFulfilledResult<VehicleSearchResponse> => r.status === "fulfilled"
+  );
+  if (fulfilled.length === 0) {
+    throw results[0]?.status === "rejected"
+      ? results[0].reason
+      : new Error("Apibara request failed: /vehicles");
+  }
 
   return {
     ok: true,
-    data: results.flatMap((r) => r.data).slice(0, params.per_page ?? 20),
+    data: fulfilled.flatMap((r) => r.value.data).slice(0, params.per_page ?? 20),
     meta: { next_cursor: null, prev_cursor: null },
   };
 }
