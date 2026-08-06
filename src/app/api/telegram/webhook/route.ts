@@ -27,8 +27,18 @@ interface TelegramUpdate {
  * a one-time setWebhook call - see scripts/telegram-bot/README.md.
  */
 export async function POST(request: Request) {
+  // FAIL CLOSED. The old check was `if (secret && header !== secret)`, which
+  // meant an unset env var accepted EVERY request — and the handler goes on
+  // to call Telegram's API with a chat id taken from the request body, so an
+  // unauthenticated caller could drive our bot in chats we never intended
+  // (found in the 2026-08-06 security audit). The secret is set in the same
+  // one-time setWebhook step that makes Telegram start calling this at all,
+  // so refusing while it is absent breaks nothing that works today.
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (secret && request.headers.get("x-telegram-bot-api-secret-token") !== secret) {
+  if (!secret) {
+    return NextResponse.json({ ok: false, error: "webhook_not_configured" }, { status: 503 });
+  }
+  if (request.headers.get("x-telegram-bot-api-secret-token") !== secret) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 

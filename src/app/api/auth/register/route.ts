@@ -39,7 +39,20 @@ export async function POST(request: Request) {
       link: absoluteUrl(request, `${prefix}/verify-email?token=${result.verifyToken}`),
     }).catch((e) => console.error("[auth] verify email failed:", e));
   }
-  // status "exists" falls through to the same ok — indistinguishable outside.
+
+  if (result.status === "exists") {
+    // The heads-up the design always promised (implemented in the 2026-08-06
+    // audit — accounts.ts claimed it, nothing sent it). The owner learns
+    // someone used their address — most often their own forgotten past self —
+    // and gets the login link. Externally this response stays byte-identical
+    // to the created path.
+    await sendAuthEmail({
+      to: result.existingEmail,
+      locale,
+      kind: "exists",
+      link: absoluteUrl(request, `${prefix}/login`),
+    }).catch((e) => console.error("[auth] exists email failed:", e));
+  }
 
   return NextResponse.json({ ok: true });
 }

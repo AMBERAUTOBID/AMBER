@@ -1172,7 +1172,13 @@
         "instruction": "Paspauskite nuorodą žemiau ir pasirinkite naują slaptažodį. Jei to neužsakėte, tiesiog ignoruokite šį laišką:",
         "expiry": "Nuoroda galioja 1 valandą."
       },
-      "signature": "— {site} komanda"
+      "signature": "— {site} komanda",
+      "exists": {
+        "subject": "Jūs jau turite SmartAutoBid paskyrą",
+        "greeting": "Sveiki,",
+        "instruction": "Kažkas — greičiausiai jūs pats — ką tik bandė sukurti naują paskyrą šiuo el. pašto adresu, tačiau ji jau egzistuoja. Tiesiog prisijunkite čia:",
+        "note": "Jei pamiršote slaptažodį, pasinaudokite atkūrimo nuoroda prisijungimo puslapyje. Jei tai buvote ne jūs, nieko daryti nereikia — jūsų paskyra nepasikeitė."
+      }
     }
   },
   "Account": {

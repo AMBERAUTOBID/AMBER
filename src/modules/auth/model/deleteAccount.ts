@@ -77,6 +77,11 @@ export async function deleteAccount(
   // failed, we would have signed someone out of an account they still have.
   await db().delete(schema.sessions).where(eq(schema.sessions.userId, userId));
   await db().delete(schema.actionTokens).where(eq(schema.actionTokens.userId, userId));
+  // Saved cars go too (2026-08-06 audit finding — they survived erasure).
+  // Which vehicles a person was watching is their personal data, and unlike
+  // the deposit rows there is no accounting duty to keep it. Deleted
+  // outright, not anonymised: an unowned favourite means nothing.
+  await db().delete(schema.favorites).where(eq(schema.favorites.userId, userId));
 
   // Any open request dies with the account. Found by testing: without this,
   // an erased user's pending deposit stayed in the admin queue as a row

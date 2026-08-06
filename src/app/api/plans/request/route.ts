@@ -3,6 +3,7 @@ import { currentUser } from "@/modules/auth/model/currentUser";
 import { PLANS, isPlanKey } from "@/modules/plans/model/plans";
 import { requestPlan } from "@/modules/plans/model/deposits";
 import { sendPlanRequestEmails } from "@/modules/plans/api/sendPlanRequestEmails";
+import { consumeLimit } from "@/modules/auth/model/rateLimit";
 
 /**
  * A signed-in client asks to take a plan. This creates a pending deposit —
@@ -15,6 +16,12 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ ok: false, error: "unauthenticated" }, { status: 401 });
   if (!user.emailVerified) {
     return NextResponse.json({ ok: false, error: "email_not_verified" }, { status: 403 });
+  }
+
+  // A cancel-and-re-request loop otherwise emails the admin and the client
+  // on every cycle, unmetered (2026-08-06 audit finding).
+  if (!(await consumeLimit("planRequestPerUser", user.id))) {
+    return NextResponse.json({ ok: false, error: "rate_limited" }, { status: 429 });
   }
 
   const body = (await request.json().catch(() => null)) as {

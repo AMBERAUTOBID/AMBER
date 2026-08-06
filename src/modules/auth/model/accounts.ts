@@ -22,6 +22,7 @@ import { db, schema } from "@/shared/db/client";
 import { hashPassword, verifyPassword, passwordMeetsPolicy } from "./password";
 import { generateToken, hashToken } from "./token";
 import { createSession, pruneExpiredSessions, destroyAllSessionsForUser } from "./session";
+import { pruneStaleRateLimits } from "./rateLimit";
 
 /** Hash of a random password nobody knows — verified against for unknown
  * emails so login timing doesn't depend on whether the account exists. */
@@ -118,7 +119,10 @@ export async function loginAccount(
   // blocking here keeps half-real accounts out of the session table.
   if (!user.emailVerifiedAt) return { status: "email_not_verified" };
 
+  // Two opportunistic cleanups on the same write moment: expired sessions,
+  // and rate-limit counters whose window lapsed over a day ago.
   await pruneExpiredSessions();
+  await pruneStaleRateLimits();
   const session = await createSession(user.id, context);
   return {
     status: "ok",

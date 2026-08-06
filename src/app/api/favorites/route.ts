@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchLotSnapshot } from "@/modules/favorites/api/fetchSnapshot";
 import { saveFavorite, removeFavorite } from "@/modules/favorites/model/favorites";
 import { requireOwner, requireSaver, UUID } from "@/modules/favorites/api/guard";
+import { consumeLimit } from "@/modules/auth/model/rateLimit";
 
 /**
  * Save a car.
@@ -19,6 +20,12 @@ import { requireOwner, requireSaver, UUID } from "@/modules/favorites/api/guard"
 export async function POST(request: Request) {
   const { user, error } = await requireSaver();
   if (error) return error;
+
+  // Each save is one Apibara call — metered like refresh, and for the same
+  // reason (2026-08-06 audit: this was the one unmetered quota spender).
+  if (!(await consumeLimit("favoriteSavePerUser", user.id))) {
+    return NextResponse.json({ ok: false, error: "rate_limited" }, { status: 429 });
+  }
 
   const body = (await request.json().catch(() => null)) as { lot?: unknown } | null;
   const lotRef = typeof body?.lot === "string" ? body.lot.trim() : "";

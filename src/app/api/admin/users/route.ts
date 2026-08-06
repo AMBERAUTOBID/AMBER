@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
+import { UUID } from "@/shared/validation";
 import { currentAdmin } from "@/modules/admin/model/currentAdmin";
 import { findUserByEmail } from "@/modules/admin/model/findUser";
 import { deleteAccount } from "@/modules/auth/model/deleteAccount";
 
-/** Postgres raises on a malformed uuid literal rather than matching nothing. */
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Admin actions on a user account: look one up, and erase it.

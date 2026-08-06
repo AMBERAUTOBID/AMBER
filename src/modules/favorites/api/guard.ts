@@ -4,9 +4,8 @@ import { can } from "@/modules/plans/model/can";
 import type { PlanKey } from "@/modules/plans/model/plans";
 import type { SessionUser } from "@/modules/auth/model/session";
 
-/** Postgres raises on a malformed uuid literal rather than matching nothing,
- * so an unchecked junk id surfaces as a 500 instead of a 400. */
-export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Re-exported for the favorites routes; the definition lives in shared/validation.
+export { UUID } from "@/shared/validation";
 
 type Guarded =
   | { user: SessionUser; error: null }

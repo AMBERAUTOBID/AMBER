@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
+import { UUID } from "@/shared/validation";
 import { currentAdmin } from "@/modules/admin/model/currentAdmin";
 import { confirmDeposit, refundDeposit } from "@/modules/plans/model/deposits";
 import { sendDepositDecisionEmail } from "@/modules/plans/api/sendDepositDecisionEmail";
 
-/** Postgres raises on a malformed uuid literal rather than matching nothing,
- * so a junk id would surface as a 500 instead of a 400. */
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Admin actions on a deposit. Authorization goes through can() like every

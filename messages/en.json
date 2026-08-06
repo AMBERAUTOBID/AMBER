@@ -1172,7 +1172,13 @@
         "instruction": "Click the link below to choose a new password. If you didn't request this, you can ignore this email:",
         "expiry": "The link is valid for 1 hour."
       },
-      "signature": "— The {site} team"
+      "signature": "— The {site} team",
+      "exists": {
+        "subject": "You already have a SmartAutoBid account",
+        "greeting": "Hello,",
+        "instruction": "Someone — most likely you — just tried to create a new account with this email address, but it already has one. You can simply log in here:",
+        "note": "If you've forgotten your password, use the reset link on the login page. If this wasn't you, no action is needed — nothing about your account has changed."
+      }
     }
   },
   "Account": {

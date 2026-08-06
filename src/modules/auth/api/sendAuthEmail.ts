@@ -19,8 +19,13 @@ import { SITE } from "@/shared/config/site";
 interface AuthMail {
   to: string;
   locale: string;
-  kind: "verify" | "reset";
-  /** Absolute link, already carrying its token. */
+  /** `exists` = someone tried to register an address that already has an
+   * account; the owner gets a heads-up and a login link instead of a
+   * duplicate. The registering party sees the identical "ok" either way —
+   * the inbox is the only place the truth lands. */
+  kind: "verify" | "reset" | "exists";
+  /** Absolute link — the token link for verify/reset, the login page for
+   * exists (which has no token and no expiry). */
   link: string;
 }
 
@@ -33,8 +38,9 @@ export async function sendAuthEmail(mail: AuthMail): Promise<void> {
     t(`${mail.kind}.instruction`),
     "",
     mail.link,
-    "",
-    t(`${mail.kind}.expiry`),
+    // Token links expire; the exists notice instead carries a what-now line
+    // (reset hint, and reassurance if the attempt wasn't the owner's).
+    ...(mail.kind === "exists" ? ["", t("exists.note")] : ["", t(`${mail.kind}.expiry`)]),
     "",
     t("signature", { site: SITE.name }),
   ].join("\n");
