@@ -394,7 +394,24 @@ going to grow views that have nothing to do with the plan catalogue, so
   a curious client that /admin is worth returning to with better credentials.
 - **The page is a list of `AdminSection`s.** Adding a view should mean adding
   a section, not rewriting the page; that component is also the seam where
-  tabs or a sidebar go once the list outgrows one scroll.
+  tabs or a sidebar go once the list outgrows one scroll. The Users section
+  (2026-08-06) was the first test of that claim and cost one model file, one
+  component and three lines in the page — no restructuring.
+- **Users is the one place a user is erased.** It absorbed the earlier
+  find-by-email panel, and the now-callerless `lookup` action was removed
+  from `/api/admin/users`. Two ways to delete a person is how the two drift
+  apart, and erasing a row you can see beats erasing whatever a lookup box
+  matched. Its list is **bounded** (`USERS_PAGE_SIZE`, currently 50) with the
+  shortfall stated on screen — search narrows; offset paging is the next step
+  when it's genuinely needed. Erased accounts are excluded and reported as a
+  footnote count: nothing of them remains to act on.
+- **No role editing anywhere in the console, deliberately.** Admin is granted
+  by `scripts/makeAdmin.mjs` only, so a stolen admin session cannot mint more
+  admins. If a "make admin" button ever appears, that property is gone.
+- Search escapes `%` and `_` before the `ilike`. Unescaped, a search for
+  `a_b` silently matches `axb` and a lone `%` returns every user — a
+  correctness bug well before it is a security one; both are covered by the
+  runtime checks in the commit that added it.
 - **Tier names come from `Plans.tiers` only.** The parallel `Admin.tiers` copy
   is gone — the page resolves names once server-side and passes them down.
 - Confirming and refunding now **email the client** (§6a's notification path,

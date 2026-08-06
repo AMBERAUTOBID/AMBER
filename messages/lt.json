@@ -1418,18 +1418,6 @@
     "refundConfirm": "Depozitas bus grąžintas, o {name} planas nedelsiant panaikintas. Klientas gaus pranešimą el. paštu. Pinigų pervedimas atliekamas atskirai, rankiniu būdu.",
     "refundYes": "Taip, grąžinti",
     "refundNo": "Atšaukti",
-    "deleteUser": "Ištrinti paskyrą",
-    "deleting": "Trinama…",
-    "deleteConfirm": "Bus ištrinti {name} asmens duomenys ir atjungti visi įrenginiai. Depozitų įrašai išliks, bet be vardo. Šio veiksmo atšaukti negalima.",
-    "deleteYes": "Taip, ištrinti",
-    "deleteNo": "Atšaukti",
-    "deleted": "Paskyra ištrinta.",
-    "deleteUserHeading": "Paskyros ištrynimas",
-    "deleteUserHint": "BDAR duomenų ištrynimo prašymams. Suraskite paskyrą pagal el. pašto adresą, įsitikinkite, kad tai tas žmogus, ir ištrinkite.",
-    "deleteUserEmail": "Kliento el. pašto adresas",
-    "deleteUserFind": "Rasti paskyrą",
-    "deleteUserNotFound": "Paskyros tokiu el. pašto adresu nėra.",
-    "deleteAnother": "Ištrinti kitą paskyrą",
     "maintenance": {
       "heading": "Techninės priežiūros režimas",
       "statusOff": "Svetainė veikia",
@@ -1444,6 +1432,27 @@
       "wrongPassword": "Slaptažodis neteisingas.",
       "rateLimited": "Per daug bandymų. Palaukite kelias minutes.",
       "failed": "Nepavyko. Bandykite dar kartą."
+    },
+    "users": {
+      "heading": "Vartotojai",
+      "searchPlaceholder": "Ieškoti pagal vardą ar el. paštą",
+      "search": "Ieškoti",
+      "clear": "Išvalyti",
+      "empty": "Pagal šią paiešką paskyrų nerasta.",
+      "noPlan": "Be plano",
+      "adminBadge": "Administratorius",
+      "verified": "Patvirtintas",
+      "unverified": "Nepatvirtintas",
+      "joined": "Užsiregistravo {date}",
+      "depositCount": "{count, plural, one {# depozitas} few {# depozitai} other {# depozitų}}",
+      "erase": "Ištrinti",
+      "erasing": "Trinama…",
+      "eraseConfirm": "Bus ištrinti {name} asmens duomenys ir atjungti visi įrenginiai. Depozitų įrašai išliks, bet be vardo. Šio veiksmo atšaukti negalima.",
+      "eraseYes": "Taip, ištrinti",
+      "eraseNo": "Atšaukti",
+      "eraseFailed": "Nepavyko. Bandykite dar kartą.",
+      "truncated": "Rodoma {shown} iš {total}. Patikslinkite paiešką, kad sąrašas susiaurėtų.",
+      "erasedNote": "{count, plural, one {# ištrinta paskyra nerodoma} few {# ištrintos paskyros nerodomos} other {# ištrintų paskyrų nerodoma}}."
     }
   }
 }

@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
 import { UUID } from "@/shared/validation";
 import { currentAdmin } from "@/modules/admin/model/currentAdmin";
-import { findUserByEmail } from "@/modules/admin/model/findUser";
 import { deleteAccount } from "@/modules/auth/model/deleteAccount";
 
-
 /**
- * Admin actions on a user account: look one up, and erase it.
+ * Admin actions on a user account. Erasure only, for now.
  *
- * Erasure here exists so a GDPR request that arrives by email can be honoured
- * without a database console. The client-facing route does the same thing;
- * this is the same operation performed on someone's behalf, and the audit log
- * records which of the two it was.
+ * It exists so a GDPR request arriving by email can be honoured without a
+ * database console. The client-facing route performs the same operation;
+ * `audit_log.detail.selfService` records which of the two it was.
+ *
+ * A `lookup` action lived here to serve the old find-by-email panel. That
+ * panel became the Users table, which searches server-side through
+ * `listUsers`, so the action was left with no caller and was removed —
+ * an unused authenticated endpoint is surface with no upside.
  */
 export async function POST(request: Request) {
   const admin = await currentAdmin();
@@ -20,14 +22,6 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   const action = body?.action;
-
-  if (action === "lookup") {
-    const email = typeof body?.email === "string" ? body.email : "";
-    const user = await findUserByEmail(email);
-    // 200 with user: null, not 404 — "no account with that address" is a
-    // successful answer to a search, not a failed request.
-    return NextResponse.json({ ok: true, user });
-  }
 
   if (action === "delete") {
     const userId = typeof body?.userId === "string" ? body.userId : "";

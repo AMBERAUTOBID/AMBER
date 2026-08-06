@@ -1418,18 +1418,6 @@
     "refundConfirm": "This refunds the deposit and removes {name}'s plan immediately. They'll be emailed about it. Transferring the money back is a separate, manual step.",
     "refundYes": "Yes, refund it",
     "refundNo": "Cancel",
-    "deleteUser": "Delete account",
-    "deleting": "Deleting…",
-    "deleteConfirm": "This erases {name}'s personal details and signs them out everywhere. Their deposit records are kept, without a name attached. This cannot be undone.",
-    "deleteYes": "Yes, delete",
-    "deleteNo": "Cancel",
-    "deleted": "Account deleted.",
-    "deleteUserHeading": "Erase an account",
-    "deleteUserHint": "For GDPR erasure requests. Find the account by email address, check it's the right person, then erase it.",
-    "deleteUserEmail": "Client email address",
-    "deleteUserFind": "Find account",
-    "deleteUserNotFound": "No account with that email address.",
-    "deleteAnother": "Erase another account",
     "maintenance": {
       "heading": "Maintenance mode",
       "statusOff": "The site is live",
@@ -1444,6 +1432,27 @@
       "wrongPassword": "That password isn't right.",
       "rateLimited": "Too many attempts. Wait a few minutes.",
       "failed": "That didn't work. Please try again."
+    },
+    "users": {
+      "heading": "Users",
+      "searchPlaceholder": "Search by name or email",
+      "search": "Search",
+      "clear": "Clear",
+      "empty": "No accounts match that search.",
+      "noPlan": "No plan",
+      "adminBadge": "Admin",
+      "verified": "Verified",
+      "unverified": "Not verified",
+      "joined": "Joined {date}",
+      "depositCount": "{count, plural, one {# deposit} other {# deposits}}",
+      "erase": "Erase",
+      "erasing": "Erasing…",
+      "eraseConfirm": "This erases {name}'s personal details and signs them out everywhere. Their deposit records are kept, without a name attached. This cannot be undone.",
+      "eraseYes": "Yes, erase",
+      "eraseNo": "Cancel",
+      "eraseFailed": "That didn't work. Please try again.",
+      "truncated": "Showing {shown} of {total}. Search to narrow the list.",
+      "erasedNote": "{count, plural, one {# erased account is not shown} other {# erased accounts are not shown}}."
     }
   }
 }
