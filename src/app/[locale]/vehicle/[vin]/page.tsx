@@ -13,8 +13,8 @@ import SaveLotButton from "@/modules/favorites/components/SaveLotButton";
 import { currentUser } from "@/modules/auth/model/currentUser";
 import { savedLotKeys, lotKey } from "@/modules/favorites/model/favorites";
 import {
-  getVehicleDetail,
-  getRelatedVehicles,
+  getAuctionSource,
+  type VehicleDetailResponse,
   computeSoldPriceStats,
   extractIaaiValuation,
   extractLotDeepSpecs,
@@ -94,7 +94,7 @@ export async function generateMetadata({
   // link (each view costs a real Apibara API call).
   const robots = { index: false, follow: false };
   try {
-    const { data } = await getVehicleDetail(vin);
+    const { data } = await getAuctionSource().getVehicleDetail(vin);
     return { title: `${data.title} — SmartAutoBid`, robots };
   } catch {
     return { title: "Vehicle — SmartAutoBid", robots };
@@ -110,16 +110,18 @@ export default async function VehicleDetailPage({
   setRequestLocale(locale);
   const t = await getTranslations("VehicleDetail");
 
-  let detail: Awaited<ReturnType<typeof getVehicleDetail>>["data"] | null = null;
+  const source = getAuctionSource();
+
+  let detail: VehicleDetailResponse["data"] | null = null;
   try {
-    const res = await getVehicleDetail(vin);
+    const res = await source.getVehicleDetail(vin);
     detail = res.data;
   } catch {
     notFound();
   }
   if (!detail) notFound();
 
-  const related = await getRelatedVehicles(vin).catch(() => null);
+  const related = await source.getRelatedVehicles(vin).catch(() => null);
   const soldStats = related ? computeSoldPriceStats(related.data.past) : null;
   const valuation = extractIaaiValuation(detail);
   const deepSpecs = extractLotDeepSpecs(detail);

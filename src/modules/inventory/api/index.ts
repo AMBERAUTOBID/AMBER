@@ -11,3 +11,6 @@
 export * from "./types";
 export * from "./client";
 export * from "./lotFields";
+// The seam that lets search move to our own database later without touching
+// call sites. Prefer `getAuctionSource()` over importing from ./client directly.
+export * from "./source";

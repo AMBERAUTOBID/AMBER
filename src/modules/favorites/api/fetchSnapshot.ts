@@ -1,4 +1,4 @@
-import { getVehicleDetail } from "@/modules/inventory/api";
+import { getAuctionSource } from "@/modules/inventory/api";
 import { snapshotFromLot, type FavoriteSnapshot } from "../model/snapshot";
 
 /**
@@ -18,7 +18,7 @@ import { snapshotFromLot, type FavoriteSnapshot } from "../model/snapshot";
  */
 export async function fetchLotSnapshot(lotRef: string): Promise<FavoriteSnapshot | null> {
   try {
-    const detail = await getVehicleDetail(lotRef);
+    const detail = await getAuctionSource().getVehicleDetail(lotRef);
     if (!detail?.ok || !detail.data) return null;
     return snapshotFromLot(detail.data);
   } catch (e) {

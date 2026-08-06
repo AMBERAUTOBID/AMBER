@@ -6,7 +6,11 @@ import Button from "@/shared/ui/Button";
 import SearchWidget from "@/modules/inventory/components/SearchWidget";
 import LotCard from "@/modules/inventory/components/LotCard";
 import { Link } from "@/i18n/navigation";
-import { searchVehicles, searchVehiclesAcrossTypes, type AuctionPlatform } from "@/modules/inventory/api";
+import {
+  getAuctionSource,
+  type AuctionPlatform,
+  type VehicleSearchResponse,
+} from "@/modules/inventory/api";
 import { parseFreeTextQuery, CATEGORY_TYPE_GROUPS } from "@/modules/inventory/model/searchQuery";
 import { currentUser } from "@/modules/auth/model/currentUser";
 import { savedLotKeys, lotKey } from "@/modules/favorites/model/favorites";
@@ -112,12 +116,13 @@ export default async function SearchPage({
   const fanOutTypes =
     !effectiveModel && !effectiveType && category ? CATEGORY_TYPE_GROUPS[category] : undefined;
 
-  let results: Awaited<ReturnType<typeof searchVehicles>> | null = null;
+  let results: VehicleSearchResponse | null = null;
   let error: string | null = null;
   try {
+    const source = getAuctionSource();
     results = fanOutTypes
-      ? await searchVehiclesAcrossTypes(baseSearchParams, fanOutTypes)
-      : await searchVehicles(baseSearchParams);
+      ? await source.searchVehiclesAcrossTypes(baseSearchParams, fanOutTypes)
+      : await source.searchVehicles(baseSearchParams);
   } catch (e) {
     error = e instanceof Error ? e.message : "Unknown error";
   }
