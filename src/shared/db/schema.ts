@@ -19,6 +19,7 @@
  */
 import { sql, type SQL } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -320,5 +321,254 @@ export const actionTokens = pgTable(
   (t) => [
     uniqueIndex("action_tokens_hash_idx").on(t.tokenHash),
     index("action_tokens_user_idx").on(t.userId),
+  ]
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Our own mirror of the auction catalogue.
+//
+// WHY THESE EXIST: every lot the site shows is currently fetched from a
+// third-party aggregator once per page view, which makes their uptime our
+// uptime — on 2026-08-06 Apibara returned HTTP 500 for 75+ minutes and /search
+// had nothing to render. It is also slow: a make-only category browse measured
+// 12-28s of server time because one browse fans out into several upstream
+// calls. Owning the rows fixes both, and unlocks what no aggregator search API
+// gives us: a result count, facet counts, real full-text, and archived browsing.
+//
+// These tables are ADDITIVE and nothing else references them. The site keeps
+// running entirely on the live API until `SEARCH_SOURCE` says otherwise, so a
+// half-finished mirror cannot affect a visitor.
+//
+// TWO RULES LEARNED FROM MEASURING THE VENDOR, both of which cost money if
+// ignored:
+//
+// 1. NEVER ASSUME A CURRENCY. A Canadian IAAI lot came back stamped
+//    `currency: {char_code: "BRL"}` — Brazilian Real. Amounts are therefore
+//    stored next to the currency the vendor claimed, and a cost estimate must
+//    refuse to run rather than guess. The precedent is the post that once
+//    advertised a 2022 BMW landed in Klaipėda for €1,656, which came from
+//    treating a null bid as $0.
+// 2. NEVER ASSUME A UNIT. There is no unit field on `odometer`, and the
+//    catalogue spans US, Canadian and Finnish branches. A 2006 F-350 showing
+//    484,007 is plausible as km and absurd as miles, so the number is stored
+//    verbatim with the unit recorded separately as an explicit inference.
+//
+// Vendor strings are stored close to verbatim (whitespace trimmed only — their
+// vehicle type is literally `"TRUCK "` with a trailing space). Derived and
+// normalised values sit in their OWN columns so a bad normalisation can be
+// recomputed from stored data instead of re-fetching. `raw_json` is
+// deliberately NOT kept for every lot: at ~141k active lots that is gigabytes
+// against a 0.5 GB free tier, and a full re-sweep costs ~2,850 requests.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * One row per lot currently listed at a source auction.
+ *
+ * Keyed on `(platform, lotNumber)` rather than VIN: lot numbers are always
+ * present and unique per platform, while salvage rows sometimes arrive with no
+ * VIN at all — the same reasoning as `favorites`.
+ *
+ * DISAPPEARANCE IS NORMAL, NOT AN ERROR. The vendor exposes no "updated since"
+ * filter (`updated_at_from` is silently ignored; only `created_at_from` works),
+ * so freshness comes from periodic full sweeps. `lastSeenAt` is what makes that
+ * safe: every sweep stamps the rows it saw, and anything not stamped has left
+ * the active set — sold, withdrawn or relisted. Rows are kept and marked, never
+ * deleted, because a client who saved a lot must still be able to open it.
+ */
+export const auctionLots = pgTable(
+  "auction_lots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+
+    // ── identity ────────────────────────────────────────────────────────────
+    /** Normalised to the auction house. Derived from `auctionName`, which is
+     * NOT a two-value field — `"IAAI CANADA"` is a real observed value. */
+    platform: text("platform", { enum: ["copart", "iaai"] }).notNull(),
+    /** The vendor's own string, kept because it carries the region that
+     * `platform` throws away, and region decides export eligibility. */
+    auctionName: text("auction_name").notNull(),
+    /** Arrives as a JSON number; stored as text so it can never be reformatted
+     * by numeric handling and stop matching the auction's own reference. */
+    lotNumber: text("lot_number").notNull(),
+    vin: text("vin"),
+    /** The vendor's primary key. Exceeds int4, hence bigint. */
+    vendorLotId: bigint("vendor_lot_id", { mode: "number" }),
+
+    // ── classification: every signal, because the usable one isn't known yet ─
+    // The vendor has TWO type taxonomies and neither is trustworthy alone. The
+    // top-level field yields values like "Light Truck"; `car_info` yields a
+    // 9-value uppercase set whose API filter matched only 9.3% of the
+    // catalogue. Storing all of them makes choosing between them a query-time
+    // decision instead of a re-sweep. `COUNT(*) … GROUP BY` over these columns
+    // answers "which one is actually populated?" for free once ingested.
+    vehicleType: text("vehicle_type"),
+    bodyStyle: text("body_style"),
+    carInfoVehicleType: text("car_info_vehicle_type"),
+    carInfoBodyClass: text("car_info_body_class"),
+    vehicleTypeId: integer("vehicle_type_id"),
+    bodyClassId: integer("body_class_id"),
+
+    // ── what it is ──────────────────────────────────────────────────────────
+    year: integer("year"),
+    make: text("make"),
+    model: text("model"),
+    series: text("series"),
+    /** The vendor's canonical taxonomy ids, so make/model filters can key on
+     * something stable rather than on a display string. */
+    makeId: integer("make_id"),
+    modelId: integer("model_id"),
+    seriesId: integer("series_id"),
+
+    // ── specs, one column per filter in the target filter panel ─────────────
+    color: text("color"),
+    /** Text, not an integer: the vendor sends `"8 Cyl"`. A numeric column is
+     * derivable from this later without going back to the API. */
+    cylinders: text("cylinders"),
+    engineType: text("engine_type"),
+    fuel: text("fuel"),
+    transmission: text("transmission"),
+    drive: text("drive"),
+    /** Verbatim, unit-free — see rule 2 above. */
+    odometer: integer("odometer"),
+    /** `mi` or `km`, INFERRED from the auction region, never sent by the
+     * vendor. Null means "not established" and must not be rendered as either. */
+    odometerUnit: text("odometer_unit", { enum: ["mi", "km"] }),
+    /** "Actual" / "Not Actual" / "Exempt" — the one filter with no obvious
+     * source field; nullable until a source is confirmed. */
+    odometerBrand: text("odometer_brand"),
+
+    // ── condition and paperwork ─────────────────────────────────────────────
+    primaryDamage: text("primary_damage"),
+    secondaryDamage: text("secondary_damage"),
+    /** Carries a jurisdiction suffix as sent — `"Repairable (AB)"`. Normalise
+     * for display, but keep this so the normalisation stays fixable. */
+    docType: text("doc_type"),
+    /** The vendor sends the string `"no"`, so the boolean is our reading of it
+     * and null genuinely means unknown rather than "no keys". */
+    hasKeys: boolean("has_keys"),
+    /** Run and Drive / Starts / Stationary — drives the Lot Condition filter. */
+    highlights: text("highlights"),
+
+    // ── who is selling, and from where ──────────────────────────────────────
+    /** Often null in practice; seller *type* comes from `isInsurance`. */
+    sellerName: text("seller_name"),
+    isInsurance: boolean("is_insurance"),
+    locationRaw: text("location_raw"),
+
+    // ── money: minor units, and NEVER without its currency ──────────────────
+    currentBidCents: integer("current_bid_cents"),
+    buyNowCents: integer("buy_now_cents"),
+    estRetailCents: integer("est_retail_cents"),
+    /** ISO code as the vendor claimed it. Read this before doing arithmetic:
+     * it has been observed disagreeing with the lot's own country. */
+    currencyCode: text("currency_code"),
+    currencyCodeId: integer("currency_code_id"),
+
+    // ── timing ──────────────────────────────────────────────────────────────
+    /** Parsed from `active_bidding[0].sale_date`, which is epoch milliseconds
+     * inside a string. */
+    saleDate: timestamp("sale_date", { withTimezone: true }),
+    /** The vendor's `created_at` arrives with NO timezone
+     * (`"2026-05-01 05:47:49"`); the ingest worker records the assumption it
+     * made, and this column is not authoritative for anything user-facing. */
+    vendorCreatedAt: timestamp("vendor_created_at", { withTimezone: true }),
+
+    // ── our own bookkeeping ─────────────────────────────────────────────────
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Stamped by every sweep that saw this lot. Stale = gone from the active
+     * set; see the note on disappearance above. */
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // Makes a sweep's write idempotent: re-ingesting the same lot updates one
+    // row instead of accumulating duplicates.
+    uniqueIndex("auction_lots_platform_lot_idx").on(t.platform, t.lotNumber),
+    index("auction_lots_vin_idx").on(t.vin),
+    // The common browse: a make, optionally a model, newest sale first.
+    index("auction_lots_make_model_idx").on(t.make, t.model, t.year),
+    index("auction_lots_sale_date_idx").on(t.saleDate),
+    // Finding what a sweep did NOT stamp.
+    index("auction_lots_last_seen_idx").on(t.lastSeenAt),
+    // Full-text search (tsvector + GIN) and per-filter facet indexes come with
+    // the query layer, once local profiling shows which columns are populated
+    // enough to be worth indexing.
+  ]
+);
+
+/**
+ * Lot photography, one row per image.
+ *
+ * The vendor passes through URLs on the auction's own CDN rather than
+ * re-hosting (`vis.iaai.com/resizer?imageKeys=…`), which means every photo on
+ * our site would break the day Copart or IAAI add a referer check. `imageKey`
+ * is extracted so images can be served through our own proxy route at whatever
+ * size we ask for; `sourceUrl` is kept because Copart's URL shape differs and
+ * the key is not always recoverable.
+ */
+export const auctionLotImages = pgTable(
+  "auction_lot_images",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    lotId: uuid("lot_id")
+      .notNull()
+      .references(() => auctionLots.id, { onDelete: "cascade" }),
+    /** Damage shots arrive in their own array and are worth distinguishing:
+     * a card should lead with the general photo, not a close-up of a dent. */
+    kind: text("kind", { enum: ["photo", "damage"] }).notNull(),
+    position: integer("position").notNull(),
+    sourceUrl: text("source_url").notNull(),
+    /** The `imageKeys` value, when the URL exposes one. Null = proxy the URL. */
+    imageKey: text("image_key"),
+  },
+  (t) => [uniqueIndex("auction_lot_images_lot_kind_pos_idx").on(t.lotId, t.kind, t.position)]
+);
+
+/**
+ * Append-only record of what lots actually sold for.
+ *
+ * THE ONE ASSET THAT CANNOT BE BOUGHT BACK LATER, which is why it exists before
+ * there is anything to put in it: `sales_history` came back as an empty array on
+ * every lot sampled, so ingest writes opportunistically and this table may stay
+ * empty for a while. Starting late means permanently missing that window.
+ *
+ * Deliberately NOT foreign-keyed to `auctionLots`. A sale outlives the listing,
+ * and cascading a sold lot's removal would delete the very history we are trying
+ * to accumulate. Identity is the VIN plus the platform's lot number.
+ *
+ * Fixes the comparables problem too: the previous source matched only on
+ * make/model, so a 2010 base model and a 2020 top trim received the identical
+ * twelve sales spanning a decade — mixing a burnt shell at $150 with a clean
+ * car at $17,000, and an average over that is a confident number that means
+ * nothing. Owning the rows means filtering by year and trim before quoting.
+ */
+export const auctionSalesHistory = pgTable(
+  "auction_sales_history",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    platform: text("platform", { enum: ["copart", "iaai"] }).notNull(),
+    lotNumber: text("lot_number").notNull(),
+    vin: text("vin"),
+    year: integer("year"),
+    make: text("make"),
+    model: text("model"),
+    /** Null means "no sale recorded", NEVER zero — roughly a third of the old
+     * source's entries were a literal 0 meaning exactly that, and averaging
+     * them in dragged every estimate down. */
+    soldPriceCents: integer("sold_price_cents"),
+    currencyCode: text("currency_code"),
+    soldAt: timestamp("sold_at", { withTimezone: true }),
+    /** The auction's own words for the outcome, e.g. sold vs on-approval. */
+    saleStatus: text("sale_status"),
+    /** Small volume and irregularly shaped, so unlike `auctionLots` the source
+     * entry is worth keeping whole — it is the record of what we were told. */
+    raw: jsonb("raw"),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // Same sale re-observed on a later sweep must not create a second row.
+    uniqueIndex("auction_sales_platform_lot_idx").on(t.platform, t.lotNumber, t.soldAt),
+    index("auction_sales_vin_idx").on(t.vin),
+    index("auction_sales_make_model_year_idx").on(t.make, t.model, t.year),
   ]
 );
