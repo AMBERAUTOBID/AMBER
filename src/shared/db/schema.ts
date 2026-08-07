@@ -21,6 +21,7 @@ import { sql, type SQL } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -31,6 +32,19 @@ import {
   uuid,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
+
+/**
+ * Postgres full-text type. Drizzle has no built-in `tsvector`, and the
+ * alternative — an expression index that schema.ts knows nothing about — would
+ * be invisible to `drizzle-kit generate` and liable to be dropped by a later
+ * migration. Declaring the type keeps the index under the same management as
+ * every other one.
+ */
+const tsvector = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return "tsvector";
+  },
+});
 
 /** lower() for the functional unique index on users.email. */
 function sqlLower(col: AnyPgColumn): SQL {
@@ -528,6 +542,45 @@ export const auctionLots = pgTable(
     primaryDamageClass: text("primary_damage_class"),
     secondaryDamageClass: text("secondary_damage_class"),
 
+    /**
+     * Everything a person might type, as one searchable document.
+     *
+     * MEASURED BEFORE BUILDING THIS: the old free-text box matched only an exact
+     * VIN, an exact lot number, or a single make/model substring. So `ford`
+     * returned 14,660 lots while **`ford f150` returned zero**, as did
+     * `toyota camry`, `bmw x5` and `honda civic 2018`. Every natural multi-word
+     * query — which is how people actually search — found nothing at all.
+     *
+     * GENERATED ALWAYS, not maintained by the sweep. The mapper cannot forget to
+     * set it, a renormalise cannot leave it stale, and rows written by any future
+     * tool are indexed on arrival. That costs the expression being immutable,
+     * which is why the text-search config is named explicitly: bare
+     * `to_tsvector(x)` depends on a session setting and Postgres rejects it here.
+     *
+     * `simple` rather than `english`: stemming helps prose and hurts model names
+     * — an English stemmer would happily conflate distinct trims.
+     *
+     * THE PUNCTUATION COPY IS THE POINT OF THE LAST TWO LINES. `F-150` tokenises
+     * as {f-150, f, 150} and `f150` as {f150}, so neither query finds the other —
+     * and both spellings are real in this catalogue (1,323 lots vs 1,090).
+     * Appending a punctuation-stripped copy of model and series puts `f150` in
+     * the document too, so either spelling matches either listing.
+     */
+    searchTsv: tsvector("search_tsv").generatedAlwaysAs(
+      sql`to_tsvector('simple',
+        coalesce("make", '') || ' ' ||
+        coalesce("model", '') || ' ' ||
+        coalesce("series", '') || ' ' ||
+        coalesce("year"::text, '') || ' ' ||
+        coalesce("body_style", '') || ' ' ||
+        coalesce("color", '') || ' ' ||
+        coalesce("vin", '') || ' ' ||
+        coalesce("lot_number", '') || ' ' ||
+        regexp_replace(coalesce("model", ''), '[^a-zA-Z0-9]', '', 'g') || ' ' ||
+        regexp_replace(coalesce("series", ''), '[^a-zA-Z0-9]', '', 'g')
+      )`
+    ),
+
     // ── our own bookkeeping ─────────────────────────────────────────────────
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
     /** Stamped by every sweep that saw this lot. Stale = gone from the active
@@ -553,6 +606,10 @@ export const auctionLots = pgTable(
     // refinement applied after primary has already narrowed the set, so it does
     // not earn its own index.
     index("auction_lots_damage_idx").on(t.primaryDamageClass),
+    // GIN is the right structure for a tsvector: one entry per lexeme pointing at
+    // every row containing it, which is what makes "2015 ford f150" an index
+    // intersection rather than a scan of 134,647 rows.
+    index("auction_lots_search_tsv_idx").using("gin", t.searchTsv),
     // "Buy Now only" is a headline toggle, and ~49,400 of ~147,000 lots qualify.
     // Partial index: the rows without a price are exactly the ones it must never
     // scan, and excluding them keeps it a fraction of the size.

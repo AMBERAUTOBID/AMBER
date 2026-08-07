@@ -197,10 +197,27 @@ function buildWhere(
   // rows, so it narrows ~150k to ~49k without a full scan.
   if (params.lot_status === "Buy Now") conditions.push(isNotNull(t.buyNowCents));
 
-  // `s` is the free-text box. Identifiers resolve exactly; anything else falls
-  // back to make/model matching. Real full-text (tsvector + pg_trgm, so "2015
-  // f150 xlt" and a misspelled "mercedez" both work) is the next step and is the
-  // reason the raw columns exist to index.
+  // `s` is the free-text box.
+  //
+  // WHAT THIS REPLACED, measured against the full mirror: the old clause was
+  // `vin = term OR lot_number = term OR make ILIKE %term% OR model ILIKE %term%`,
+  // which meant a single word worked and a phrase did not. `ford` returned
+  // 14,660 lots; `ford f150`, `toyota camry`, `bmw x5` and `honda civic 2018`
+  // each returned ZERO, because no single column contains both words.
+  //
+  // `plainto_tsquery` ANDs the terms, so "2015 ford f150" is year AND make AND
+  // model — narrowing, which is what a second word is for.
+  //
+  // THE QUERY IS PUNCTUATION-STRIPPED to match the stripped copy carried in
+  // `search_tsv`. Both spellings of the same truck are real here — 1,323 lots
+  // say `F-150` and 1,090 say `f150` — and they tokenise to disjoint sets, so
+  // without this a visitor finds one group or the other depending on where they
+  // put a hyphen. Spaces are preserved; only within-word punctuation goes, or
+  // "F-150" would split into two useless tokens.
+  //
+  // Exact VIN and lot number stay as their own alternatives: they are what a
+  // client pastes from an email, and equality on an indexed column beats making
+  // them compete for relevance with 134,647 other documents.
   if (params.s) {
     const term = params.s.trim();
     if (term.length > 0) {
@@ -208,8 +225,7 @@ function buildWhere(
         or(
           eq(t.vin, term.toUpperCase()),
           eq(t.lotNumber, term),
-          ilike(t.make, `%${term}%`),
-          ilike(t.model, `%${term}%`)
+          sql`${t.searchTsv} @@ plainto_tsquery('simple', regexp_replace(${term}, '[^a-zA-Z0-9 ]', '', 'g'))`
         )!
       );
     }

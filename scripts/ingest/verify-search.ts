@@ -107,6 +107,37 @@ async function main() {
     );
   }
 
+  // ── the free-text box ────────────────────────────────────────────────────
+  //
+  // Every one of these phrases returned ZERO before full-text search, because
+  // the old clause could only match a single word against one column. They are
+  // the ordinary way people search, so they are the bar.
+  console.log("\nfree-text search");
+  const phrase = async (q: string) => (await source.searchVehicles({ s: q, per_page: 1 })).meta.total ?? 0;
+
+  const fordF150 = await phrase("ford f150");
+  const yearMakeModel = await phrase("2015 ford f150");
+  const camry = await phrase("toyota camry");
+  const bmwX5 = await phrase("bmw x5");
+  check("two words narrow instead of failing: 'ford f150'", fordF150 > 0, `${fordF150} lots`);
+  check("three words narrow further: '2015 ford f150'", yearMakeModel > 0 && yearMakeModel < fordF150, `${yearMakeModel} lots`);
+  check("'toyota camry'", camry > 0, `${camry} lots`);
+  check("'bmw x5'", bmwX5 > 0, `${bmwX5} lots`);
+
+  // The catalogue spells the same truck both ways — 1,323 lots say F-150 and
+  // 1,090 say f150 — and they tokenise to disjoint sets. A visitor must not get
+  // a different answer depending on where they put a hyphen.
+  const hyphen = await phrase("F-150");
+  const noHyphen = await phrase("f150");
+  check("a hyphen does not change the answer", hyphen === noHyphen, `F-150=${hyphen} f150=${noHyphen}`);
+
+  // An identifier pasted from an email must still resolve exactly.
+  const [sampleLot] = base.data;
+  if (sampleLot?.vin) {
+    const byVin = await source.searchVehicles({ s: sampleLot.vin, per_page: 5 });
+    check("an exact VIN still resolves", (byVin.meta.total ?? 0) >= 1, `${sampleLot.vin} → ${byVin.meta.total}`);
+  }
+
   // ── card fields the UI reads ─────────────────────────────────────────────
   console.log("\ncard fields LotCard reads");
   const withTitle = base.data.filter((v) => v.title && v.title.length > 3).length;
