@@ -24,7 +24,7 @@ import { and, asc, count, eq, gte, ilike, inArray, isNotNull, lte, or, sql } fro
 import { db, schema } from "@/shared/db/client";
 import { apibaraSource } from "./apibaraSource";
 import type { AuctionSource } from "./source";
-import type { VehicleSearchParams, VehicleSearchResponse } from "./types";
+import type { VehicleDetailResponse, VehicleSearchParams, VehicleSearchResponse } from "./types";
 import { mirrorRowToVehicleListItem, type MirrorImageRow } from "../model/mirrorLot";
 
 const DEFAULT_PER_PAGE = 20;
@@ -221,12 +221,74 @@ async function runSearch(
   };
 }
 
+/**
+ * Detail from upstream, falling back to the mirror only when upstream fails.
+ *
+ * Upstream is tried FIRST and always: it holds the live bid and the export /
+ * re-registration flags, and apicars.auction supplies neither — verified against
+ * their OpenAPI spec and a full payload dump. Measured further: those flags are
+ * NOT derivable from the document string we do hold, because one document type
+ * yields different flags on different lots.
+ *
+ * The fallback exists because of what started this project. On 2026-08-06 the
+ * aggregator returned HTTP 500 for over 75 minutes; search now survives that, and
+ * without this a lot page still would not. Serving a mirrored row keeps the page
+ * useful — make, model, damage, photos, paperwork wording — and stamps
+ * `mirror_as_of` so the page states its age rather than passing a stale bid off as
+ * current. A wrong bid is worse than an admitted gap.
+ *
+ * Note what the fallback CANNOT restore: export/registration, odometer brand,
+ * country of origin, the IAAI deep specs and valuation. Those rows simply do not
+ * render. That is the honest degradation, not a silent substitution.
+ */
+async function getVehicleDetailWithFallback(vinOrLot: string): Promise<VehicleDetailResponse> {
+  try {
+    return await apibaraSource.getVehicleDetail(vinOrLot);
+  } catch (upstreamError) {
+    const t = schema.auctionLots;
+    const term = vinOrLot.trim();
+    const [row] = await db()
+      .select()
+      .from(t)
+      // Resolves either identifier, matching upstream's behaviour: salvage rows
+      // sometimes arrive with no VIN, so the lot number has to work too.
+      .where(or(eq(t.vin, term.toUpperCase()), eq(t.lotNumber, term)))
+      .limit(1);
+
+    if (!row) throw upstreamError;
+
+    const images = await db()
+      .select({
+        sourceUrl: schema.auctionLotImages.sourceUrl,
+        kind: schema.auctionLotImages.kind,
+        position: schema.auctionLotImages.position,
+      })
+      .from(schema.auctionLotImages)
+      .where(eq(schema.auctionLotImages.lotId, row.id));
+
+    console.warn(
+      `[inventory] serving ${term} from the mirror; upstream failed: ` +
+        (upstreamError instanceof Error ? upstreamError.message : String(upstreamError))
+    );
+
+    return {
+      ok: true,
+      data: {
+        ...mirrorRowToVehicleListItem(row, images),
+        mirror_as_of: row.lastSeenAt.toISOString(),
+      },
+    };
+  }
+}
+
 export const postgresSource: AuctionSource = {
   name: "postgres",
   searchVehicles,
   searchVehiclesAcrossTypes,
-  // See the header: detail must stay live, and only upstream knows whether the
-  // paperwork allows export and re-registration.
-  getVehicleDetail: apibaraSource.getVehicleDetail,
+  getVehicleDetail: getVehicleDetailWithFallback,
+  // No mirrored equivalent worth substituting: comparable sales in our own table
+  // are overwhelmingly failed bids (2,423 of 2,440 read "Not sold"), so a
+  // fallback here would compute a price band from almost nothing. Better to show
+  // no comparables than a confident wrong range.
   getRelatedVehicles: apibaraSource.getRelatedVehicles,
 };

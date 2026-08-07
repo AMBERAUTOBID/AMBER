@@ -175,6 +175,32 @@ export default async function VehicleDetailPage({
 
   return (
     <>
+      {/* Only rendered when this lot came from our own copy because the upstream
+          aggregator was unreachable. `mirror_as_of` is absent on every normal
+          response, so this cannot appear while upstream is healthy — but when it
+          does, the visitor is told the age of what they are looking at rather than
+          shown a stale bid as if it were current. */}
+      {detail.mirror_as_of && (
+        <div className="border-b border-amber-300 bg-amber-50">
+          <Container>
+            <div className="flex items-start gap-3 py-4">
+              <Info size={20} weight="duotone" className="mt-0.5 shrink-0 text-amber-600" />
+              <div className="text-sm">
+                <p className="font-bold text-char-900">{t("staleMirror.title")}</p>
+                <p className="mt-1 leading-relaxed text-char-700">
+                  {t("staleMirror.note", {
+                    date: new Date(detail.mirror_as_of).toLocaleString(locale, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }),
+                  })}
+                </p>
+              </div>
+            </div>
+          </Container>
+        </div>
+      )}
+
       <section className="border-b border-char-100 bg-gradient-to-b from-amber-50/50 to-background py-8 sm:py-10">
         <Container>
           <Reveal className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wider text-char-400">

@@ -391,6 +391,10 @@
       "ctaGeneric": "Talk to us about finding a car"
     },
     "disclaimerArchived": "An archived record of a sale that has already taken place, sourced via a third-party auction data aggregator. Prices shown are historical and are useful as a guide to what comparable cars fetch.",
+    "staleMirror": {
+      "title": "Live auction data is temporarily unavailable",
+      "note": "Our data provider is not responding, so this page shows our own saved copy from {date}. The current bid, the auction time and the paperwork details may have changed since then. Please check with us before placing a bid."
+    },
     "archived": {
       "soldBadge": "Sold",
       "endedBadge": "Auction ended",

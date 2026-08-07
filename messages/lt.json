@@ -391,6 +391,10 @@
       "ctaGeneric": "Pasikalbėkime apie automobilio paiešką"
     },
     "disclaimerArchived": "Archyvinis įrašas apie jau įvykusį pardavimą, gautas per trečiosios šalies aukcionų duomenų agregatorių. Nurodytos kainos yra istorinės ir naudingos kaip orientyras, už kiek parduodami panašūs automobiliai.",
+    "staleMirror": {
+      "title": "Tiesioginiai aukciono duomenys laikinai neprieinami",
+      "note": "Mūsų duomenų teikėjas neatsako, todėl šiame puslapyje rodoma mūsų išsaugota kopija nuo {date}. Dabartinis siūlymas, aukciono laikas ir dokumentų informacija nuo tada galėjo pasikeisti. Prieš siūlydami, pasitikslinkite su mumis."
+    },
     "archived": {
       "soldBadge": "Parduota",
       "endedBadge": "Aukcionas baigtas",

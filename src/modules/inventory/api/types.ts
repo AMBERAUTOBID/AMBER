@@ -171,7 +171,20 @@ export interface VehicleSearchResponse {
 
 export interface VehicleDetailResponse {
   ok: boolean;
-  data: VehicleListItem & { slug_vin?: string };
+  data: VehicleListItem & {
+    slug_vin?: string;
+    /**
+     * Set ONLY when this lot was served from our own mirror because the upstream
+     * aggregator was unreachable. Carries the moment the row was last confirmed
+     * live, so the page can say "as of ..." instead of presenting stale data as
+     * current.
+     *
+     * Absent on every normal response, which is what makes it safe: the banner
+     * cannot appear while upstream is healthy. A visitor must never be shown a
+     * bid or an auction time from a stale row without being told.
+     */
+    mirror_as_of?: string;
+  };
 }
 
 /**
