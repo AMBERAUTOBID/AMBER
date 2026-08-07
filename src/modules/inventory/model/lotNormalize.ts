@@ -141,9 +141,14 @@ export function normalizeTitle(raw: string | null | undefined): TitleClass | nul
   if (!s) return null;
 
   // Most restrictive first: a car that may never be road-registered.
-  if (s.includes("NON REPAIRABLE") || s.includes("NON-REPAIRABLE") || s.includes("NONREPAIRABLE")) {
-    return "non_repairable";
-  }
+  //
+  // One regex rather than a list of spellings, because listing them missed a real
+  // one. "AZ - CERT OF TITLE- NON REPAIR" (no -ABLE) fell through every variant
+  // and then matched "CERT OF TITLE", so a NON-REPAIRABLE car was classified as a
+  // CLEAN title — the single worst mistake this function can make. Apibara
+  // independently reports registration=false for that exact lot.
+  // Covers NONREPAIR, NON REPAIR, NON-REPAIR and their -ABLE forms.
+  if (/NON[\s-]?REPAIR/.test(s)) return "non_repairable";
   if (s.includes("DESTRUCTION") || s.includes("JUNK") || s.includes("SCRAP") || s.includes("PARTS ONLY")) {
     return "non_repairable";
   }
@@ -158,7 +163,9 @@ export function normalizeTitle(raw: string | null | undefined): TitleClass | nul
   if (s.includes("REBUILDABLE") || s.includes("REBUILT") || s.includes("RESTORABLE")) {
     return "rebuildable";
   }
-  if (s.includes("SALVAGE") || s.includes("SLVG")) return "salvage";
+  // SALV covers the abbreviation seen in real values such as
+  // "CA - DIS/DLR/EXP LIEN PAPERS-SALV", which previously fell through to "other".
+  if (s.includes("SALVAGE") || s.includes("SLVG") || s.includes("SALV")) return "salvage";
 
   if (s.startsWith("NONE") || s.includes("NO TITLE") || s.includes("BILL OF SALE")) return "no_title";
 

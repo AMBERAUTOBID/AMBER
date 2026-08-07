@@ -172,6 +172,22 @@ describe("normalizeTitle", () => {
     expect(normalizeTitle("JUNK TITLE")).toBe("non_repairable");
   });
 
+  it("catches NON REPAIR even without the -ABLE suffix", () => {
+    // Regression. These are real values, and the first three previously fell
+    // through to "clean" because they also contain "CERT OF TITLE" — a
+    // non-repairable car presented as having a clean title. Apibara independently
+    // reports registration=false for the AZ lot.
+    expect(normalizeTitle("AZ - CERT OF TITLE- NON REPAIR")).toBe("non_repairable");
+    expect(normalizeTitle("CERT OF TITLE-NONREPAIR")).toBe("non_repairable");
+    expect(normalizeTitle("CO - NON-REPAIRABLE CERT OF TITLE")).toBe("non_repairable");
+    expect(normalizeTitle("AL - CERT OF TITLE-PARTS ONLY SALVG")).toBe("non_repairable");
+  });
+
+  it("recognises the SALV abbreviation", () => {
+    // Real value that previously landed in "other".
+    expect(normalizeTitle("CA - DIS/DLR/EXP LIEN PAPERS-SALV")).toBe("salvage");
+  });
+
   it("never guesses clean for something it does not recognise", () => {
     // Mislabelling a salvage car as clean is the worst failure available here,
     // so the fallback is "other", never "clean".
