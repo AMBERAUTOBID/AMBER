@@ -180,6 +180,25 @@ describe("mapApicarsLot", () => {
     expect(lot.bodyClassId).toBe(6);
   });
 
+  it("reads car_info type fields whether they are strings or nested objects", () => {
+    // Found the hard way: a first ingest of 100 lots left both columns 0%
+    // populated, because car_info nests these the way it nests make/model and
+    // reading an object as text silently yields null.
+    const nested = mapped({
+      ...IAAI_CANADA_F350,
+      car_info: {
+        ...IAAI_CANADA_F350.car_info,
+        vehicle_type: { id: 3, vehicle_type: "TRUCK " },
+        body_class: { id: 6, body_class: "Pickup" },
+      },
+    });
+    expect(nested.lot.carInfoVehicleType).toBe("TRUCK");
+    expect(nested.lot.carInfoBodyClass).toBe("Pickup");
+
+    // The bare-string form must keep working.
+    expect(mapped(IAAI_CANADA_F350).lot.carInfoVehicleType).toBe("TRUCK");
+  });
+
   it("infers km for Canadian branches and records nothing it can't infer", () => {
     // No unit is sent. 484,007 is plausible as km and absurd as miles.
     expect(mapped(IAAI_CANADA_F350).lot.odometerUnit).toBe("km");
@@ -207,6 +226,82 @@ describe("mapApicarsLot", () => {
     expect(images).toHaveLength(0);
     // odometer 0 is a real reading for a trailer, distinct from a missing one.
     expect(lot.odometer).toBe(0);
+  });
+
+  it("reads the Buy Now price out of the object it arrives in", () => {
+    // buy_now_car is an OBJECT, not a number. Reading it as a number yielded null
+    // for every lot, leaving buy_now_cents 0% populated across 4,883 mirrored
+    // rows — which looked like the endpoint carried no Buy Now data at all. It
+    // carries ~49,400 of them, and is_buy_now=1 narrows to exactly that set.
+    const { lot } = mapped({
+      ...IAAI_CANADA_F350,
+      buy_now_car: {
+        all_lots_id: 513515525,
+        auction_name: "COPART",
+        sale_date: "20260807",
+        purchase_price: 1455,
+      },
+    });
+    expect(lot.buyNowCents).toBe(145_500);
+  });
+
+  it("classifies for the filter panel without disturbing the raw values", () => {
+    const { lot } = mapped(IAAI_CANADA_F350);
+    expect(lot.vehicleClass).toBe("truck"); // from "Light Truck"
+    expect(lot.bodyType).toBe("pickup"); // from "Crew Cab"
+    expect(lot.fuelClass).toBe("diesel");
+    expect(lot.driveClass).toBe("4wd"); // from "Four Wheel Drive"
+    expect(lot.cylinderCount).toBe(8); // from "8 Cyl"
+    expect(lot.conditionClass).toBe("stationary");
+    expect(lot.isEnhanced).toBe(false);
+    // The auction's own words must survive alongside our classification.
+    expect(lot.fuel).toBe("Diesel");
+    expect(lot.drive).toBe("Four Wheel Drive");
+    expect(lot.cylinders).toBe("8 Cyl");
+  });
+
+  it("does not record a failed bid as a sale price", () => {
+    // A real entry: purchase_price is populated while sold is 0 and the status
+    // says "Not sold". That 600 is a bid that missed reserve, and counting it as
+    // a sale would poison every comparable estimate built on this table.
+    const { salesHistory } = mapped({
+      ...IAAI_CANADA_F350,
+      sales_history: [
+        {
+          id: 79497238,
+          all_lots_id: 514458242,
+          purchase_price: 600,
+          sale_status: "Not sold",
+          sold: 0,
+          sale_date: 1785853800,
+        },
+      ],
+    });
+    expect(salesHistory).toHaveLength(1);
+    expect(salesHistory[0].soldPriceCents).toBeNull();
+    expect(salesHistory[0].saleStatus).toBe("Not sold");
+    // sale_date here is epoch SECONDS, unlike active_bidding's ms-in-a-string.
+    expect(salesHistory[0].soldAt?.toISOString()).toBe("2026-08-04T14:30:00.000Z");
+  });
+
+  it("records a price when the lot actually sold", () => {
+    const { salesHistory } = mapped({
+      ...IAAI_CANADA_F350,
+      sales_history: [{ id: 1, purchase_price: 8650, sale_status: "Sold", sold: 1, sale_date: 1785853800 }],
+    });
+    expect(salesHistory[0].soldPriceCents).toBe(865_000);
+  });
+
+  it("drops a history entry with no stable id", () => {
+    // Without the vendor's entry id there is no way to avoid re-inserting it on
+    // every sweep, and NULLs are distinct in a unique index — so it would
+    // duplicate without bound.
+    const { salesHistory } = mapped({
+      ...IAAI_CANADA_F350,
+      sales_history: [{ purchase_price: 500, sold: 1 }, { id: 7, purchase_price: 900, sold: 1 }],
+    });
+    expect(salesHistory).toHaveLength(1);
+    expect(salesHistory[0].vendorEntryId).toBe(7);
   });
 
   it("skips auctions we do not mirror instead of filing them under a guess", () => {

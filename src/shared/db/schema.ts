@@ -473,6 +473,48 @@ export const auctionLots = pgTable(
      * made, and this column is not authoritative for anything user-facing. */
     vendorCreatedAt: timestamp("vendor_created_at", { withTimezone: true }),
 
+    // ── normalised, for the filter panel ────────────────────────────────────
+    // The auctions describe identical facts differently and inconsistently:
+    // `fuel` arrives as GAS / Gasoline / Gas, `drive` as FRONT WHEEL DRIVE /
+    // Front Wheel Drive / Front-wheel Drive, and `doc_type` has 415 distinct
+    // values. These columns hold the folded classification that a filter can
+    // offer and a GROUP BY can count, while every raw column above is preserved
+    // untouched — so a corrected mapping is a re-run over stored rows rather
+    // than another 2,900-request sweep.
+    //
+    // NULL always means "could not be classified", never a default bucket. A
+    // filter renders that as absent; inventing a value would quietly mislabel
+    // inventory.
+    /** automobile | motorcycle | truck | other — drives the category tabs, from
+     * `vehicleType` (99.9% populated), never from the `car_info` taxonomy whose
+     * own API filter matched just 9.3% of the catalogue. */
+    vehicleClass: text("vehicle_class"),
+    /** sedan | suv | pickup | coupe | hatchback | van | wagon | convertible |
+     * truck | motorcycle — folds four spellings of "SUV" into one. */
+    bodyType: text("body_type"),
+    fuelClass: text("fuel_class"),
+    /** fwd | rwd | awd | 4wd | 2wd. `4X2` becomes `2wd` rather than a guess at
+     * which axle drives. */
+    driveClass: text("drive_class"),
+    /** clean | salvage | rebuildable | non_repairable | no_title | other.
+     * Rebuildable is deliberately NOT merged into salvage: it changes what a
+     * client may legally do with the car after import. */
+    titleClass: text("title_class"),
+    /** run_and_drive | starts | stationary, or NULL when genuinely unknown —
+     * which includes every Copart "ENHANCED VEHICLES" lot, since that flag is
+     * cosmetic and says nothing about whether the car runs. */
+    conditionClass: text("condition_class"),
+    /** Seller permitted cosmetic cleaning or parts removal. Real information,
+     * but NOT a condition guarantee and not even a promise the work happened —
+     * so it lives apart from `conditionClass`. */
+    isEnhanced: boolean("is_enhanced").notNull().default(false),
+    /** Displacement in cc — integer for the same reason money is in cents: a
+     * range filter comparing floats drops boundary matches. 2.0L = 2000. */
+    engineCc: integer("engine_cc"),
+    /** Parsed from `"4"` (Copart) or `"4 Cyl"` (IAAI). The auctions' `0` means
+     * "not recorded" and becomes null, never a selectable zero. */
+    cylinderCount: integer("cylinder_count"),
+
     // ── our own bookkeeping ─────────────────────────────────────────────────
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
     /** Stamped by every sweep that saw this lot. Stale = gone from the active
@@ -490,9 +532,17 @@ export const auctionLots = pgTable(
     index("auction_lots_sale_date_idx").on(t.saleDate),
     // Finding what a sweep did NOT stamp.
     index("auction_lots_last_seen_idx").on(t.lastSeenAt),
-    // Full-text search (tsvector + GIN) and per-filter facet indexes come with
-    // the query layer, once local profiling shows which columns are populated
-    // enough to be worth indexing.
+    // The category tabs plus the two filters most likely to narrow a query hard.
+    index("auction_lots_class_idx").on(t.vehicleClass, t.bodyType),
+    index("auction_lots_title_idx").on(t.titleClass),
+    // "Buy Now only" is a headline toggle, and ~49,400 of ~147,000 lots qualify.
+    // Partial index: the rows without a price are exactly the ones it must never
+    // scan, and excluding them keeps it a fraction of the size.
+    index("auction_lots_buy_now_idx")
+      .on(t.buyNowCents)
+      .where(sql`${t.buyNowCents} is not null`),
+    // Full-text search (tsvector + GIN) comes with the query layer, once local
+    // profiling shows which columns are populated enough to be worth indexing.
   ]
 );
 
@@ -608,6 +658,16 @@ export const auctionSalesHistory = pgTable(
   "auction_sales_history",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    /**
+     * The vendor's own id for this history entry, and the dedupe key.
+     *
+     * Keying on (platform, lotNumber, soldAt) instead looked reasonable and was
+     * wrong: Postgres treats NULLs as distinct in a unique index, so every entry
+     * with no sale date — and plenty have none — would insert a fresh duplicate
+     * on every sweep, growing without bound. An entry arriving without an id is
+     * skipped rather than risk that.
+     */
+    vendorEntryId: bigint("vendor_entry_id", { mode: "number" }).notNull(),
     platform: text("platform", { enum: ["copart", "iaai"] }).notNull(),
     lotNumber: text("lot_number").notNull(),
     vin: text("vin"),
@@ -628,9 +688,13 @@ export const auctionSalesHistory = pgTable(
     recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    // Same sale re-observed on a later sweep must not create a second row.
-    uniqueIndex("auction_sales_platform_lot_idx").on(t.platform, t.lotNumber, t.soldAt),
+    // The same entry re-observed on a later sweep must not create a second row.
+    uniqueIndex("auction_sales_vendor_entry_idx").on(t.vendorEntryId),
+    // Non-unique: one lot legitimately has several past appearances.
+    index("auction_sales_platform_lot_idx").on(t.platform, t.lotNumber),
     index("auction_sales_vin_idx").on(t.vin),
+    // The comparables query — same model, near year, and only sales that
+    // actually happened.
     index("auction_sales_make_model_year_idx").on(t.make, t.model, t.year),
   ]
 );

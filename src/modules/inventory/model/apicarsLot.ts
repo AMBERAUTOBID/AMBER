@@ -14,10 +14,21 @@
  * that cannot be understood is skipped with a reason, because one malformed row
  * must never abort a sweep of thousands.
  */
+import {
+  isEnhanced,
+  normalizeBodyType,
+  normalizeCondition,
+  normalizeCylinders,
+  normalizeDrive,
+  normalizeFuel,
+  normalizeTitle,
+  normalizeVehicleClass,
+  parseEngineCc,
+} from "./lotNormalize";
 
 /** What we managed to make of a lot, or why we gave up on it. */
 export type MappedLot =
-  | { ok: true; lot: AuctionLotRow; images: AuctionLotImageRow[] }
+  | { ok: true; lot: AuctionLotRow; images: AuctionLotImageRow[]; salesHistory: AuctionSalesHistoryRow[] }
   | { ok: false; reason: string };
 
 export interface AuctionLotRow {
@@ -63,6 +74,17 @@ export interface AuctionLotRow {
   currencyCodeId: number | null;
   saleDate: Date | null;
   vendorCreatedAt: Date | null;
+
+  // ── normalised for filtering; raw equivalents above are never overwritten ──
+  vehicleClass: string | null;
+  bodyType: string | null;
+  fuelClass: string | null;
+  driveClass: string | null;
+  titleClass: string | null;
+  conditionClass: string | null;
+  isEnhanced: boolean;
+  engineCc: number | null;
+  cylinderCount: number | null;
 }
 
 export interface AuctionLotImageRow {
@@ -70,6 +92,25 @@ export interface AuctionLotImageRow {
   position: number;
   sourceUrl: string;
   imageKey: string | null;
+}
+
+/**
+ * A past appearance of this vehicle at auction.
+ *
+ * `soldPriceCents` is populated ONLY when the lot actually sold. The vendor sends
+ * `purchase_price` alongside `sold: 0` and `sale_status: "Not sold"` — that
+ * figure is a bid that failed to meet reserve, not a sale. Recording it as a sale
+ * price would poison every comparable estimate built on this table, which is the
+ * documented failure of the previous data source where a third of entries were
+ * meaningless zeros dragging averages down.
+ */
+export interface AuctionSalesHistoryRow {
+  /** The vendor's stable id for this entry, and the only safe dedupe key. */
+  vendorEntryId: number;
+  soldPriceCents: number | null;
+  saleStatus: string | null;
+  soldAt: Date | null;
+  raw: unknown;
 }
 
 // ── primitive readers ────────────────────────────────────────────────────────
@@ -99,6 +140,18 @@ export function text(v: unknown): string | null {
   return null;
 }
 
+/**
+ * Reads a field that the vendor sends EITHER as a bare string or as a nested
+ * object under its own name — `car_info.make` is `{id, make}` while other
+ * fields in the same object are plain strings, and which is which is not
+ * documented. Guessing wrong silently yields null, which is exactly how
+ * `car_info_vehicle_type` and `car_info_body_class` came back 0% populated on a
+ * first ingest of 100 lots.
+ */
+export function textOrNested(v: unknown, key: string): string | null {
+  return text(v) ?? text(obj(v)[key]);
+}
+
 export function int(v: unknown): number | null {
   if (typeof v === "number") return Number.isFinite(v) ? Math.trunc(v) : null;
   if (typeof v === "string") {
@@ -121,6 +174,19 @@ export function toCents(v: unknown): number | null {
   const n = typeof v === "number" ? v : typeof v === "string" ? Number(v.trim()) : NaN;
   if (!Number.isFinite(n) || n <= 0) return null;
   return Math.round(n * 100);
+}
+
+/**
+ * `sales_history[].sale_date` is epoch SECONDS as a bare number, while
+ * `active_bidding[0].sale_date` is epoch MILLISECONDS inside a string and
+ * `buy_now_car.sale_date` is `"20260813"`. Three encodings in one payload, so the
+ * unit is never inferred from context — each call site says which it expects.
+ */
+export function parseEpochSeconds(v: unknown): Date | null {
+  const n = typeof v === "number" ? v : typeof v === "string" ? Number(v.trim()) : NaN;
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const d = new Date(n * 1000);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 /** `active_bidding[0].sale_date` is epoch milliseconds inside a string. */
@@ -266,8 +332,8 @@ export function mapApicarsLot(raw: unknown): MappedLot {
     // question for a GROUP BY once this is local, not a guess now.
     vehicleType: text(r.vehicle_type),
     bodyStyle: text(r.body_style),
-    carInfoVehicleType: text(carInfo.vehicle_type),
-    carInfoBodyClass: text(carInfo.body_class),
+    carInfoVehicleType: textOrNested(carInfo.vehicle_type, "vehicle_type"),
+    carInfoBodyClass: textOrNested(carInfo.body_class, "body_class"),
     vehicleTypeId: int(carInfo.vehicle_type_id),
     bodyClassId: int(carInfo.body_class_id),
 
@@ -301,7 +367,12 @@ export function mapApicarsLot(raw: unknown): MappedLot {
     locationRaw: text(r.location),
 
     currentBidCents: toCents(bidding.current_bid),
-    buyNowCents: toCents(r.buy_now_car),
+    // `buy_now_car` is an OBJECT — `{all_lots_id, auction_name, sale_date,
+    // purchase_price}` — not a number. Reading it as one returned null for every
+    // lot, which made buy_now_cents 0% populated across 4,883 mirrored rows and
+    // looked like the endpoint simply had no Buy Now data. It has ~49,400 of
+    // them, and `is_buy_now: 1` narrows to exactly that set.
+    buyNowCents: toCents(obj(r.buy_now_car).purchase_price),
     estRetailCents: toCents(r.est_retail_value),
     // Stored with the amounts and never assumed: a Canadian lot has been seen
     // stamped "BRL". A cost estimate must refuse to run on an unexpected
@@ -311,6 +382,18 @@ export function mapApicarsLot(raw: unknown): MappedLot {
 
     saleDate: parseEpochMs(bidding.sale_date),
     vendorCreatedAt: parseNaiveTimestamp(r.created_at),
+
+    // Derived from the raw values just above. Kept in their own columns so a
+    // corrected mapping is a local re-run over stored rows, never a re-fetch.
+    vehicleClass: normalizeVehicleClass(text(r.vehicle_type)),
+    bodyType: normalizeBodyType(text(r.body_style)),
+    fuelClass: normalizeFuel(text(r.fuel)),
+    driveClass: normalizeDrive(text(r.drive)),
+    titleClass: normalizeTitle(text(r.doc_type)),
+    conditionClass: normalizeCondition(text(r.highlights)),
+    isEnhanced: isEnhanced(text(r.highlights)),
+    engineCc: parseEngineCc(text(r.engine_type)),
+    cylinderCount: normalizeCylinders(text(r.cylinders)),
   };
 
   const images: AuctionLotImageRow[] = [];
@@ -326,7 +409,44 @@ export function mapApicarsLot(raw: unknown): MappedLot {
     if (u) images.push({ kind: "damage", position: damageAt++, sourceUrl: u, imageKey: extractImageKey(u) });
   }
 
-  return { ok: true, lot, images };
+  return { ok: true, lot, images, salesHistory: mapSalesHistory(r.sales_history) };
+}
+
+/**
+ * Past auction appearances for a lot.
+ *
+ * Worth collecting from the first sweep: ~45% of lots carry entries, and this is
+ * the one asset that cannot be bought back later — a sale that happened while we
+ * were not looking is gone. It also fixes the comparables problem inherited from
+ * the previous source, which matched on make/model alone and so handed a 2010
+ * base model and a 2020 top trim the identical twelve sales.
+ *
+ * THE TRAP: `purchase_price` is populated even when nothing sold. A real entry
+ * read `{purchase_price: 600, sale_status: "Not sold", sold: 0}` — that 600 is a
+ * bid that failed to meet reserve. Only `sold` truthy yields a price; everything
+ * else keeps its status for context with a null price, so an average over this
+ * table can never quietly include failed bids.
+ */
+export function mapSalesHistory(raw: unknown): AuctionSalesHistoryRow[] {
+  const rows: AuctionSalesHistoryRow[] = [];
+  for (const entry of arr(raw)) {
+    const e = obj(entry);
+    // No stable id means no safe way to avoid re-inserting this entry on every
+    // sweep, so it is dropped rather than allowed to accumulate duplicates.
+    const vendorEntryId = int(e.id);
+    if (vendorEntryId === null) continue;
+
+    const didSell = parseIntFlag(e.sold) === true;
+    rows.push({
+      vendorEntryId,
+      soldPriceCents: didSell ? toCents(e.purchase_price) : null,
+      saleStatus: text(e.sale_status),
+      // Epoch SECONDS here, unlike active_bidding's milliseconds-in-a-string.
+      soldAt: parseEpochSeconds(e.sale_date),
+      raw: entry,
+    });
+  }
+  return rows;
 }
 
 /**
