@@ -20,7 +20,7 @@
  * result count, one query instead of a five-request category fan-out, filters on
  * columns the search API never accepted, and immunity to vendor downtime.
  */
-import { and, asc, count, eq, gte, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 import { apibaraSource } from "./apibaraSource";
 import type { AuctionSource } from "./source";
@@ -45,6 +45,72 @@ function decodeCursor(cursor: string | undefined): number {
   if (!cursor) return 0;
   const n = Number(Buffer.from(cursor, "base64url").toString("utf8"));
   return Number.isFinite(n) && n >= 0 ? Math.trunc(n) : 0;
+}
+
+/**
+ * How many consecutive completed full sweeps must fail to see a lot before
+ * search stops showing it.
+ *
+ * NOT ONE — and this is the measurement that decides it. The full sweep of
+ * 2026-08-07 recorded 144,350 lot observations but only 132,620 distinct lots:
+ * 8.1% of its reads were of a lot it had already seen. That is the vendor's
+ * pagination window shifting underneath a four-hour walk, and a window that
+ * shifts one way also shifts the other — a lot can move from an unread page to
+ * an already-read one and be missed without ever leaving the auction.
+ *
+ * So a single miss is not evidence of absence. Requiring two costs a day of
+ * latency on a genuinely sold car; requiring one would quietly delete live
+ * inventory from our own search, which is the worse failure.
+ */
+const SWEEPS_BEFORE_GONE = 2;
+
+/** The cutoff changes only when a sweep finishes, i.e. at most daily, so a short
+ * cache turns a per-search round trip into roughly nothing. */
+const CUTOFF_TTL_MS = 60_000;
+let cutoffCache: { value: Date | null; at: number } | null = null;
+
+/**
+ * The instant a lot must have been seen at or after to still count as active.
+ *
+ * DERIVED FROM THE RUN LOG RATHER THAN MATERIALISED INTO A `gone` COLUMN, on
+ * purpose. A marking job is a second thing that can fail silently — and a
+ * silently failed sweep already "looks like a healthy site with stale data".
+ * Reading the run log at query time means search can never disagree with the
+ * sweep history: no job to run, no drift, nothing to repair after an outage.
+ *
+ * Returns null — meaning "exclude nothing" — until enough completed sweeps
+ * exist to justify a conclusion. Only a run with `isPartial = false` AND a
+ * `finishedAt` may be used: a run that hit its page cap or died saw a slice of
+ * the catalogue, and treating its blind spot as absence would empty the search.
+ */
+async function activeSetCutoff(): Promise<Date | null> {
+  const now = Date.now();
+  if (cutoffCache && now - cutoffCache.at < CUTOFF_TTL_MS) return cutoffCache.value;
+
+  const runs = await db()
+    .select({ startedAt: schema.auctionIngestRuns.startedAt })
+    .from(schema.auctionIngestRuns)
+    .where(
+      and(
+        eq(schema.auctionIngestRuns.kind, "full_sweep"),
+        eq(schema.auctionIngestRuns.isPartial, false),
+        isNotNull(schema.auctionIngestRuns.finishedAt)
+      )
+    )
+    .orderBy(desc(schema.auctionIngestRuns.startedAt))
+    .limit(SWEEPS_BEFORE_GONE);
+
+  // Fewer completed sweeps than the rule needs: show everything. Being too
+  // permissive shows a stale lot; being too strict hides a real one.
+  const value = runs.length >= SWEEPS_BEFORE_GONE ? runs[SWEEPS_BEFORE_GONE - 1].startedAt : null;
+  cutoffCache = { value, at: now };
+  return value;
+}
+
+/** Exposed so a test can force the next call to re-read, and so the ingest
+ * tooling can invalidate after a sweep completes in the same process. */
+export function resetActiveSetCutoffCache(): void {
+  cutoffCache = null;
 }
 
 /**
@@ -77,11 +143,22 @@ function typeGroupCondition(typeValues: string[]) {
   return parts.length > 0 ? or(...parts) : undefined;
 }
 
-function buildWhere(params: VehicleSearchParams, typeValues?: string[]) {
+function buildWhere(
+  params: VehicleSearchParams,
+  typeValues?: string[],
+  activeSince?: Date | null
+) {
   const t = schema.auctionLots;
   const conditions = [];
 
-  // ── the two standing rules, decided with the user ────────────────────────
+  // ── the three standing rules, decided with the user ──────────────────────
+  //
+  // A lot missed by the last SWEEPS_BEFORE_GONE completed full sweeps has left
+  // the auction and must not be offered. Measured before building this: 2,027
+  // rows survived the 2026-08-07 sweep unstamped, of which 823 were still
+  // future-dated and therefore visible — 0.70% of everything a visitor sees.
+  // Small, but it is inventory we would be advertising and cannot sell.
+  if (activeSince) conditions.push(gte(t.lastSeenAt, activeSince));
   //
   // Only lots that can still be bid on. ~11% of what the vendor calls "active"
   // has a sale date already in the past — the same stale-lot artifact visible on
@@ -167,7 +244,10 @@ async function runSearch(
   const t = schema.auctionLots;
   const perPage = Math.min(Math.max(params.per_page ?? DEFAULT_PER_PAGE, 1), MAX_PER_PAGE);
   const offset = decodeCursor(params.cursor);
-  const where = buildWhere(params, typeValues);
+  // Resolved once per search and reused by both the page query and the count, so
+  // the two can never disagree about what "active" means.
+  const activeSince = await activeSetCutoff();
+  const where = buildWhere(params, typeValues, activeSince);
 
   const rows = await db()
     .select()

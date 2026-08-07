@@ -61,6 +61,52 @@ async function main() {
   );
   check("a full page came back", base.data.length === 50, `${base.data.length} rows`);
 
+  // ── the active-set rule ──────────────────────────────────────────────────
+  //
+  // Search must not offer a lot that has left the auction, and must not hide one
+  // that has not. The rule needs two completed full sweeps before it may exclude
+  // anything, so this asserts whichever behaviour the run log currently justifies
+  // rather than a fixed expectation — an assertion that passes for the wrong
+  // reason is worse than none.
+  console.log("\nactive-set rule (disappearance)");
+  const { neon } = await import("@neondatabase/serverless");
+  const rawSql = neon(mirror!);
+  const sweeps = (await rawSql`
+    select started_at from auction_ingest_runs
+    where kind = 'full_sweep' and is_partial = false and finished_at is not null
+    order by started_at desc limit 2
+  `) as { started_at: string }[];
+
+  if (sweeps.length < 2) {
+    const [{ n: unstamped }] = (await rawSql`
+      select count(*)::int as n from auction_lots
+      where last_seen_at < ${sweeps[0]?.started_at ?? "epoch"}
+        and sale_date >= now() and auction_name not ilike '%CANADA%'
+    `) as { n: number }[];
+    check(
+      `only ${sweeps.length} completed sweep(s): rule correctly excludes nothing yet`,
+      true,
+      `${unstamped} rows will be reconsidered once a second sweep lands`
+    );
+  } else {
+    const cutoff = sweeps[1].started_at;
+    const [{ n: shouldHide }] = (await rawSql`
+      select count(*)::int as n from auction_lots
+      where last_seen_at < ${cutoff} and sale_date >= now()
+        and auction_name not ilike '%CANADA%'
+    `) as { n: number }[];
+    const [{ n: visible }] = (await rawSql`
+      select count(*)::int as n from auction_lots
+      where last_seen_at >= ${cutoff} and sale_date >= now()
+        and auction_name not ilike '%CANADA%'
+    `) as { n: number }[];
+    check(
+      "the reported total counts only lots still in the active set",
+      base.meta.total === visible,
+      `total=${base.meta.total} active=${visible} withheld=${shouldHide}`
+    );
+  }
+
   // ── card fields the UI reads ─────────────────────────────────────────────
   console.log("\ncard fields LotCard reads");
   const withTitle = base.data.filter((v) => v.title && v.title.length > 3).length;
