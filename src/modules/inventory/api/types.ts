@@ -152,7 +152,21 @@ export interface VehicleSearchParams {
 export interface VehicleSearchResponse {
   ok: boolean;
   data: VehicleListItem[];
-  meta: { next_cursor: string | null; prev_cursor: string | null; per_page?: number };
+  meta: {
+    next_cursor: string | null;
+    prev_cursor: string | null;
+    per_page?: number;
+    /**
+     * Total matching lots.
+     *
+     * OPTIONAL because Apibara cannot supply it — its `meta` carries only the two
+     * cursors and a page size, which is why a "Search Results (256,934)" counter
+     * was impossible while search ran on the aggregator. The local mirror answers
+     * it with a COUNT, so the field is present there and absent here. Callers must
+     * treat undefined as "unknown", never as zero.
+     */
+    total?: number;
+  };
 }
 
 export interface VehicleDetailResponse {

@@ -24,6 +24,7 @@ import type {
   VehicleSearchResponse,
 } from "./types";
 import { apibaraSource } from "./apibaraSource";
+import { postgresSource } from "./postgresSource";
 
 /**
  * Every way the site reads lot data. Deliberately shaped like the existing
@@ -69,13 +70,18 @@ let warnedAbout: string | null = null;
 export function getAuctionSource(): AuctionSource {
   const requested = process.env.SEARCH_SOURCE?.trim().toLowerCase();
 
+  // Absent means Apibara. Production sets nothing, so production gets Apibara —
+  // the default is the shipping behaviour, not a fallback from a failure.
   if (!requested || requested === "apibara") return apibaraSource;
+
+  // Opt-in, and only ever set in Preview until the mirror is trusted.
+  if (requested === "postgres") return postgresSource;
 
   if (warnedAbout !== requested) {
     warnedAbout = requested;
     console.warn(
       `[inventory] SEARCH_SOURCE="${requested}" is not an implemented source; ` +
-        `falling back to "apibara". Implemented: apibara.`
+        `falling back to "apibara". Implemented: apibara, postgres.`
     );
   }
   return apibaraSource;

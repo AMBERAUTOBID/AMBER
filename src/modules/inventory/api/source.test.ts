@@ -37,28 +37,32 @@ describe("getAuctionSource", () => {
     }
   });
 
-  it("falls back to apibara for an unimplemented source instead of throwing", () => {
-    // "postgres" is a real planned value, so this is the case that will actually
-    // happen — someone sets the flag before the source exists.
+  it("returns the local mirror only when explicitly asked for it", () => {
+    // The ONLY way to reach Postgres. Production sets no SEARCH_SOURCE, so this
+    // branch is unreachable there.
     process.env.SEARCH_SOURCE = "postgres";
+    expect(getAuctionSource().name).toBe("postgres");
+    process.env.SEARCH_SOURCE = "  Postgres  ";
+    expect(getAuctionSource().name).toBe("postgres");
+  });
+
+  it("falls back to apibara for a typo rather than taking search down", () => {
+    // The realistic accident: someone means postgres and mistypes it in a Vercel
+    // env var. Search must keep working on the shipping source.
+    process.env.SEARCH_SOURCE = "postgrse";
     expect(() => getAuctionSource()).not.toThrow();
     expect(getAuctionSource().name).toBe("apibara");
   });
 
-  it("falls back to apibara for a typo rather than taking search down", () => {
-    process.env.SEARCH_SOURCE = "postgrse";
-    expect(getAuctionSource().name).toBe("apibara");
-  });
-
   it("warns about an unimplemented source, but only once per value", () => {
-    process.env.SEARCH_SOURCE = "postgres";
+    process.env.SEARCH_SOURCE = "mysql";
     getAuctionSource();
     getAuctionSource();
     getAuctionSource();
     // A page render resolves the source many times; one warning per process is
     // a signal, one per call is noise that buries everything else in the log.
-    const forPostgres = warn.mock.calls.filter((c) => String(c[0]).includes("postgres"));
-    expect(forPostgres).toHaveLength(1);
+    const forValue = warn.mock.calls.filter((c) => String(c[0]).includes("mysql"));
+    expect(forValue).toHaveLength(1);
   });
 
   it("empty and whitespace-only values are treated as unset, not as errors", () => {
