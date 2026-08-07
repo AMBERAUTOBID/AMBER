@@ -610,6 +610,13 @@ export const auctionLots = pgTable(
     // every row containing it, which is what makes "2015 ford f150" an index
     // intersection rather than a scan of 134,647 rows.
     index("auction_lots_search_tsv_idx").using("gin", t.searchTsv),
+    // NOTE: there are deliberately NO gin_trgm_ops indexes here, though migration
+    // 0013 created a pair and 0014 drops them again. They only serve pg_trgm's
+    // `<%` operator, and `<%` is pinned to the 0.6 session default — measured too
+    // high to catch `porshe` (0.571). The misspelling fallback therefore calls
+    // `word_similarity()` at an explicit 0.5, which no trigram index can serve.
+    // Keeping them would have cost write time on every sweep to support a query
+    // nothing issues. pg_trgm itself stays: it provides `word_similarity`.
     // "Buy Now only" is a headline toggle, and ~49,400 of ~147,000 lots qualify.
     // Partial index: the rows without a price are exactly the ones it must never
     // scan, and excluding them keeps it a fraction of the size.

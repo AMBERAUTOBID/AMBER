@@ -146,7 +146,8 @@ function typeGroupCondition(typeValues: string[]) {
 function buildWhere(
   params: VehicleSearchParams,
   typeValues?: string[],
-  activeSince?: Date | null
+  activeSince?: Date | null,
+  fuzzy = false
 ) {
   const t = schema.auctionLots;
   const conditions = [];
@@ -222,11 +223,36 @@ function buildWhere(
     const term = params.s.trim();
     if (term.length > 0) {
       conditions.push(
-        or(
-          eq(t.vin, term.toUpperCase()),
-          eq(t.lotNumber, term),
-          sql`${t.searchTsv} @@ plainto_tsquery('simple', regexp_replace(${term}, '[^a-zA-Z0-9 ]', '', 'g'))`
-        )!
+        fuzzy
+          ? // The misspelling fallback, on pg_trgm's word_similarity: how well the
+            // typed word matches the best-matching word inside the column. Whole-
+            // string similarity would be dragged down by text the visitor never
+            // typed — "MERCEDES-BENZ" against "mercedez".
+            //
+            // THE 0.5 IS MEASURED, NOT GUESSED. Scored against the real make
+            // vocabulary, the worst genuine typo and the best gibberish sit far
+            // apart, and 0.5 is the midpoint of that gap:
+            //   porshe 0.571 · mitsubischi 0.667 · volkswagon 0.727 · mercedez 0.778
+            //   notacar 0.375 · asdfghjkl 0.200 · qwertyuiop 0.182 · zzzzqqqq 0.143
+            // pg_trgm's own `<%` operator would be index-backed but is pinned to
+            // the 0.6 session default, which lands above `porshe` and below
+            // nothing useful — it silently drops one of the commonest misspellings
+            // of a brand this business cares about.
+            //
+            // The explicit call cannot use a trigram index, so this is a scan:
+            // ~900 ms over 134,647 rows. Acceptable because it runs ONLY after an
+            // exact search found nothing, where the alternative is an empty page.
+            // Revisit if the accumulating archive makes the scan slow — with a
+            // measurement, not a guess.
+            or(
+              sql`word_similarity(${term}, coalesce(${t.make}, '')) > 0.5`,
+              sql`word_similarity(${term}, coalesce(${t.model}, '')) > 0.5`
+            )!
+          : or(
+              eq(t.vin, term.toUpperCase()),
+              eq(t.lotNumber, term),
+              sql`${t.searchTsv} @@ plainto_tsquery('simple', regexp_replace(${term}, '[^a-zA-Z0-9 ]', '', 'g'))`
+            )!
       );
     }
   }
@@ -263,22 +289,35 @@ async function runSearch(
   // Resolved once per search and reused by both the page query and the count, so
   // the two can never disagree about what "active" means.
   const activeSince = await activeSetCutoff();
-  const where = buildWhere(params, typeValues, activeSince);
 
-  const rows = await db()
-    .select()
-    .from(t)
-    .where(where)
-    // Soonest sale first: the lots a client can still act on, in the order the
-    // deadline arrives.
-    .orderBy(asc(t.saleDate), asc(t.id))
-    .limit(perPage)
-    .offset(offset);
+  const fetchPage = async (fuzzy: boolean) => {
+    const where = buildWhere(params, typeValues, activeSince, fuzzy);
+    const pageRows = await db()
+      .select()
+      .from(t)
+      .where(where)
+      // Soonest sale first: the lots a client can still act on, in the order the
+      // deadline arrives.
+      .orderBy(asc(t.saleDate), asc(t.id))
+      .limit(perPage)
+      .offset(offset);
+    // The result counter the aggregator's API structurally cannot provide — its
+    // `meta` carries no total at all, which is why "Search Results (256,934)" was
+    // impossible before owning the rows.
+    const [{ total: n }] = await db().select({ total: count() }).from(t).where(where);
+    return { pageRows, n };
+  };
 
-  // The result counter the aggregator's API structurally cannot provide — its
-  // `meta` carries no total at all, which is why "Search Results (256,934)" was
-  // impossible before owning the rows.
-  const [{ total }] = await db().select({ total: count() }).from(t).where(where);
+  let { pageRows: rows, n: total } = await fetchPage(false);
+
+  // A typed make is the one thing full-text cannot rescue: it matches whole
+  // lexemes, so "mercedez" is simply absent from every document however the
+  // document is built. Retry with trigram similarity — but ONLY on a genuinely
+  // empty result, so the ordinary path stays one round trip and precise queries
+  // are never quietly widened into something the visitor did not ask for.
+  if (total === 0 && params.s && params.s.trim().length > 0) {
+    ({ pageRows: rows, n: total } = await fetchPage(true));
+  }
 
   const images =
     rows.length === 0

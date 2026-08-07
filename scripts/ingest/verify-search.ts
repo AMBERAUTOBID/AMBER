@@ -138,6 +138,31 @@ async function main() {
     check("an exact VIN still resolves", (byVin.meta.total ?? 0) >= 1, `${sampleLot.vin} → ${byVin.meta.total}`);
   }
 
+  // ── the misspelling fallback ─────────────────────────────────────────────
+  //
+  // The audience is Lithuanian and Russian speakers typing German, Japanese and
+  // American brand names, so this is not an edge case. Each typo must find the
+  // same lots as the correct spelling.
+  console.log("\nmisspelled makes (trigram fallback)");
+  for (const [typo, correct] of [
+    ["mercedez", "mercedes"],
+    ["porshe", "porsche"],
+    ["volkswagon", "volkswagen"],
+    ["hyundae", "hyundai"],
+  ] as const) {
+    const t = await phrase(typo);
+    const c = await phrase(correct);
+    check(`'${typo}' finds what '${correct}' finds`, t > 0 && t === c, `${t} vs ${c}`);
+  }
+
+  // The fallback must not rescue gibberish — that would advertise cars we do not
+  // have. This is the check that stops the similarity threshold drifting down.
+  console.log("\ngibberish must stay empty");
+  for (const junk of ["zzzzqqqq", "asdfghjkl", "qwertyuiop"]) {
+    const n = await phrase(junk);
+    check(`'${junk}' returns nothing`, n === 0, `${n} rows`);
+  }
+
   // ── card fields the UI reads ─────────────────────────────────────────────
   console.log("\ncard fields LotCard reads");
   const withTitle = base.data.filter((v) => v.title && v.title.length > 3).length;
