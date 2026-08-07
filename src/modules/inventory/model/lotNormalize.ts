@@ -301,3 +301,158 @@ export function normalizeBodyType(raw: string | null | undefined): BodyType | nu
   if (s.includes("TRUCK")) return "truck";
   return null;
 }
+
+// ── damage ───────────────────────────────────────────────────────────────────
+
+export type DamageClass =
+  // Condition rather than a location — the two "barely damaged" buckets, and the
+  // ones most buyers actually filter for.
+  | "normal_wear"
+  | "minor_dent"
+  // Where it is.
+  | "front"
+  | "rear"
+  | "front_and_rear"
+  | "side"
+  | "all_over"
+  | "roof"
+  | "undercarriage"
+  | "glass"
+  | "interior"
+  // What is wrong.
+  | "mechanical"
+  | "electrical"
+  | "hail"
+  | "water"
+  | "storm"
+  | "burn"
+  | "rollover"
+  | "frame"
+  | "stripped"
+  | "vandalism"
+  | "theft"
+  | "biohazard"
+  // Why it is at auction, which is not the same question — see below.
+  | "repossession"
+  | "vin_issue"
+  | "repair"
+  | "other";
+
+/**
+ * Punctuation and spacing are not stable across the two auctions: the same
+ * concept arrives as `BIOHAZARD/CHEMICAL` and `Bio Hazard`, `UNDERCARRIAGE` and
+ * `Under Carriage`, `ROLLOVER` and `Roll Over`. Collapsing to letters and digits
+ * turns each of those pairs into one token instead of a special case each.
+ */
+function squash(s: string): string {
+  return s.replace(/[^A-Z0-9]/g, "");
+}
+
+/**
+ * Primary and secondary damage, folded from 77 and 75 distinct raw values
+ * measured over 134,647 mirrored lots. Both fields share one vocabulary, so
+ * they share one function.
+ *
+ * This is the gap that made the filter panel unbuildable: `FRONT END` (26,246
+ * lots) and `Front End` (18,092) are the same thing, as are `NORMAL WEAR` and
+ * `Normal Wear & Tear`. Offered raw, the dropdown shows every option twice.
+ *
+ * TWO JUDGEMENT CALLS WORTH KNOWING, both deliberate:
+ *
+ * 1. **Corners are folded into sides.** `Right Front`, `Left Front` and `Front`
+ *    all become `front`. Somebody filtering for front-end damage wants all of
+ *    them; reproducing the auctions' twenty corner combinations would be a
+ *    faithful and useless filter.
+ * 2. **Some values are not damage at all.** `Charity`, `Cash For Clunkers`,
+ *    `Repossession` and `Damage History` say why the car is at auction, not what
+ *    is broken. `Repossession` earns its own bucket on volume (524 lots); the
+ *    rest become `other` — recognised, but with no honest damage bucket to put
+ *    them in.
+ *
+ * `None` and `Unknown` return null, not a bucket: they are the auctions saying
+ * they have nothing to record, and a filter should treat such a lot as
+ * unclassified rather than offer "Unknown" as though it described the car.
+ *
+ * Ordering is load-bearing throughout — `Engine Burn` contains ENGINE, `Front
+ * Window` contains FRONT, `Storm Damage` contains DAMAGE. Each such case is
+ * commented where it occurs.
+ */
+export function normalizeDamage(raw: string | null | undefined): DamageClass | null {
+  const s = upper(raw);
+  if (!s) return null;
+  const q = squash(s);
+
+  if (q === "NONE" || q === "UNKNOWN") return null;
+
+  // Fire first. `BURN - ENGINE`, `Engine Burn`, `Interior Fire`, `Exterior Burn`
+  // and `Total Burn` all carry a component or location word that the tests
+  // further down would otherwise capture.
+  if (q.includes("BURN") || q.includes("FIRE")) return "burn";
+
+  // `WATER/FLOOD` carries both words; `Salt Water` and `Fresh Water` only one.
+  if (q.includes("FLOOD") || q.includes("WATER")) return "water";
+  if (q.includes("STORM")) return "storm";
+  if (q.includes("HAIL")) return "hail";
+  // Squashing is what makes `Roll Over` and `ROLLOVER` one test.
+  if (q.includes("ROLLOVER")) return "rollover";
+  if (q.includes("VANDAL")) return "vandalism";
+  if (q.includes("THEFT")) return "theft";
+  if (q.includes("BIOHAZARD") || q.includes("CHEMICAL")) return "biohazard";
+
+  // Matched on the spaced string with word boundaries, NOT the squashed one:
+  // squashing would make an innocent future value like "DRIVING" contain VIN.
+  if (/\bVIN\b/.test(s)) return "vin_issue";
+
+  if (q.includes("REPAIR")) return "repair";
+  if (q.includes("REPOSSESS")) return "repossession";
+
+  // Recognised, but describing the sale rather than the car. See note 2 above.
+  if (q.includes("CHARITY") || q.includes("CLUNKER") || q.includes("DAMAGEHISTORY")) {
+    return "other";
+  }
+
+  if (q.includes("STRIP")) return "stripped";
+  if (q.includes("FRAME") || q.includes("STRUCTURAL")) return "frame";
+
+  // `Normal Wear & Tear` (17,893) and `NORMAL WEAR` (2,708) mean essentially
+  // undamaged. Kept apart from `minor_dent` because "nothing wrong with it" and
+  // "it has dents" are different answers to the only question a buyer is asking.
+  if (q.includes("WEAR")) return "normal_wear";
+  if (q.includes("DENT") || q.includes("SCRATCH")) return "minor_dent";
+
+  // Glass before the front/rear tests: `Front Window` and `Rear Window` are
+  // broken glass, not a front-end or rear-end collision.
+  if (q.includes("WINDOW") || q.includes("WINDSHIELD") || q.includes("GLASS")) return "glass";
+
+  // `TOP/ROOF` also contains ROOF, so there is no need for a TOP test that would
+  // one day capture something like STOPPED.
+  if (q.includes("ROOF")) return "roof";
+  if (q.includes("UNDERCARRIAGE")) return "undercarriage";
+  if (q.includes("ALLOVER")) return "all_over";
+
+  // After fire, so `Engine Burn` is a burn. `Possible Mech.` is why this matches
+  // the stem rather than the whole word.
+  if (
+    q.includes("MECH") ||
+    q.includes("ENGINE") ||
+    q.includes("TRANSMISSION") ||
+    q.includes("SUSPENSION") ||
+    q.includes("STEERING")
+  ) {
+    return "mechanical";
+  }
+  if (q.includes("ELECTRIC")) return "electrical";
+  // After fire, so `Interior Burn` is a burn.
+  if (q.includes("INTERIOR")) return "interior";
+
+  // `Front & Rear` names both ends, so it has to be tested before either alone.
+  const front = q.includes("FRONT");
+  const rear = q.includes("REAR");
+  if (front && rear) return "front_and_rear";
+  if (front) return "front";
+  if (rear) return "rear";
+  // `Left & Right Side` and `Left Side` fold together — see judgement call 1.
+  if (q.includes("SIDE")) return "side";
+
+  return null;
+}

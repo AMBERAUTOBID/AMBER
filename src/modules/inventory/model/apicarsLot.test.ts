@@ -254,10 +254,29 @@ describe("mapApicarsLot", () => {
     expect(lot.cylinderCount).toBe(8); // from "8 Cyl"
     expect(lot.conditionClass).toBe("stationary");
     expect(lot.isEnhanced).toBe(false);
+    expect(lot.primaryDamageClass).toBe("biohazard"); // from "Bio Hazard"
     // The auction's own words must survive alongside our classification.
     expect(lot.fuel).toBe("Diesel");
     expect(lot.drive).toBe("Four Wheel Drive");
     expect(lot.cylinders).toBe("8 Cyl");
+    expect(lot.primaryDamage).toBe("Bio Hazard");
+  });
+
+  it("classifies both damage fields through the one shared vocabulary", () => {
+    // Copart shouts and IAAI title-cases the same concept, and the two columns
+    // draw on the same set of values — so one function has to serve both, and a
+    // lot damaged at the front must land in `front` from either spelling.
+    const { lot } = mapped({
+      ...IAAI_CANADA_F350,
+      primary_damage: "FRONT END",
+      secondary_damage: "Left & Right Side",
+    });
+    expect(lot.primaryDamageClass).toBe("front");
+    expect(lot.secondaryDamageClass).toBe("side");
+
+    // An absent secondary damage must stay absent rather than become a bucket.
+    const { lot: noSecondary } = mapped({ ...IAAI_CANADA_F350, secondary_damage: null });
+    expect(noSecondary.secondaryDamageClass).toBeNull();
   });
 
   it("does not record a failed bid as a sale price", () => {

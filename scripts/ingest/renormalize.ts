@@ -21,6 +21,11 @@
  *   export DATABASE_URL_MIRROR_UNPOOLED=...
  *   npx tsx scripts/ingest/renormalize.ts          # only rows missing a class
  *   RENORMALIZE_ALL=1 npx tsx scripts/ingest/renormalize.ts   # every row
+ *
+ * NOTE the default scope tests `vehicle_class`, `body_type` and `title_class`
+ * only. A newly ADDED classification — the damage columns in 0011, for instance —
+ * leaves those three populated, so the default run skips exactly the rows that
+ * need it. **After adding a column, run with RENORMALIZE_ALL=1.**
  */
 import { neon } from "@neondatabase/serverless";
 import {
@@ -28,6 +33,7 @@ import {
   normalizeBodyType,
   normalizeCondition,
   normalizeCylinders,
+  normalizeDamage,
   normalizeDrive,
   normalizeFuel,
   normalizeTitle,
@@ -66,6 +72,8 @@ interface SourceRow {
   highlights: string | null;
   engine_type: string | null;
   cylinders: string | null;
+  primary_damage: string | null;
+  secondary_damage: string | null;
 }
 
 async function main() {
@@ -87,7 +95,8 @@ async function main() {
   // set shrinks underneath it.
   for (;;) {
     const rows = await raw<SourceRow>(
-      `select id, vehicle_type, body_style, fuel, drive, doc_type, highlights, engine_type, cylinders
+      `select id, vehicle_type, body_style, fuel, drive, doc_type, highlights, engine_type, cylinders,
+              primary_damage, secondary_damage
        from auction_lots
        where id > $1 ${ALL ? "" : "and vehicle_class is null and body_type is null and title_class is null"}
        order by id
@@ -112,26 +121,31 @@ async function main() {
         normalizeCondition(r.highlights),
         isEnhanced(r.highlights),
         parseEngineCc(r.engine_type),
-        normalizeCylinders(r.cylinders)
+        normalizeCylinders(r.cylinders),
+        normalizeDamage(r.primary_damage),
+        normalizeDamage(r.secondary_damage)
       );
-      return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},$${base + 10})`;
+      return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},$${base + 10},$${base + 11},$${base + 12})`;
     });
 
     await raw(
       `update auction_lots as t set
-         vehicle_class   = v.vehicle_class::text,
-         body_type       = v.body_type::text,
-         fuel_class      = v.fuel_class::text,
-         drive_class     = v.drive_class::text,
-         title_class     = v.title_class::text,
-         condition_class = v.condition_class::text,
-         is_enhanced     = v.is_enhanced::boolean,
-         engine_cc       = v.engine_cc::integer,
-         cylinder_count  = v.cylinder_count::integer,
-         updated_at      = now()
+         vehicle_class          = v.vehicle_class::text,
+         body_type              = v.body_type::text,
+         fuel_class             = v.fuel_class::text,
+         drive_class            = v.drive_class::text,
+         title_class            = v.title_class::text,
+         condition_class        = v.condition_class::text,
+         is_enhanced            = v.is_enhanced::boolean,
+         engine_cc              = v.engine_cc::integer,
+         cylinder_count         = v.cylinder_count::integer,
+         primary_damage_class   = v.primary_damage_class::text,
+         secondary_damage_class = v.secondary_damage_class::text,
+         updated_at             = now()
        from (values ${tuples.join(",")}) as v(
          id, vehicle_class, body_type, fuel_class, drive_class,
-         title_class, condition_class, is_enhanced, engine_cc, cylinder_count
+         title_class, condition_class, is_enhanced, engine_cc, cylinder_count,
+         primary_damage_class, secondary_damage_class
        )
        where t.id = v.id::uuid`,
       params
@@ -149,13 +163,15 @@ async function main() {
        count(*) filter (where vehicle_class is not null)::int as vehicle_class,
        count(*) filter (where title_class is not null)::int as title_class,
        count(*) filter (where engine_cc is not null)::int as engine_cc,
+       count(*) filter (where primary_damage_class is not null)::int as primary_damage_class,
        count(*)::int as total
      from auction_lots`
   );
   console.log(
     `coverage now: vehicle_class ${((after.vehicle_class / after.total) * 100).toFixed(1)}%, ` +
       `title_class ${((after.title_class / after.total) * 100).toFixed(1)}%, ` +
-      `engine_cc ${((after.engine_cc / after.total) * 100).toFixed(1)}%`
+      `engine_cc ${((after.engine_cc / after.total) * 100).toFixed(1)}%, ` +
+      `primary_damage_class ${((after.primary_damage_class / after.total) * 100).toFixed(1)}%`
   );
 }
 

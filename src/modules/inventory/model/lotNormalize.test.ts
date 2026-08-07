@@ -4,6 +4,7 @@ import {
   normalizeBodyType,
   normalizeCondition,
   normalizeCylinders,
+  normalizeDamage,
   normalizeDrive,
   normalizeFuel,
   normalizeTitle,
@@ -282,5 +283,171 @@ describe("normalizeBodyType", () => {
     expect(normalizeBodyType("N/A")).toBeNull();
     expect(normalizeBodyType(null)).toBeNull();
     expect(normalizeBodyType("Utility")).toBeNull();
+  });
+});
+
+/**
+ * EXHAUSTIVE BY CONSTRUCTION. The table below is the complete union of every
+ * distinct `primary_damage` (77) and `secondary_damage` (75) value in the mirror
+ * as of 2026-08-07, read straight off 134,647 rows with scripts/ingest/values.ts
+ * — not a selection, and not invented.
+ *
+ * That matters because damage is the field where the two vocabularies collide
+ * hardest: `FRONT END` (26,246 lots) and `Front End` (18,092) are the same
+ * concept, and shipping them unfolded would show a visitor every option twice.
+ * If the vendor introduces a 78th value, it maps to null and this table is how
+ * we notice.
+ */
+const DAMAGE_VOCABULARY: Array<[string, ReturnType<typeof normalizeDamage>]> = [
+  // ── location, and the corner variants folded into it ──
+  ["FRONT END", "front"], // 26246
+  ["Front End", "front"], // 18092 — same concept, other auction
+  ["Front", "front"], // 1719
+  ["Right Front", "front"], // 3077
+  ["Left Front", "front"], // 3041
+  ["REAR END", "rear"], // 7680
+  ["Rear", "rear"], // 5137
+  ["Left Rear", "rear"], // 1388
+  ["Right Rear", "rear"], // 999
+  ["Front & Rear", "front_and_rear"], // 2286 — names both ends
+  ["SIDE", "side"], // 7221
+  ["Left Side", "side"], // 4094
+  ["Right Side", "side"], // 3806
+  ["Left & Right Side", "side"], // 948
+  ["ALL OVER", "all_over"], // 1225
+  ["All Over", "all_over"], // 884
+  ["TOP/ROOF", "roof"], // 531
+  ["Roof", "roof"], // 382
+  ["Roof Damage", "roof"], // 14
+  ["UNDERCARRIAGE", "undercarriage"], // 714
+  ["Undercarriage", "undercarriage"], // 280
+  ["Under Carriage", "undercarriage"], // 10 — spacing drift, same thing
+  ["Front Window", "glass"], // 8
+  ["Rear Window", "glass"], // 1
+  ["Interior Damage", "interior"], // 7
+
+  // ── condition ──
+  ["Normal Wear & Tear", "normal_wear"], // 17893
+  ["NORMAL WEAR", "normal_wear"], // 2708
+  ["MINOR DENT/SCRATCHES", "minor_dent"], // 7739
+
+  // ── cause ──
+  ["MECHANICAL", "mechanical"], // 3958
+  ["Mechanical", "mechanical"], // 252
+  ["Possible Mech.", "mechanical"], // 28 — abbreviated
+  ["Engine Damage", "mechanical"], // 185
+  ["Engine", "mechanical"], // 4
+  ["Transmission Damage", "mechanical"], // 79
+  ["Suspension", "mechanical"], // 124
+  ["Steering Column", "mechanical"], // 5 (secondary only)
+  ["Electrical", "electrical"], // 121
+  ["Hail", "hail"], // 1883
+  ["HAIL", "hail"], // 1174
+  ["WATER/FLOOD", "water"], // 1105 — carries both words
+  ["Flood", "water"], // 649
+  ["Water", "water"], // 158
+  ["Fresh Water", "water"], // 146
+  ["Salt Water", "water"], // 13
+  ["Storm Damage", "storm"], // 148
+  ["BURN", "burn"], // 559
+  ["Total Burn", "burn"], // 330
+  ["Engine Burn", "burn"], // 185
+  ["BURN - ENGINE", "burn"], // 174
+  ["Interior Burn", "burn"], // 108
+  ["Exterior Burn", "burn"], // 102
+  ["BURN - INTERIOR", "burn"], // 79
+  ["Interior Fire", "burn"], // 21
+  ["Engine Fire", "burn"], // 20
+  ["ROLLOVER", "rollover"], // 902
+  ["Rollover", "rollover"], // 712
+  ["Roll Over", "rollover"], // 72 — spacing drift
+  ["FRAME DAMAGE", "frame"], // 73
+  ["Frame", "frame"], // 43
+  ["Structural", "frame"], // 14 (secondary only)
+  ["STRIPPED", "stripped"], // 226
+  ["Strip", "stripped"], // 36
+  ["VANDALISM", "vandalism"], // 578
+  ["Vandalized", "vandalism"], // 109
+  ["Theft", "theft"], // 588
+  ["Biohazard", "biohazard"], // 297
+  ["Bio Hazard", "biohazard"], // 31 — spacing drift
+  ["BIOHAZARD/CHEMICAL", "biohazard"], // 30
+
+  // ── not damage: why the car is at auction ──
+  ["Repossession", "repossession"], // 236 + 288
+  ["PARTIAL REPAIR", "repair"], // 16
+  ["REJECTED REPAIR", "repair"], // 7
+  ["MISSING/ALTERED VIN", "vin_issue"], // 13
+  ["REPLACED VIN", "vin_issue"], // 6
+  ["DAMAGE HISTORY", "other"], // 49
+  ["Charity", "other"], // 40
+  ["Cash For Clunkers", "other"], // 3
+
+  // ── the auctions saying they have nothing ──
+  ["Unknown", null], // 800
+  ["UNKNOWN", null], // 22
+  ["None", null], // 744 secondary, 22 primary
+];
+
+describe("normalizeDamage", () => {
+  it("classifies every value measured in the catalogue", () => {
+    for (const [raw, expected] of DAMAGE_VOCABULARY) {
+      expect(normalizeDamage(raw), `${raw} should map to ${expected}`).toBe(expected);
+    }
+  });
+
+  it("covers the whole measured vocabulary exactly once", () => {
+    // 77 distinct primary values and 75 secondary, overlapping in all but two
+    // (`Structural` and `Steering Column` appear only as a secondary damage).
+    // The union is therefore 79, and pinning it is what makes a dropped row
+    // during a future edit fail loudly instead of quietly reducing coverage.
+    const raws = DAMAGE_VOCABULARY.map(([raw]) => raw);
+    expect(new Set(raws).size, "a value is listed twice").toBe(raws.length);
+    expect(raws.length).toBe(79);
+  });
+
+  it("folds the two auctions' spellings of the same concept", () => {
+    // The bug this whole function exists to fix — these four were showing as
+    // four separate filter options over 45,000 lots.
+    expect(normalizeDamage("FRONT END")).toBe(normalizeDamage("Front End"));
+    expect(normalizeDamage("NORMAL WEAR")).toBe(normalizeDamage("Normal Wear & Tear"));
+    expect(normalizeDamage("ROLLOVER")).toBe(normalizeDamage("Roll Over"));
+    expect(normalizeDamage("UNDERCARRIAGE")).toBe(normalizeDamage("Under Carriage"));
+    expect(normalizeDamage("Biohazard")).toBe(normalizeDamage("Bio Hazard"));
+  });
+
+  it("reads fire as fire, whatever burned", () => {
+    // Each of these contains a component or location word that a later test
+    // would otherwise capture — the ordering trap this field is full of.
+    expect(normalizeDamage("Engine Burn")).toBe("burn");
+    expect(normalizeDamage("BURN - ENGINE")).toBe("burn");
+    expect(normalizeDamage("Interior Fire")).toBe("burn");
+    expect(normalizeDamage("BURN - INTERIOR")).toBe("burn");
+  });
+
+  it("reads a broken window as glass, not as a front or rear collision", () => {
+    expect(normalizeDamage("Front Window")).toBe("glass");
+    expect(normalizeDamage("Rear Window")).toBe("glass");
+  });
+
+  it("keeps a car damaged at both ends out of the single-end buckets", () => {
+    expect(normalizeDamage("Front & Rear")).toBe("front_and_rear");
+  });
+
+  it("does not let a substring invent a VIN problem", () => {
+    // Squashing punctuation would make DRIVING contain VIN, which is why the VIN
+    // test runs on word boundaries against the spaced string.
+    expect(normalizeDamage("MISSING/ALTERED VIN")).toBe("vin_issue");
+    expect(normalizeDamage("Driving")).toBeNull();
+  });
+
+  it("returns null rather than a default bucket", () => {
+    expect(normalizeDamage(null)).toBeNull();
+    expect(normalizeDamage(undefined)).toBeNull();
+    expect(normalizeDamage("")).toBeNull();
+    expect(normalizeDamage("   ")).toBeNull();
+    // A value the vendor has not sent yet must show up as unclassified rather
+    // than be quietly filed under "other".
+    expect(normalizeDamage("Meteor Strike")).toBeNull();
   });
 });

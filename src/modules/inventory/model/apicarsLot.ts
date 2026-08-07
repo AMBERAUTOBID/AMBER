@@ -19,6 +19,7 @@ import {
   normalizeBodyType,
   normalizeCondition,
   normalizeCylinders,
+  normalizeDamage,
   normalizeDrive,
   normalizeFuel,
   normalizeTitle,
@@ -85,6 +86,8 @@ export interface AuctionLotRow {
   isEnhanced: boolean;
   engineCc: number | null;
   cylinderCount: number | null;
+  primaryDamageClass: string | null;
+  secondaryDamageClass: string | null;
 }
 
 export interface AuctionLotImageRow {
@@ -394,6 +397,9 @@ export function mapApicarsLot(raw: unknown): MappedLot {
     isEnhanced: isEnhanced(text(r.highlights)),
     engineCc: parseEngineCc(text(r.engine_type)),
     cylinderCount: normalizeCylinders(text(r.cylinders)),
+    // Both damage fields share one vocabulary, so one function classifies both.
+    primaryDamageClass: normalizeDamage(text(r.primary_damage)),
+    secondaryDamageClass: normalizeDamage(text(r.secondary_damage)),
   };
 
   const images: AuctionLotImageRow[] = [];

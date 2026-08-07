@@ -514,6 +514,19 @@ export const auctionLots = pgTable(
     /** Parsed from `"4"` (Copart) or `"4 Cyl"` (IAAI). The auctions' `0` means
      * "not recorded" and becomes null, never a selectable zero. */
     cylinderCount: integer("cylinder_count"),
+    /**
+     * The damage buckets, from 77 distinct `primaryDamage` and 75
+     * `secondaryDamage` values measured over 134,647 rows. Both raw fields share
+     * one vocabulary, so both classify through the same function.
+     *
+     * `FRONT END` (26,246) and `Front End` (18,092) are one concept, as are
+     * `NORMAL WEAR` and `Normal Wear & Tear` — unfolded, the filter panel offers
+     * every option twice. Corners fold into their side (`Right Front` → `front`),
+     * and the handful of values that describe why the car is at auction rather
+     * than what is broken (`Charity`, `Cash For Clunkers`) become `other`.
+     */
+    primaryDamageClass: text("primary_damage_class"),
+    secondaryDamageClass: text("secondary_damage_class"),
 
     // ── our own bookkeeping ─────────────────────────────────────────────────
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
@@ -535,6 +548,11 @@ export const auctionLots = pgTable(
     // The category tabs plus the two filters most likely to narrow a query hard.
     index("auction_lots_class_idx").on(t.vehicleClass, t.bodyType),
     index("auction_lots_title_idx").on(t.titleClass),
+    // Primary damage only: it is the one the filter panel exposes and the one
+    // with real selectivity (26,246 lots on its largest bucket). Secondary is a
+    // refinement applied after primary has already narrowed the set, so it does
+    // not earn its own index.
+    index("auction_lots_damage_idx").on(t.primaryDamageClass),
     // "Buy Now only" is a headline toggle, and ~49,400 of ~147,000 lots qualify.
     // Partial index: the rows without a price are exactly the ones it must never
     // scan, and excluding them keeps it a fraction of the size.
