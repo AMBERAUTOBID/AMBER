@@ -18,7 +18,6 @@
  * so a few dozen is negligible) and zero apicars requests.
  */
 import { neon } from "@neondatabase/serverless";
-import { normalizeTitle } from "../../src/modules/inventory/model/lotNormalize";
 
 const PRODUCTION_ENDPOINT = "ep-gentle-meadow-astnmx3w";
 const mirror = process.env.DATABASE_URL_MIRROR ?? process.env.DATABASE_URL_MIRROR_UNPOOLED;

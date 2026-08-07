@@ -65,7 +65,41 @@ const SPREAD = process.env.INGEST_STRIDE !== "0";
  * statement, so batching is the difference between ~150 round trips and 15,000. */
 const DB_BATCH = 100;
 
-/** PAYG allows 5 req/s; pacing at ~2.5 leaves headroom and stays polite. */
+/**
+ * Which auction sources to mirror, pushed to the vendor rather than filtered
+ * here.
+ *
+ * Their docs: "Pass auction_names[] once per auction to query several sources at
+ * once." Requesting only COPART and IAAI means we stop downloading rows we
+ * immediately discard — Canadian lots are excluded from search permanently
+ * (their currency is mislabelled `BRL` and their odometer unit is inference, not
+ * data), and Emirates is not inventory we ship to Europe.
+ *
+ * VERIFIED 2026-08-07, because `updated_at_from` taught us this vendor accepts a
+ * parameter, returns 200 and silently ignores it. Measured by comparing
+ * `pagination.total`: unfiltered 144,563 · ["COPART","IAAI"] 138,729 ·
+ * ["IAAI"] 73,192. It filters, and on exact match — the CANADA variants are
+ * excluded, not prefix-matched. Saves ~117 pages a sweep.
+ *
+ * The SQL exclusion in postgresSource stays regardless. It is what actually
+ * guarantees a Canadian lot never reaches a visitor; this only avoids fetching
+ * rows we would discard. Belt and braces, in that order.
+ *
+ * ONE CONSEQUENCE TO KNOW: rows ingested before this filter existed will stop
+ * being re-stamped, so the disappearance logic will eventually mark them gone —
+ * not because they left the auction, but because we stopped asking about them.
+ * Harmless while those rows are Canadian (permanently hidden anyway), but it
+ * means "gone" carries two meanings for exactly that set. Clean them out once
+ * rather than reason about it later.
+ *
+ * Set INGEST_AUCTION_NAMES="" to mirror every source.
+ */
+const AUCTION_NAMES = (process.env.INGEST_AUCTION_NAMES ?? "COPART,IAAI")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+/** Active Lots Pro allows 3 req/s; pacing at ~2.5 leaves headroom. */
 const REQUEST_SPACING_MS = 400;
 
 const token = process.env.APICARS_API_TOKEN;
@@ -95,17 +129,54 @@ interface Page {
   total: number | null;
 }
 
+/**
+ * How long to wait before retrying, preferring the server's own instruction.
+ *
+ * Their docs are explicit that a 429 must "honor Retry-After", and guessing
+ * instead is how a sweep gets throttled harder: back off too little and every
+ * retry is rejected too, burning the rate limit that caused the problem.
+ *
+ * Accepts both forms the header allows — a seconds count or an HTTP date — and
+ * caps the result, so a malformed or hostile value cannot park the sweep for
+ * hours.
+ */
+function retryDelayMs(res: Response, attempt: number): number {
+  const MAX_WAIT = 60_000;
+  const header = res.headers.get("retry-after");
+
+  if (header) {
+    const seconds = Number(header.trim());
+    if (Number.isFinite(seconds) && seconds >= 0) {
+      return Math.min(seconds * 1000, MAX_WAIT);
+    }
+    const when = Date.parse(header);
+    if (!Number.isNaN(when)) {
+      const delta = when - Date.now();
+      if (delta > 0) return Math.min(delta, MAX_WAIT);
+    }
+  }
+
+  // No usable header: linear back-off, which is fine for a transient 5xx.
+  return attempt * 2000;
+}
+
 async function fetchPage(page: number, attempt = 1): Promise<Page> {
   const res = await fetch("https://apicars.auction/api/v2/get-active-lots", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ per_page: PER_PAGE, page }),
+    body: JSON.stringify({
+      per_page: PER_PAGE,
+      page,
+      // Ask the vendor to filter sources rather than downloading rows we discard.
+      ...(AUCTION_NAMES.length > 0 ? { auction_names: AUCTION_NAMES } : {}),
+    }),
   });
 
   // A rate limit or a blip should cost a pause, not the whole sweep.
   if ((res.status === 429 || res.status >= 500) && attempt <= 3) {
-    const wait = attempt * 2000;
-    console.log(`  page ${page}: ${res.status}, retrying in ${wait}ms (attempt ${attempt})`);
+    const wait = retryDelayMs(res, attempt);
+    const source = res.headers.get("retry-after") ? "Retry-After" : "back-off";
+    console.log(`  page ${page}: ${res.status}, waiting ${wait}ms per ${source} (attempt ${attempt})`);
     await sleep(wait);
     return fetchPage(page, attempt + 1);
   }
