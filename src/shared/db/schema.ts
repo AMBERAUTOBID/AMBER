@@ -541,6 +541,18 @@ export const auctionLots = pgTable(
      */
     primaryDamageClass: text("primary_damage_class"),
     secondaryDamageClass: text("secondary_damage_class"),
+    /**
+     * Paint colour, from 58 raw values. `WHITE` (15,413) and `White` (15,303)
+     * were one filter option pretending to be two. Also folds `Grey` into
+     * `Gray`, the truncated `SILVE` into silver, and every shade of blue into
+     * blue. NULL for the 212 lots whose colour field says `BURN` — that is a
+     * burned car, not a paint colour, and the damage columns already say so.
+     */
+    colorClass: text("color_class"),
+    /** automatic | manual. `Automatic` (66,425) and `AUTOMATIC` (59,178) split
+     * 125,000 lots across two identical options. CVT counts as automatic (no
+     * clutch pedal); `BOTH AUTOMATED MANUAL` counts as neither. */
+    transmissionClass: text("transmission_class"),
 
     /**
      * Everything a person might type, as one searchable document.

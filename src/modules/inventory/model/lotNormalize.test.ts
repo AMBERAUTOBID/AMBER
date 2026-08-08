@@ -3,11 +3,13 @@ import {
   isEnhanced,
   normalizeBodyType,
   normalizeCondition,
+  normalizeColor,
   normalizeCylinders,
   normalizeDamage,
   normalizeDrive,
   normalizeFuel,
   normalizeTitle,
+  normalizeTransmission,
   normalizeVehicleClass,
   parseEngineCc,
 } from "./lotNormalize";
@@ -283,6 +285,135 @@ describe("normalizeBodyType", () => {
     expect(normalizeBodyType("N/A")).toBeNull();
     expect(normalizeBodyType(null)).toBeNull();
     expect(normalizeBodyType("Utility")).toBeNull();
+  });
+});
+
+/**
+ * The complete colour vocabulary — all 58 distinct `color` values over 134,647
+ * mirrored rows, read with scripts/ingest/values.ts. Same exhaustive-by-
+ * construction rule as the damage table below.
+ */
+const COLOR_VOCABULARY: Array<[string, ReturnType<typeof normalizeColor>]> = [
+  ["WHITE", "white"], // 15413
+  ["White", "white"], // 15303 — the same colour, twice in the filter
+  ["Black", "black"], // 15262
+  ["BLACK", "black"], // 12927
+  ["Gray", "gray"], // 11879
+  ["GRAY", "gray"], // 8697
+  ["Grey", "gray"], // 114 — British spelling, in the same catalogue
+  ["CHARCOAL", "gray"], // 1451
+  ["Pewter", "gray"], // 71
+  ["Silver", "silver"], // 8169
+  ["SILVER", "silver"], // 7577
+  ["SILVE", "silver"], // 2 — truncated in the source data
+  ["BLUE", "blue"], // 6290
+  ["Blue", "blue"], // 6127
+  ["Dark Blue", "blue"], // 637
+  ["Light Blue", "blue"], // 525
+  ["Navy", "blue"], // 126
+  ["Red", "red"], // 5080
+  ["RED", "red"], // 3886
+  ["Candy Apple Red", "red"], // 3
+  ["CRIMSON", "red"], // 2
+  ["Green", "green"], // 1287
+  ["GREEN", "green"], // 997
+  ["BURGUNDY", "burgundy"], // 1008
+  ["Burgundy", "burgundy"], // 814
+  ["Maroon", "burgundy"], // 680
+  ["MAROON", "burgundy"], // 497
+  ["Brown", "brown"], // 880
+  ["BROWN", "brown"], // 559
+  ["Dark Brown", "brown"], // 43
+  ["TAN", "beige"], // 687
+  ["Tan", "beige"], // 426
+  ["Beige", "beige"], // 498
+  ["BEIGE", "beige"], // 444
+  ["Cream", "beige"], // 157
+  ["CREAM", "beige"], // 155
+  ["Champagne", "beige"], // 201
+  ["Gold", "gold"], // 750
+  ["GOLD", "gold"], // 490
+  ["YELLOW", "yellow"], // 603
+  ["Yellow", "yellow"], // 191
+  ["Orange", "orange"], // 400
+  ["ORANGE", "orange"], // 361
+  ["Purple", "purple"], // 181
+  ["PURPLE", "purple"], // 115
+  ["TEAL", "teal"], // 134
+  ["Teal", "teal"], // 103
+  ["TURQUOISE", "teal"], // 79
+  ["Turquoise", "teal"], // 42
+  ["Pink", "pink"], // 20
+  ["PINK", "pink"], // 11
+  ["TWO TONE", "other"], // 430 — a real answer meaning "more than one"
+  ["Multi", "other"], // 1
+  ["BURN", null], // 212 — a burned car, NOT a paint colour
+  ["- Unknown -", null], // 15
+  ["- N/A -", null], // 8
+  ["UNKNOWN - NOT OK FOR INV.", null], // 8
+  ["Unknown", null], // 3
+];
+
+describe("normalizeColor", () => {
+  it("classifies every colour measured in the catalogue", () => {
+    for (const [raw, expected] of COLOR_VOCABULARY) {
+      expect(normalizeColor(raw), `${raw} should map to ${expected}`).toBe(expected);
+    }
+  });
+
+  it("covers the whole measured vocabulary exactly once", () => {
+    const raws = COLOR_VOCABULARY.map(([raw]) => raw);
+    expect(new Set(raws).size, "a value is listed twice").toBe(raws.length);
+    expect(raws.length).toBe(58);
+  });
+
+  it("folds case, spelling and truncation", () => {
+    // 30,716 lots were about to show as two separate "white" options.
+    expect(normalizeColor("WHITE")).toBe(normalizeColor("White"));
+    // British and American spelling, both real here.
+    expect(normalizeColor("Grey")).toBe(normalizeColor("Gray"));
+    // The source truncates, exactly as it does with "Sport Utility Vehicl".
+    expect(normalizeColor("SILVE")).toBe(normalizeColor("SILVER"));
+  });
+
+  it("refuses to read a burned car as a paint colour", () => {
+    // Copart puts BURN in the colour field on 212 lots. We do not know the
+    // paint, and "other" would imply we did. The damage columns already record
+    // that it burned.
+    expect(normalizeColor("BURN")).toBeNull();
+  });
+
+  it("returns null rather than a default bucket", () => {
+    expect(normalizeColor(null)).toBeNull();
+    expect(normalizeColor("")).toBeNull();
+    expect(normalizeColor("Aubergine")).toBeNull();
+  });
+});
+
+describe("normalizeTransmission", () => {
+  it("folds the two spellings that would have split 125,000 lots", () => {
+    expect(normalizeTransmission("Automatic")).toBe("automatic"); // 66425
+    expect(normalizeTransmission("AUTOMATIC")).toBe("automatic"); // 59178
+    expect(normalizeTransmission("Automatic Transmission")).toBe("automatic"); // 1
+    expect(normalizeTransmission("ECVT AUTOMATIC")).toBe("automatic"); // 13
+    expect(normalizeTransmission("MANUAL")).toBe("manual"); // 1920
+    expect(normalizeTransmission("Manual")).toBe("manual"); // 1478
+  });
+
+  it("counts a CVT as automatic, because there is no clutch pedal", () => {
+    expect(normalizeTransmission("CVT")).toBe("automatic"); // 38
+  });
+
+  it("refuses to file an automated manual as either", () => {
+    // It sits between the two and calling it either would be a guess. 5 lots.
+    expect(normalizeTransmission("BOTH AUTOMATED MANUAL")).toBeNull();
+  });
+
+  it("returns null for the auctions' non-answers", () => {
+    expect(normalizeTransmission("Unknown")).toBeNull(); // 1908
+    expect(normalizeTransmission("UNKNOWN")).toBeNull(); // 127
+    expect(normalizeTransmission("NONE")).toBeNull(); // 190
+    expect(normalizeTransmission(null)).toBeNull();
   });
 });
 

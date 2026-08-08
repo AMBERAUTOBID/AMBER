@@ -32,11 +32,13 @@ import {
   isEnhanced,
   normalizeBodyType,
   normalizeCondition,
+  normalizeColor,
   normalizeCylinders,
   normalizeDamage,
   normalizeDrive,
   normalizeFuel,
   normalizeTitle,
+  normalizeTransmission,
   normalizeVehicleClass,
   parseEngineCc,
 } from "../../src/modules/inventory/model/lotNormalize";
@@ -74,6 +76,8 @@ interface SourceRow {
   cylinders: string | null;
   primary_damage: string | null;
   secondary_damage: string | null;
+  color: string | null;
+  transmission: string | null;
 }
 
 async function main() {
@@ -96,7 +100,7 @@ async function main() {
   for (;;) {
     const rows = await raw<SourceRow>(
       `select id, vehicle_type, body_style, fuel, drive, doc_type, highlights, engine_type, cylinders,
-              primary_damage, secondary_damage
+              primary_damage, secondary_damage, color, transmission
        from auction_lots
        where id > $1 ${ALL ? "" : "and vehicle_class is null and body_type is null and title_class is null"}
        order by id
@@ -123,9 +127,11 @@ async function main() {
         parseEngineCc(r.engine_type),
         normalizeCylinders(r.cylinders),
         normalizeDamage(r.primary_damage),
-        normalizeDamage(r.secondary_damage)
+        normalizeDamage(r.secondary_damage),
+        normalizeColor(r.color),
+        normalizeTransmission(r.transmission)
       );
-      return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},$${base + 10},$${base + 11},$${base + 12})`;
+      return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},$${base + 10},$${base + 11},$${base + 12},$${base + 13},$${base + 14})`;
     });
 
     await raw(
@@ -141,11 +147,13 @@ async function main() {
          cylinder_count         = v.cylinder_count::integer,
          primary_damage_class   = v.primary_damage_class::text,
          secondary_damage_class = v.secondary_damage_class::text,
+         color_class            = v.color_class::text,
+         transmission_class     = v.transmission_class::text,
          updated_at             = now()
        from (values ${tuples.join(",")}) as v(
          id, vehicle_class, body_type, fuel_class, drive_class,
          title_class, condition_class, is_enhanced, engine_cc, cylinder_count,
-         primary_damage_class, secondary_damage_class
+         primary_damage_class, secondary_damage_class, color_class, transmission_class
        )
        where t.id = v.id::uuid`,
       params

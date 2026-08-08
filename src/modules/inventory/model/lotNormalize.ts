@@ -302,6 +302,114 @@ export function normalizeBodyType(raw: string | null | undefined): BodyType | nu
   return null;
 }
 
+// ── colour ───────────────────────────────────────────────────────────────────
+
+export type ColorClass =
+  | "white"
+  | "black"
+  | "gray"
+  | "silver"
+  | "blue"
+  | "red"
+  | "green"
+  | "brown"
+  | "beige"
+  | "gold"
+  | "burgundy"
+  | "yellow"
+  | "orange"
+  | "purple"
+  | "teal"
+  | "pink"
+  | "other";
+
+/**
+ * Paint colour, folded from 58 distinct raw values over 134,647 lots.
+ *
+ * Same duplicate-options problem as damage, and just as large: `WHITE` (15,413)
+ * and `White` (15,303) are one colour, as are `BLACK` (12,927) and `Black`
+ * (15,262). Three traps beyond simple case:
+ *
+ *  - **`Grey` and `Gray` both occur.** British and American spelling in the same
+ *    catalogue, 114 lots on the British one.
+ *  - **`SILVE` is truncated `SILVER`** in the source data, the same corruption
+ *    that produced `Sport Utility Vehicl` in body style. Matched on the stem.
+ *  - **`BURN` (212 lots) IS NOT A COLOUR.** It is a burned car, described in the
+ *    colour field. It returns null — we do not know the paint, and saying
+ *    "other" would imply we had an answer. The damage columns already carry the
+ *    fact that it burned.
+ *
+ * Shades fold into their parent — `Dark Blue`, `Light Blue` and `Navy` are all
+ * `blue` — for the same reason damage corners fold into sides: somebody
+ * filtering for a blue car wants all of them.
+ */
+export function normalizeColor(raw: string | null | undefined): ColorClass | null {
+  const s = upper(raw);
+  if (!s) return null;
+
+  // `- Unknown -`, `- N/A -`, `UNKNOWN - NOT OK FOR INV.`
+  if (s.includes("UNKNOWN") || s.includes("N/A")) return null;
+  // See the note above: a burned car, not a paint colour.
+  if (s === "BURN") return null;
+  // Genuine answers meaning "more than one".
+  if (s.includes("TWO TONE") || s.includes("MULTI")) return "other";
+
+  if (s.includes("WHITE")) return "white";
+  if (s.includes("BLACK")) return "black";
+  // Stem, so the truncated `SILVE` lands with `SILVER`.
+  if (s.includes("SILVE")) return "silver";
+  // Charcoal and pewter are both greys by any useful definition.
+  if (s.includes("GRAY") || s.includes("GREY") || s.includes("CHARCOAL") || s.includes("PEWTER")) {
+    return "gray";
+  }
+  if (s.includes("BLUE") || s.includes("NAVY")) return "blue";
+  // Before red: burgundy and maroon are their own bucket at ~3,000 lots, and
+  // neither string contains RED, so the order is for the reader, not the parser.
+  if (s.includes("BURGUNDY") || s.includes("MAROON")) return "burgundy";
+  if (s.includes("RED") || s.includes("CRIMSON")) return "red";
+  if (s.includes("GREEN")) return "green";
+  if (s.includes("TURQUOISE") || s.includes("TEAL")) return "teal";
+  if (s.includes("BROWN")) return "brown";
+  // The pale neutrals, which no buyer distinguishes on a filter.
+  if (s.includes("TAN") || s.includes("BEIGE") || s.includes("CREAM") || s.includes("CHAMPAGNE")) {
+    return "beige";
+  }
+  if (s.includes("GOLD")) return "gold";
+  if (s.includes("YELLOW")) return "yellow";
+  if (s.includes("ORANGE")) return "orange";
+  if (s.includes("PURPLE")) return "purple";
+  if (s.includes("PINK")) return "pink";
+  return null;
+}
+
+// ── transmission ─────────────────────────────────────────────────────────────
+
+export type TransmissionClass = "automatic" | "manual";
+
+/**
+ * Two buckets, because that is the question a buyer asks.
+ *
+ * `Automatic` (66,425) and `AUTOMATIC` (59,178) are the same gearbox and were
+ * about to appear as two filter options over 125,000 lots.
+ *
+ * CVT counts as automatic: there is no clutch pedal, which is what the filter
+ * means. `BOTH AUTOMATED MANUAL` deliberately does NOT — an automated manual
+ * sits between the two and calling it either would be a guess, so those 5 lots
+ * return null and stay unfiltered rather than wrongly filed.
+ */
+export function normalizeTransmission(raw: string | null | undefined): TransmissionClass | null {
+  const s = upper(raw);
+  if (!s) return null;
+  if (s.includes("UNKNOWN") || s === "NONE" || s.includes("N/A")) return null;
+  // Checked before both AUTOMATIC and MANUAL, since it contains one and means
+  // neither.
+  if (s.includes("AUTOMATED MANUAL")) return null;
+  // `ECVT AUTOMATIC` and `Automatic Transmission` both land here.
+  if (s.includes("AUTOMATIC") || s.includes("CVT")) return "automatic";
+  if (s.includes("MANUAL")) return "manual";
+  return null;
+}
+
 // ── damage ───────────────────────────────────────────────────────────────────
 
 export type DamageClass =

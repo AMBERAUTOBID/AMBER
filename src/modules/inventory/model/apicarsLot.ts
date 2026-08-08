@@ -18,11 +18,13 @@ import {
   isEnhanced,
   normalizeBodyType,
   normalizeCondition,
+  normalizeColor,
   normalizeCylinders,
   normalizeDamage,
   normalizeDrive,
   normalizeFuel,
   normalizeTitle,
+  normalizeTransmission,
   normalizeVehicleClass,
   parseEngineCc,
 } from "./lotNormalize";
@@ -88,6 +90,8 @@ export interface AuctionLotRow {
   cylinderCount: number | null;
   primaryDamageClass: string | null;
   secondaryDamageClass: string | null;
+  colorClass: string | null;
+  transmissionClass: string | null;
 }
 
 export interface AuctionLotImageRow {
@@ -400,6 +404,8 @@ export function mapApicarsLot(raw: unknown): MappedLot {
     // Both damage fields share one vocabulary, so one function classifies both.
     primaryDamageClass: normalizeDamage(text(r.primary_damage)),
     secondaryDamageClass: normalizeDamage(text(r.secondary_damage)),
+    colorClass: normalizeColor(text(r.color)),
+    transmissionClass: normalizeTransmission(text(r.transmission)),
   };
 
   const images: AuctionLotImageRow[] = [];
