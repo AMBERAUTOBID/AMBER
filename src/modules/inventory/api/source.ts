@@ -52,7 +52,30 @@ export interface AuctionSource {
   getVehicleDetail(vinOrLot: string): Promise<VehicleDetailResponse>;
 
   getRelatedVehicles(vinOrLot: string): Promise<RelatedVehiclesResponse>;
+
+  /**
+   * How many lots each filter option would return, given everything else the
+   * visitor has already chosen.
+   *
+   * OPTIONAL ON PURPOSE, and the one method Apibara can never implement: its
+   * `filters` response field is an echo of the request, and its `meta` carries no
+   * total at all. Owning the rows is what makes "Salvage (43,636)" possible, so
+   * a caller must check for the method rather than assume it.
+   *
+   * Kept off `searchVehicles` so an ordinary search does not pay for counts it
+   * will not render.
+   */
+  getFacets?(params: VehicleSearchParams, typeValues?: string[]): Promise<SearchFacets>;
 }
+
+/**
+ * Counts per option, keyed by filter dimension:
+ * `{ fuel: [{ value: "gasoline", count: 93854 }, ...], ... }`.
+ *
+ * Values are the normalised class strings the filters accept, so a UI can feed
+ * one straight back as `fuel=<value>` without a translation table.
+ */
+export type SearchFacets = Record<string, Array<{ value: string; count: number }>>;
 
 export type AuctionSourceName = "apibara" | "postgres";
 

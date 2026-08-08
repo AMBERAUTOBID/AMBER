@@ -135,14 +135,67 @@ export interface VehicleSearchParams {
   type?: string;
   make?: string;
   model?: string;
+  /**
+   * Current bid, in whole currency units.
+   *
+   * DELIBERATELY NOT ONE GENERIC "price". Only 25.4% of searchable lots carry a
+   * current bid and 37.0% a buy-now price, so a single combined filter would
+   * silently hide most of the catalogue — the same trap as `vehicle_type`, which
+   * covers 9.3% and would have hidden 90% of inventory had it driven the
+   * category tabs. Two explicit ranges instead, matching the two figures the lot
+   * card already shows, so a visitor filters on a number they can see.
+   *
+   * A lot with no bid is excluded when this is set: we cannot claim an unknown
+   * price falls in the requested range.
+   */
   price_min?: number;
   price_max?: number;
+  buy_now_min?: number;
+  buy_now_max?: number;
   year_from?: number;
   year_to?: number;
   odometer_from?: number;
   odometer_to?: number;
-  run_cond?: string;
+  /** Engine displacement in cc — 2.0L is 2000. Integers, because a range filter
+   * comparing floats drops boundary matches. 92.5% populated. */
+  engine_from?: number;
+  engine_to?: number;
+  /** ISO instants bounding the auction date. 100% populated; the catalogue
+   * currently spans about three weeks ahead. */
+  sale_date_from?: string;
+  sale_date_to?: string;
+
+  /**
+   * The categorical filters, each a comma-separated list of normalised class
+   * values — `fuel=gasoline,diesel`. Multi-select is the point: a buyer willing
+   * to accept a clean OR a rebuildable title must be able to say so.
+   *
+   * An unrecognised value matches nothing rather than being dropped. Returning
+   * zero for `fuel=banana` is honest; ignoring the filter and showing petrol
+   * cars is not.
+   */
+  fuel?: string;
+  drive?: string;
+  body_type?: string;
+  title?: string;
+  color?: string;
+  transmission?: string;
+  /** Primary damage classes. */
   damage?: string;
+  secondary_damage?: string;
+  /** Run condition: run_and_drive | starts | stationary. */
+  run_cond?: string;
+  /** Cylinder counts, e.g. `4,6,8`. */
+  cylinders?: string;
+  /** `insurance` | `non_insurance`. Only 62.9% populated, so this narrows hard
+   * and the UI should say so. */
+  seller?: string;
+  /** `yes` | `no`. 100% populated. */
+  keys?: string;
+  /** Copart's cosmetic-preparation flag. NOT a run condition and never a promise
+   * the work happened — see `isEnhanced` in lotNormalize. */
+  enhanced?: boolean;
+
   lot_status?: LotStatus;
   cursor?: string;
   per_page?: number;

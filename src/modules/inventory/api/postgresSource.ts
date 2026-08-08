@@ -23,7 +23,7 @@
 import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 import { apibaraSource } from "./apibaraSource";
-import type { AuctionSource } from "./source";
+import type { AuctionSource, SearchFacets } from "./source";
 import type { VehicleDetailResponse, VehicleSearchParams, VehicleSearchResponse } from "./types";
 import { mirrorRowToVehicleListItem, type MirrorImageRow } from "../model/mirrorLot";
 
@@ -114,6 +114,47 @@ export function resetActiveSetCutoffCache(): void {
 }
 
 /**
+ * A comma-separated multi-select value, e.g. `fuel=gasoline,diesel`.
+ *
+ * Lower-cased because the class columns hold lower-case values, and empty
+ * segments are dropped so a trailing comma is harmless. Returns undefined for an
+ * empty list, which callers read as "filter not set".
+ *
+ * Unrecognised values are deliberately KEPT: `inArray` simply matches nothing,
+ * so `fuel=banana` yields zero results. That is honest. Filtering the unknown
+ * value out instead would silently ignore what the visitor asked for and show
+ * them petrol cars.
+ */
+function multi(v: string | number | boolean | undefined): string[] | undefined {
+  if (typeof v !== "string") return undefined;
+  const parts = v
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.length > 0);
+  return parts.length > 0 ? parts : undefined;
+}
+
+/** The same, for the numeric multi-selects — cylinder counts. Non-numeric
+ * segments are dropped here rather than kept, because there is no integer to
+ * compare them against. */
+function multiInt(v: string | number | boolean | undefined): number[] | undefined {
+  if (typeof v !== "string" && typeof v !== "number") return undefined;
+  const parts = String(v)
+    .split(",")
+    .map((s) => Number(s.trim()))
+    .filter((n) => Number.isFinite(n));
+  return parts.length > 0 ? parts : undefined;
+}
+
+/** A date bound from the query string. Invalid input returns undefined so the
+ * filter is skipped — a typo in a URL must not throw and blank the search page. */
+function parseInstant(v: string | number | boolean | undefined): Date | undefined {
+  if (typeof v !== "string" || v.trim().length === 0) return undefined;
+  const ms = Date.parse(v);
+  return Number.isNaN(ms) ? undefined : new Date(ms);
+}
+
+/**
  * Translates the aggregator's `type` vocabulary into our normalised columns.
  *
  * The search page's category picker still speaks in Apibara type strings
@@ -192,6 +233,65 @@ function buildWhere(
   if (params.year_to !== undefined) conditions.push(lte(t.year, params.year_to));
   if (params.odometer_from !== undefined) conditions.push(gte(t.odometer, params.odometer_from));
   if (params.odometer_to !== undefined) conditions.push(lte(t.odometer, params.odometer_to));
+  if (params.engine_from !== undefined) conditions.push(gte(t.engineCc, params.engine_from));
+  if (params.engine_to !== undefined) conditions.push(lte(t.engineCc, params.engine_to));
+
+  // Money arrives in whole units and is stored in cents. Two separate ranges
+  // rather than one "price" — see the note on VehicleSearchParams: a lot with no
+  // bid is excluded when a bid range is set, because an unknown price cannot be
+  // claimed to fall inside it.
+  if (params.price_min !== undefined) conditions.push(gte(t.currentBidCents, params.price_min * 100));
+  if (params.price_max !== undefined) conditions.push(lte(t.currentBidCents, params.price_max * 100));
+  if (params.buy_now_min !== undefined) conditions.push(gte(t.buyNowCents, params.buy_now_min * 100));
+  if (params.buy_now_max !== undefined) conditions.push(lte(t.buyNowCents, params.buy_now_max * 100));
+
+  // Auction date. Parsed defensively: a malformed value must narrow nothing
+  // rather than throw and take the whole search page down.
+  const saleFrom = parseInstant(params.sale_date_from);
+  const saleTo = parseInstant(params.sale_date_to);
+  if (saleFrom) conditions.push(gte(t.saleDate, saleFrom));
+  if (saleTo) conditions.push(lte(t.saleDate, saleTo));
+
+  // ── the categorical filters ──────────────────────────────────────────────
+  //
+  // Every one of these reads a NORMALISED class column, never the raw string.
+  // That is the whole point of the normalisers: filtering on raw `color` would
+  // mean `WHITE` and `White` are different options over 30,716 lots.
+  const fuel = multi(params.fuel);
+  if (fuel) conditions.push(inArray(t.fuelClass, fuel));
+  const drive = multi(params.drive);
+  if (drive) conditions.push(inArray(t.driveClass, drive));
+  const bodyType = multi(params.body_type);
+  if (bodyType) conditions.push(inArray(t.bodyType, bodyType));
+  const title = multi(params.title);
+  if (title) conditions.push(inArray(t.titleClass, title));
+  const color = multi(params.color);
+  if (color) conditions.push(inArray(t.colorClass, color));
+  const transmission = multi(params.transmission);
+  if (transmission) conditions.push(inArray(t.transmissionClass, transmission));
+  const damage = multi(params.damage);
+  if (damage) conditions.push(inArray(t.primaryDamageClass, damage));
+  const secondaryDamage = multi(params.secondary_damage);
+  if (secondaryDamage) conditions.push(inArray(t.secondaryDamageClass, secondaryDamage));
+  const runCond = multi(params.run_cond);
+  if (runCond) conditions.push(inArray(t.conditionClass, runCond));
+
+  const cylinders = multiInt(params.cylinders);
+  if (cylinders) conditions.push(inArray(t.cylinderCount, cylinders));
+
+  // `is_insurance` carries seller TYPE, not a seller name — the name field was
+  // null on every lot sampled. 62.9% populated, so either choice narrows hard
+  // and the 37% we cannot classify are excluded rather than guessed at.
+  if (params.seller === "insurance") conditions.push(eq(t.isInsurance, true));
+  if (params.seller === "non_insurance") conditions.push(eq(t.isInsurance, false));
+
+  if (params.keys === "yes") conditions.push(eq(t.hasKeys, true));
+  if (params.keys === "no") conditions.push(eq(t.hasKeys, false));
+
+  // Only ever used to narrow TO enhanced lots. `enhanced=false` would otherwise
+  // read as "not cosmetically prepared", which the flag does not establish —
+  // its absence means unknown, not no.
+  if (params.enhanced === true) conditions.push(eq(t.isEnhanced, true));
 
   // Buy Now means "has a buy-now price", which is what the competitor's toggle
   // does and what a visitor expects. Backed by a partial index on exactly these
@@ -262,6 +362,106 @@ function buildWhere(
 
 async function searchVehicles(params: VehicleSearchParams): Promise<VehicleSearchResponse> {
   return runSearch(params);
+}
+
+/**
+ * Each facet dimension: the response key, its normalised column, and the search
+ * param that filters it.
+ *
+ * Every column here is a CLASS column, never a raw one. Counting raw `color`
+ * would report `WHITE` 15,413 and `White` 15,303 as two separate options over
+ * the same 30,716 cars — the exact bug the normalisers exist to prevent, and the
+ * reason facets waited until they were in place.
+ */
+const FACET_DIMENSIONS = [
+  { key: "fuel", column: "fuel_class", param: "fuel" },
+  { key: "drive", column: "drive_class", param: "drive" },
+  { key: "body_type", column: "body_type", param: "body_type" },
+  { key: "title", column: "title_class", param: "title" },
+  { key: "color", column: "color_class", param: "color" },
+  { key: "transmission", column: "transmission_class", param: "transmission" },
+  { key: "damage", column: "primary_damage_class", param: "damage" },
+  { key: "secondary_damage", column: "secondary_damage_class", param: "secondary_damage" },
+  { key: "run_cond", column: "condition_class", param: "run_cond" },
+  { key: "cylinders", column: "cylinder_count", param: "cylinders" },
+  { key: "vehicle_class", column: "vehicle_class", param: "" },
+  { key: "platform", column: "platform", param: "platform" },
+] as const;
+
+/**
+ * One scan, every dimension, via GROUPING SETS.
+ *
+ * The obvious alternative — a UNION ALL of ten GROUP BY queries — reads more
+ * simply and scans the table ten times. Over 117,747 rows on a 0.25 CU compute
+ * that difference is the whole cost of the feature.
+ *
+ * Rows whose grouped value is NULL are dropped rather than reported. That is
+ * both what we want (a filter should not offer "unknown" as an option) and what
+ * makes the parsing safe: within a grouping set every OTHER dimension column is
+ * NULL by definition, so exactly one non-null column identifies the row.
+ */
+async function facetCounts(
+  where: ReturnType<typeof buildWhere>,
+  dimensions: ReadonlyArray<{ key: string; column: string }>
+): Promise<SearchFacets> {
+  const columns = sql.raw(dimensions.map((d) => `"${d.column}"`).join(", "));
+  const sets = sql.raw(dimensions.map((d) => `("${d.column}")`).join(", "));
+
+  const result = await db().execute(sql`
+    select ${columns}, count(*)::int as n
+    from auction_lots
+    where ${where}
+    group by grouping sets (${sets})
+  `);
+  const rows = (Array.isArray(result) ? result : ((result as { rows?: unknown[] }).rows ?? [])) as Array<
+    Record<string, unknown>
+  >;
+
+  const out: SearchFacets = {};
+  for (const d of dimensions) out[d.key] = [];
+  for (const row of rows) {
+    for (const d of dimensions) {
+      const v = row[d.column];
+      if (v === null || v === undefined) continue;
+      out[d.key].push({ value: String(v), count: Number(row.n) });
+      break; // exactly one dimension is non-null per row
+    }
+  }
+  for (const d of dimensions) out[d.key].sort((a, b) => b.count - a.count);
+  return out;
+}
+
+/**
+ * Facet counts for the current search.
+ *
+ * A dimension the visitor has ALREADY filtered is recounted with its own filter
+ * removed. Without that, selecting `fuel=diesel` would make the fuel facet
+ * report only diesel and there would be no way to discover how many petrol cars
+ * the rest of the filters allow — the multi-select would be a one-way door.
+ *
+ * Costs one query plus one per actively-filtered dimension. Visitors rarely set
+ * more than a few, so this is typically two or three round trips rather than the
+ * thirteen a naive exclude-everything implementation would need.
+ */
+async function getFacets(
+  params: VehicleSearchParams,
+  typeValues?: string[]
+): Promise<SearchFacets> {
+  const activeSince = await activeSetCutoff();
+  const facets = await facetCounts(buildWhere(params, typeValues, activeSince), FACET_DIMENSIONS);
+
+  const filtered = FACET_DIMENSIONS.filter(
+    (d) => d.param !== "" && params[d.param] !== undefined && params[d.param] !== ""
+  );
+  await Promise.all(
+    filtered.map(async (d) => {
+      const without: VehicleSearchParams = { ...params, [d.param]: undefined };
+      const recounted = await facetCounts(buildWhere(without, typeValues, activeSince), [d]);
+      facets[d.key] = recounted[d.key];
+    })
+  );
+
+  return facets;
 }
 
 /**
@@ -426,4 +626,8 @@ export const postgresSource: AuctionSource = {
   // fallback here would compute a price band from almost nothing. Better to show
   // no comparables than a confident wrong range.
   getRelatedVehicles: apibaraSource.getRelatedVehicles,
+  // The one capability Apibara structurally cannot offer: its `filters` field is
+  // an echo of the request and its `meta` has no total, so "Salvage (43,636)"
+  // only became possible by owning the rows.
+  getFacets,
 };

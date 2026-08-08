@@ -163,6 +163,84 @@ async function main() {
     check(`'${junk}' returns nothing`, n === 0, `${n} rows`);
   }
 
+  // ── the filter panel ─────────────────────────────────────────────────────
+  //
+  // Each of these reads a NORMALISED class column. Filtering on the raw values
+  // would offer WHITE and White as two options over the same 30,716 cars.
+  console.log("\nfilters");
+  const filtered = async (p: Record<string, unknown>) =>
+    (await source.searchVehicles({ per_page: 1, ...p })).meta.total ?? 0;
+  const catalogue = base.meta.total ?? 0;
+
+  for (const [label, p] of [
+    ["fuel=diesel", { fuel: "diesel" }],
+    ["drive=4wd", { drive: "4wd" }],
+    ["body_type=suv", { body_type: "suv" }],
+    ["title=clean", { title: "clean" }],
+    ["color=white", { color: "white" }],
+    ["transmission=manual", { transmission: "manual" }],
+    ["damage=normal_wear", { damage: "normal_wear" }],
+    ["run_cond=run_and_drive", { run_cond: "run_and_drive" }],
+    ["cylinders=4", { cylinders: "4" }],
+    ["seller=insurance", { seller: "insurance" }],
+    ["keys=no", { keys: "no" }],
+    ["enhanced", { enhanced: true }],
+    ["engine 1500-2500cc", { engine_from: 1500, engine_to: 2500 }],
+    ["buy_now under $3000", { buy_now_max: 3000 }],
+  ] as Array<[string, Record<string, unknown>]>) {
+    const n = await filtered(p);
+    check(label, n > 0 && n < catalogue, `${n.toLocaleString()} of ${catalogue.toLocaleString()}`);
+  }
+
+  // Multi-select must widen within a dimension and narrow across dimensions.
+  const diesel = await filtered({ fuel: "diesel" });
+  const dieselOrPetrol = await filtered({ fuel: "gasoline,diesel" });
+  check("comma-separated values widen within a dimension", dieselOrPetrol > diesel, `${dieselOrPetrol} > ${diesel}`);
+  const narrowed = await filtered({ fuel: "diesel", drive: "4wd", title: "clean" });
+  check("combining dimensions narrows", narrowed < diesel, `${narrowed} < ${diesel}`);
+
+  // An unrecognised value must return nothing rather than be ignored — showing
+  // petrol cars for fuel=banana would be a filter that silently does not apply.
+  check("an unknown value returns nothing", (await filtered({ fuel: "banana" })) === 0);
+  // A malformed date must be skipped, not throw and blank the page.
+  check("a malformed date is ignored", (await filtered({ sale_date_from: "not-a-date" })) === catalogue);
+
+  // ── facet counts ─────────────────────────────────────────────────────────
+  //
+  // The number beside each option, which the aggregator structurally cannot
+  // provide: its `filters` response is an echo of the request.
+  console.log("\nfacet counts");
+  if (!source.getFacets) {
+    check("source exposes getFacets", false);
+  } else {
+    const facets = await source.getFacets({});
+    check("every dimension returns options", Object.values(facets).every((o) => o.length > 0), `${Object.keys(facets).length} dimensions`);
+
+    // A dimension summing above the catalogue means a lot was counted twice —
+    // the failure mode of misreading a GROUPING SETS result.
+    const overcounted = Object.entries(facets).filter(
+      ([, opts]) => opts.reduce((a, o) => a + o.count, 0) > catalogue
+    );
+    check("no dimension double-counts", overcounted.length === 0, overcounted.map(([d]) => d).join(", "));
+
+    // The count beside an option must be what selecting it actually returns,
+    // or the panel is lying about inventory.
+    for (const dim of ["fuel", "title", "color"] as const) {
+      const top = facets[dim]?.[0];
+      if (!top) continue;
+      const actual = await filtered({ [dim]: top.value });
+      check(`${dim}=${top.value} count matches the search`, actual === top.count, `facet ${top.count} vs search ${actual}`);
+    }
+
+    // With a fuel chosen, the fuel facet must still offer the others — else the
+    // multi-select is a one-way door out of which a visitor cannot click.
+    const withDiesel = await source.getFacets({ fuel: "diesel" });
+    check("a selected dimension still offers its alternatives", (withDiesel.fuel?.length ?? 0) > 1, `${withDiesel.fuel?.length} fuels still listed`);
+    const all4wd = facets.drive?.find((o) => o.value === "4wd")?.count ?? 0;
+    const diesel4wd = withDiesel.drive?.find((o) => o.value === "4wd")?.count ?? 0;
+    check("unselected dimensions reflect the selection", diesel4wd < all4wd, `4wd ${all4wd} -> ${diesel4wd}`);
+  }
+
   // ── card fields the UI reads ─────────────────────────────────────────────
   console.log("\ncard fields LotCard reads");
   const withTitle = base.data.filter((v) => v.title && v.title.length > 3).length;
