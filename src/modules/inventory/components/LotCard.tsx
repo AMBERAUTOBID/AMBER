@@ -1,6 +1,7 @@
 import { MapPin, Gauge } from "@phosphor-icons/react/dist/ssr";
 import { Link } from "@/i18n/navigation";
 import type { VehicleListItem } from "@/modules/inventory/api";
+import { formatOdometer } from "@/modules/inventory/model/formatOdometer";
 
 /** Lots that haven't been bid on yet come back as 0, not null - printing
  * "$0" would read as a price rather than as "no bids yet". */
@@ -41,6 +42,7 @@ export default function LotCard({
     formatPrice(vehicle.pricing?.current_bid_usd) ??
     formatPrice(vehicle.pricing?.buy_now_usd) ??
     labels.priceNA;
+  const odometerLabel = formatOdometer(vehicle.odometer);
 
   return (
     // The wrapper carries the hover treatment and `group`, so hovering the
@@ -74,10 +76,13 @@ export default function LotCard({
               <MapPin size={13} /> {vehicle.location.display}
             </span>
           )}
-          {/* 0 is how an unreported reading arrives, not a real mileage. */}
-          {typeof vehicle.odometer?.mi === "number" && vehicle.odometer.mi > 0 && (
+          {/* Miles with kilometres beside them: the auctions publish miles, the
+              buyer thinks in kilometres. A zero or one-mile reading is printed
+              rather than hidden — it is what the auction recorded, and 12,656
+              searchable lots read one or the other. */}
+          {odometerLabel && (
             <span className="inline-flex items-center gap-1">
-              <Gauge size={13} /> {vehicle.odometer.mi.toLocaleString()} mi
+              <Gauge size={13} /> {odometerLabel}
             </span>
           )}
         </div>
