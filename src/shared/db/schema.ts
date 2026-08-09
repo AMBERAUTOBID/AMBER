@@ -792,3 +792,394 @@ export const auctionSalesHistory = pgTable(
     index("auction_sales_make_model_year_idx").on(t.make, t.model, t.year),
   ]
 );
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Vehicle case files — Phase 2.4, the `/account/orders` slot
+//
+// One won auction becomes one `vehicle_orders` row, and everything an admin
+// adds afterwards hangs off it: a timeline of shipping stages, the files at
+// each stage, what the car costs and what has been paid.
+//
+// Three rules run through all five tables:
+//
+// 1. **The order is a SNAPSHOT, never a reference to a live lot.** A year
+//    after delivery the lot is gone from Copart, from the mirror's active set
+//    and from every vendor, but the client still owns the car and still wants
+//    to see what they bought. Same reasoning as `favorites`, with a longer
+//    horizon.
+// 2. **Everything a client can see carries `visibleToClient`.** An admin needs
+//    somewhere honest to write "damage found at the yard, call before telling
+//    them" — without it that note goes to WhatsApp and this record rots into a
+//    half-truth. Defaults differ on purpose and are stated per table.
+// 3. **Money keeps its own currency per row.** The auction is USD; EU customs
+//    and final delivery are EUR. Converting a €300 delivery into USD and back
+//    yields €299.87, and a client comparing the page to their bank statement
+//    finds a discrepancy we invented.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * The shipping stages, in order, shared by all three columns that name one.
+ *
+ * Declared once because it appears on `vehicle_orders`, `order_stage_events`
+ * and `order_files`: three separate literal lists would drift, and the drift
+ * would be silent — a file written to a stage nothing else recognises simply
+ * stops appearing, with no error anywhere.
+ *
+ * Like `deposits.status`, this is a TypeScript-level constraint on a `text`
+ * column. Postgres never sees a CHECK, so inserting a stage is a code change
+ * rather than a migration. The display order and translations live in the
+ * orders module; this is only the vocabulary.
+ */
+export const ORDER_STAGES = [
+  "won",
+  "paid",
+  "to_terminal",
+  "at_terminal",
+  "loaded",
+  "at_sea",
+  "arrived",
+  "delivered",
+] as const;
+
+export type OrderStage = (typeof ORDER_STAGES)[number];
+
+/**
+ * A car bought at auction on a client's behalf, and its whole life afterwards.
+ *
+ * ⚠️ `userId` is **restrict**, not cascade — the one place this schema
+ * deliberately diverges from `deposits`. Decided with the owner 2026-08-09: a
+ * case file survives account erasure with the person anonymised, because a
+ * shipping and customs file carries a statutory retention obligation (LT
+ * accounting, 10 years) that GDPR Art. 17(3) explicitly accommodates.
+ *
+ * Cascade would be actively harmful here for a second reason that has nothing
+ * to do with law: these rows are the ONLY index of the objects in R2. Delete
+ * the row and the client's documents stay in the bucket forever with nothing
+ * left pointing at them — the worst of both worlds, a lost record and retained
+ * personal data. Restrict makes a hard delete fail loudly instead of silently
+ * doing that. In practice neither fires: `deleteAccount()` anonymises.
+ */
+export const vehicleOrders = pgTable(
+  "vehicle_orders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /**
+     * Human-quotable reference, e.g. `SAB-2026-0007`. Exists because a client
+     * writes "kas su SAB-2026-0007" in WhatsApp and nobody has ever read a
+     * uuid aloud. Assigned by the application, unique, never reused.
+     */
+    reference: text("reference").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+
+    // ── vehicle snapshot, taken once at creation ────────────────────────────
+    platform: text("platform", { enum: ["copart", "iaai"] }).notNull(),
+    auctionName: text("auction_name"),
+    lotNumber: text("lot_number").notNull(),
+    vin: text("vin"),
+    year: integer("year"),
+    make: text("make"),
+    model: text("model"),
+    series: text("series"),
+    color: text("color"),
+    odometer: integer("odometer"),
+    /** Copied from the source, never inferred here. Null renders as neither. */
+    odometerUnit: text("odometer_unit", { enum: ["mi", "km"] }),
+    primaryDamage: text("primary_damage"),
+    secondaryDamage: text("secondary_damage"),
+    /** clean | salvage | rebuildable | non_repairable | no_title | other */
+    titleClass: text("title_class"),
+    /** The auction's own paperwork string, kept beside the folded class. */
+    docType: text("doc_type"),
+    hasKeys: boolean("has_keys"),
+    /** When the auction actually sold it. */
+    soldAt: timestamp("sold_at", { withTimezone: true }),
+    /**
+     * The full source payload as it was on the day, for the fields nobody
+     * thought to give a column yet.
+     *
+     * This is the one place the "never store raw json" rule from `auctionLots`
+     * is deliberately reversed, and the reason is arithmetic: that rule exists
+     * because 550k lots × ~8 KB is gigabytes. Orders are counted in hundreds,
+     * so the same payload costs ~1 MB per five hundred cars — and unlike a lot
+     * listing, it can never be re-fetched once the auction drops the lot.
+     */
+    lotSnapshot: jsonb("lot_snapshot"),
+
+    // ── shipping, one value each per order ──────────────────────────────────
+    containerNumber: text("container_number"),
+    billOfLading: text("bill_of_lading"),
+    vesselName: text("vessel_name"),
+    departurePort: text("departure_port"),
+    destinationPort: text("destination_port"),
+    etaAt: timestamp("eta_at", { withTimezone: true }),
+
+    // ── money ───────────────────────────────────────────────────────────────
+    /**
+     * EUR per 1 USD × 1,000,000 — so 0.925 is stored as `925000`.
+     *
+     * Integer for the same reason money is cents and engine size is cc: a
+     * float rate makes two totals computed on different days disagree in the
+     * last decimal, and a client who screenshots a balance will notice.
+     *
+     * **Entered by the admin, frozen on the order, deliberately not fetched.**
+     * The ECB reference rate is not the rate the business actually gets from
+     * its bank, and showing a number the client's transfer will not match is
+     * worse than showing none (decided with the owner 2026-08-09).
+     */
+    usdToEurMicros: integer("usd_to_eur_micros"),
+    rateSetAt: timestamp("rate_set_at", { withTimezone: true }),
+
+    // ── state ───────────────────────────────────────────────────────────────
+    /**
+     * Where the car is now. The ordered list of stages lives in the orders
+     * module, not here — `text` with a TypeScript-level enum, exactly like
+     * `deposits.status`, so adding a stage is a code change and not a
+     * migration. Postgres never sees a CHECK.
+     *
+     * Denormalised on purpose: `order_stage_events` holds when each stage was
+     * entered and by whom, but a list of two hundred orders filtered by stage
+     * must not need a correlated subquery to draw. Both are written in one
+     * transaction, so they cannot disagree.
+     */
+    stage: text("stage", { enum: ORDER_STAGES }).notNull().default("won"),
+    stageChangedAt: timestamp("stage_changed_at", { withTimezone: true }).notNull().defaultNow(),
+
+    /** Never shown to the client, at any stage. The working scratchpad. */
+    internalNote: text("internal_note"),
+
+    /** `set null` for the same reason as `deposits.reviewedBy`: a staff
+     * account must stay deletable even though it once created an order. */
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("vehicle_orders_reference_idx").on(t.reference),
+    // The client's own list, newest first.
+    index("vehicle_orders_user_idx").on(t.userId, t.createdAt),
+    // The admin list, filtered by where cars are.
+    index("vehicle_orders_stage_idx").on(t.stage),
+    /**
+     * Answers "do we already have a file on this lot?" before a new order is
+     * opened — but deliberately NOT unique.
+     *
+     * Unique looked right and is wrong twice over: Copart relists vehicles
+     * that fail to sell under the same lot number, and lot numbers are reused
+     * outright over a long enough period. Both are legitimate second orders on
+     * one number, and a unique index would meet them with an unreadable
+     * constraint violation at exactly the wrong moment.
+     *
+     * The duplicate check therefore belongs in the creation flow, where it can
+     * show the admin the existing file and let them decide. A constraint that
+     * will one day need to be violated is a constraint that will one day block
+     * real work; a warning is the honest shape of this rule.
+     */
+    index("vehicle_orders_platform_lot_idx").on(t.platform, t.lotNumber),
+  ]
+);
+
+/**
+ * One row per stage this order has entered — the timeline the client reads.
+ *
+ * Unique on (order, stage): a stage is entered once. Re-opening an earlier
+ * stage to add a late photo edits the existing row rather than appending a
+ * second, so the timeline can never show "Terminale" twice with different
+ * dates and leave the client guessing which is true.
+ *
+ * `happenedAt` is the real-world date the admin states — the day the car
+ * reached the yard — and is not `createdAt`, which is when the row was typed.
+ * Those differ routinely, and the client cares about the first.
+ */
+export const orderStageEvents = pgTable(
+  "order_stage_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => vehicleOrders.id, { onDelete: "cascade" }),
+    stage: text("stage", { enum: ORDER_STAGES }).notNull(),
+    happenedAt: timestamp("happened_at", { withTimezone: true }).notNull(),
+    note: text("note"),
+    /**
+     * Notes default to INTERNAL, unlike files. The asymmetry is the point:
+     * photos of the car are the whole reason the feature exists and should
+     * reach the client the moment they land, while a note is where an admin
+     * thinks out loud. Publishing is one click; unpublishing a note the client
+     * already read is impossible.
+     */
+    noteVisibleToClient: boolean("note_visible_to_client").notNull().default(false),
+    /**
+     * When the "your car reached X" email went out. Non-null is what stops a
+     * second send — an edit to a note must not re-notify, and a retry after a
+     * failed send must not double-notify.
+     */
+    notifiedAt: timestamp("notified_at", { withTimezone: true }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("order_stage_events_order_stage_idx").on(t.orderId, t.stage),
+    index("order_stage_events_order_idx").on(t.orderId, t.happenedAt),
+  ]
+);
+
+/**
+ * Every photo, video and document, filed under the stage it belongs to.
+ *
+ * `storageKey` is the R2 object key and the only link between this database
+ * and the bucket — which is why `vehicle_orders.userId` refuses to cascade
+ * (see there). Unique, so a retried upload cannot leave two rows pointing at
+ * one object and a delete of the first orphan the second.
+ *
+ * `uploadedAt` is null between "the browser asked for a presigned URL" and
+ * "the PUT succeeded". A row stuck in that state is an abandoned upload, not a
+ * file: nothing lists it, and it is safe to sweep. Without this column a
+ * failed 150 MB video upload would leave a permanent broken entry on the
+ * timeline with no way to tell it from a real one.
+ */
+export const orderFiles = pgTable(
+  "order_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => vehicleOrders.id, { onDelete: "cascade" }),
+    /** Which stage's folder — the same vocabulary as `vehicleOrders.stage`. */
+    stage: text("stage", { enum: ORDER_STAGES }).notNull(),
+    kind: text("kind", { enum: ["photo", "video", "document"] }).notNull(),
+    /**
+     * `auction` rows were copied in from the auction's own gallery at
+     * creation; `upload` rows an admin added. Worth distinguishing because the
+     * two answer different questions — "what did it look like at the auction"
+     * versus "what did it look like when we received it" — and a gallery that
+     * mixed them would quietly hide damage that happened in between.
+     */
+    source: text("source", { enum: ["auction", "upload"] }).notNull().default("upload"),
+    /**
+     * Where an `auction` file was copied from. Null for admin uploads.
+     *
+     * Needed for the import to work at all: a pending row has to remember what
+     * to fetch, and the alternative — re-deriving the list from `lotSnapshot`
+     * on every batch and matching by position — breaks the moment one item
+     * fails and the positions shift.
+     *
+     * Worth keeping afterwards as provenance. Years later this is the only
+     * record of where a photo came from, and the URL will be long dead, which
+     * is exactly why the bytes are ours.
+     */
+    sourceUrl: text("source_url"),
+
+    storageKey: text("storage_key").notNull(),
+    /** As the file was named on the admin's machine, for the download. */
+    fileName: text("file_name").notNull(),
+    contentType: text("content_type"),
+    /** Null until the upload is confirmed; `bigint` because video passes 2 GB
+     * in principle and int4 would silently overflow. */
+    sizeBytes: bigint("size_bytes", { mode: "number" }),
+
+    caption: text("caption"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    /** Files default VISIBLE — see the asymmetry note on stage events. */
+    visibleToClient: boolean("visible_to_client").notNull().default(true),
+
+    uploadedAt: timestamp("uploaded_at", { withTimezone: true }),
+    /**
+     * Why an import gave up on this file, or null.
+     *
+     * Without it a permanently failing photo is indistinguishable from one
+     * still in progress: both are rows with a null `uploadedAt`, and the
+     * import screen would show "2 remaining" forever with nothing to click.
+     * A recorded reason turns a silent stall into something an admin can
+     * retry or delete.
+     */
+    importError: text("import_error"),
+    uploadedBy: uuid("uploaded_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("order_files_storage_key_idx").on(t.storageKey),
+    // How a stage's gallery is drawn.
+    index("order_files_order_stage_idx").on(t.orderId, t.stage, t.sortOrder),
+  ]
+);
+
+/**
+ * What the car costs, one line at a time.
+ *
+ * `amountCents` + `currency` together, never apart — the auction is USD while
+ * EU customs and final delivery are EUR, and a single-currency table would
+ * force a conversion at write time that can never be undone. Totals are
+ * computed in both currencies from `vehicleOrders.usdToEurMicros`.
+ *
+ * `kind` is a label for grouping and translation; `label` overrides it when a
+ * line needs saying in words ("storage, 6 days"). Both, because a fixed list
+ * would eventually be wrong and free text alone cannot be translated.
+ */
+export const orderCostLines = pgTable(
+  "order_cost_lines",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => vehicleOrders.id, { onDelete: "cascade" }),
+    kind: text("kind", {
+      enum: [
+        "auction_price",
+        "auction_fees",
+        "inland_transport",
+        "terminal",
+        "ocean_freight",
+        "customs",
+        "delivery",
+        "commission",
+        "other",
+      ],
+    }).notNull(),
+    label: text("label"),
+    /** Minor units of `currency`. $1,250.00 is 125000. */
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency", { enum: ["USD", "EUR"] }).notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    visibleToClient: boolean("visible_to_client").notNull().default(true),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("order_cost_lines_order_idx").on(t.orderId, t.sortOrder)]
+);
+
+/**
+ * Money actually received, one row per transfer.
+ *
+ * Separate from cost lines rather than a `paidCents` column on the order,
+ * because "how much is left" is a question with a history behind it: clients
+ * pay in instalments, and "you still owe $2,400" is only credible next to the
+ * three payments that got them there.
+ *
+ * Nothing here moves money. These rows record transfers that happened in a
+ * bank, exactly as `deposits` does.
+ */
+export const orderPayments = pgTable(
+  "order_payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => vehicleOrders.id, { onDelete: "cascade" }),
+    amountCents: integer("amount_cents").notNull(),
+    currency: text("currency", { enum: ["USD", "EUR"] }).notNull(),
+    /** When the money arrived, as stated by the admin — not when typed. */
+    paidAt: timestamp("paid_at", { withTimezone: true }).notNull(),
+    method: text("method", { enum: ["bank_transfer", "cash", "other"] })
+      .notNull()
+      .default("bank_transfer"),
+    /** Bank reference, so a client's statement and this row can be matched. */
+    reference: text("reference"),
+    note: text("note"),
+    visibleToClient: boolean("visible_to_client").notNull().default(true),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("order_payments_order_idx").on(t.orderId, t.paidAt)]
+);
