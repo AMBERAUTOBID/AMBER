@@ -4,10 +4,7 @@
  *
  * ⚠️ A section goes in here only once it has real data behind it
  * (ARCHITECTURE.md §6a). An entry that opens onto "nothing yet" advertises a
- * product that doesn't exist, and is worse than no entry at all. Still
- * deliberately absent until its feature lands:
- *
- *   /account/orders  Phase 2.4
+ * product that doesn't exist, and is worse than no entry at all.
  *
  * Two entries bend the rule, differently:
  *
@@ -25,6 +22,17 @@ export interface AccountSection {
 
 export const ACCOUNT_SECTIONS: AccountSection[] = [
   { key: "overview", href: "/account" },
+  /**
+   * The Phase 2.4 slot this file has been holding open, now filled. It sits
+   * above bids deliberately: a car that has been bought is the thing a client
+   * opens the account for, and a bid still in progress is the thing they check
+   * on the way past.
+   *
+   * It ships with an empty state rather than being hidden until a client has
+   * one, on the Favourites precedent — the feature works from the first visit,
+   * and the empty panel explains what will appear.
+   */
+  { key: "orders", href: "/account/orders" },
   { key: "bids", href: "/account/bids" },
   { key: "favorites", href: "/account/favorites" },
   { key: "plan", href: "/account/plan" },

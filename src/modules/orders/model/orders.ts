@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, like, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, like, sql } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 import { bumpReference, nextReference } from "./reference";
 import { INITIAL_STAGE, type OrderSnapshot } from "./orderSnapshot";
@@ -296,6 +296,71 @@ export async function listStageEvents(orderId: string) {
     .from(schema.orderStageEvents)
     .where(eq(schema.orderStageEvents.orderId, orderId))
     .orderBy(asc(schema.orderStageEvents.happenedAt));
+}
+
+/**
+ * Cost lines and payments.
+ *
+ * `visibleOnly` is a QUERY parameter rather than something the caller filters
+ * afterwards, for the same reason `getOrderForUser` embeds its ownership
+ * check: a page that fetched everything and filtered in JSX is one careless
+ * map away from printing an internal line to the client. What the client's
+ * page asks for is what the client may see.
+ */
+export async function listCostLines(orderId: string, visibleOnly = false) {
+  return db()
+    .select()
+    .from(schema.orderCostLines)
+    .where(
+      visibleOnly
+        ? and(
+            eq(schema.orderCostLines.orderId, orderId),
+            eq(schema.orderCostLines.visibleToClient, true)
+          )
+        : eq(schema.orderCostLines.orderId, orderId)
+    )
+    .orderBy(asc(schema.orderCostLines.sortOrder));
+}
+
+export async function listPayments(orderId: string, visibleOnly = false) {
+  return db()
+    .select()
+    .from(schema.orderPayments)
+    .where(
+      visibleOnly
+        ? and(
+            eq(schema.orderPayments.orderId, orderId),
+            eq(schema.orderPayments.visibleToClient, true)
+          )
+        : eq(schema.orderPayments.orderId, orderId)
+    )
+    .orderBy(asc(schema.orderPayments.paidAt));
+}
+
+/** Files, optionally only the ones a client may see. */
+export async function listVisibleOrderFiles(orderId: string) {
+  return db()
+    .select()
+    .from(schema.orderFiles)
+    .where(
+      and(
+        eq(schema.orderFiles.orderId, orderId),
+        eq(schema.orderFiles.visibleToClient, true),
+        isNotNull(schema.orderFiles.uploadedAt)
+      )
+    )
+    .orderBy(asc(schema.orderFiles.sortOrder));
+}
+
+/** The timeline a client sees: every stage entry, but notes only when published. */
+export async function listVisibleStageEvents(orderId: string) {
+  const rows = await listStageEvents(orderId);
+  return rows.map((row) => ({
+    ...row,
+    // Blanked rather than omitted: the stage still happened on that date, and
+    // hiding the row entirely would leave a gap in the client's timeline.
+    note: row.noteVisibleToClient ? row.note : null,
+  }));
 }
 
 /**

@@ -1313,6 +1313,7 @@
     "nav": {
       "label": "Account sections",
       "overview": "Overview",
+      "orders": "My vehicles",
       "bids": "My bids",
       "favorites": "Favourites",
       "plan": "Plan",
