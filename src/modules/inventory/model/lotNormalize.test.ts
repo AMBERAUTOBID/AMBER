@@ -237,18 +237,55 @@ describe("normalizeVehicleClass", () => {
     expect(normalizeVehicleClass("TRUCK")).toBe("truck");
   });
 
-  it("keeps non-car inventory searchable rather than dropping it", () => {
-    // The user's requirement is explicitly "any vehicle from IAAI and Copart",
-    // so these need a real bucket, not a silent exclusion.
-    expect(normalizeVehicleClass("INDUSTRIAL EQUIPMENT")).toBe("other"); // 26
-    expect(normalizeVehicleClass("BUS")).toBe("other");
-    expect(normalizeVehicleClass("TRAILER")).toBe("other");
-    expect(normalizeVehicleClass("Recreational/ Miscellaneous")).toBe("other");
-    expect(normalizeVehicleClass("LOW SPEED VEHICLE (LSV)")).toBe("other");
+  it("gives each non-car category its own bucket, not one 'other' pile", () => {
+    // The requirement is explicitly "any vehicle from IAAI and Copart". These
+    // were all `other` until 2026-08-08, which made 3,229 lots one
+    // undifferentiated heap nobody could browse. Counts are searchable lots.
+    expect(normalizeVehicleClass("TRAILERS")).toBe("trailer"); // 740
+    expect(normalizeVehicleClass("TRAVEL TRAILER")).toBe("trailer"); // 323
+    expect(normalizeVehicleClass("TRAILER")).toBe("trailer"); // 194
+    expect(normalizeVehicleClass("RECREATIONAL VEHICLE (RV)")).toBe("rv"); // 685
+    expect(normalizeVehicleClass("INDUSTRIAL EQUIPMENT")).toBe("equipment"); // 464
+    expect(normalizeVehicleClass("CONSTRUCTION EQUIPMENT")).toBe("equipment"); // 33
+    expect(normalizeVehicleClass("AGRICULTURE AND FARM EQUIPMENT")).toBe("equipment"); // 29
+    expect(normalizeVehicleClass("BUS")).toBe("bus"); // 315
+    expect(normalizeVehicleClass("Bus")).toBe("bus"); // 32
+    expect(normalizeVehicleClass("BOAT")).toBe("boat"); // 251
+    expect(normalizeVehicleClass("ATV")).toBe("atv"); // 127
+  });
+
+  it("recovers the 575 lots that used to have no category at all", () => {
+    // Every one of these returned null before, so the lot existed in the table
+    // and could not be reached by browsing any category.
+    expect(normalizeVehicleClass("SEDAN")).toBe("automobile"); // 192
+    expect(normalizeVehicleClass("PICKUP")).toBe("automobile"); // 52
+    expect(normalizeVehicleClass("COUPE")).toBe("automobile"); // 30
+    expect(normalizeVehicleClass("VAN")).toBe("automobile"); // 20
+    expect(normalizeVehicleClass("MOTOR HOME")).toBe("rv"); // 118
+    expect(normalizeVehicleClass("PERSONAL WATERCRAFT")).toBe("jet_ski"); // 48
+    expect(normalizeVehicleClass("JET SKI")).toBe("jet_ski"); // 21
+    expect(normalizeVehicleClass("SNOWMOBILE")).toBe("atv"); // 13
+    expect(normalizeVehicleClass("OTHER")).toBe("other"); // 65
+  });
+
+  it("separates the categories that share keywords", () => {
+    // A jet ski is a boat by any keyword test, and buyers shop for them apart.
+    expect(normalizeVehicleClass("PERSONAL WATERCRAFT")).not.toBe("boat");
+    // SNOWMOBILE contains MOBILE and must not become a motorhome.
+    expect(normalizeVehicleClass("SNOWMOBILE")).toBe("atv");
+    // A travel trailer is towed, which decides how it ships — trailer, not RV.
+    expect(normalizeVehicleClass("TRAVEL TRAILER")).toBe("trailer");
+    // HEAVY DUTY TRUCKS contains HEAVY and must not land with the diggers.
+    expect(normalizeVehicleClass("HEAVY DUTY TRUCKS")).toBe("truck"); // 766
   });
 
   it("handles the trailing space in the vendor's own vocabulary", () => {
     expect(normalizeVehicleClass("TRUCK ")).toBe("truck");
+  });
+
+  it("still returns null for something genuinely unrecognised", () => {
+    expect(normalizeVehicleClass("Teleporter")).toBeNull();
+    expect(normalizeVehicleClass(null)).toBeNull();
   });
 });
 

@@ -1,7 +1,21 @@
 "use client";
 
 export const ODO_MIN = 0;
-export const ODO_MAX = 250000;
+/**
+ * Raised from 250,000 to match bidauto.online, which paces the same catalogue at
+ * 0–500,000.
+ *
+ * It was not a cosmetic mismatch: **5,825 searchable lots read above 250,000 mi
+ * and were unreachable through this control at any setting** — the top of the
+ * slider was a wall, not a range. 5,358 of them fall inside the new range; the
+ * remaining 467 are covered by the `+` on the top stop, which is why
+ * `formatMiles` renders the maximum as "500,000+ mi" rather than a hard figure.
+ *
+ * The true maximum in the data is 2,437,131 — a Toyota Sienna, which is not a
+ * real reading. Sizing the slider to the data's maximum would make the whole
+ * useful range occupy the first tenth of the track.
+ */
+export const ODO_MAX = 500000;
 const ODO_STEP = 5000;
 
 const THUMB_CLASS =

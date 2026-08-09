@@ -61,9 +61,24 @@ const MAX_PAGES = Number(process.env.INGEST_MAX_PAGES ?? 300);
  */
 const SPREAD = process.env.INGEST_STRIDE !== "0";
 
-/** Rows per database round trip. The HTTP driver costs one request per
- * statement, so batching is the difference between ~150 round trips and 15,000. */
-const DB_BATCH = 100;
+/**
+ * Rows per database round trip.
+ *
+ * RAISED FROM 100 TO 500 AS A CORRECTNESS FIX, not a speed one. The sweep of
+ * 2026-08-07 took 3h59m and was database-bound at ~4.7 s per page of 50 — four
+ * Neon HTTP round trips per batch against a 0.25 CU compute. Over four hours the
+ * vendor's result set shifts underneath an offset walk, and the measured cost was
+ * severe: 144,350 reads covering only 132,620 distinct lots, so **8.1% of reads
+ * were repeats and ~8.3% of the catalogue was never seen at all**.
+ *
+ * A shorter sweep is a smaller window for that drift. Five times fewer round
+ * trips is the cheapest way to shorten it.
+ *
+ * 500 rows x 46 columns is ~23,000 bound parameters, comfortably inside
+ * Postgres' 65,535 limit. `flush()` still falls back to row-by-row on a batch
+ * failure, so a bad value costs one row rather than the sweep.
+ */
+const DB_BATCH = 500;
 
 /**
  * Which auction sources to mirror, pushed to the vendor rather than filtered
@@ -99,7 +114,21 @@ const AUCTION_NAMES = (process.env.INGEST_AUCTION_NAMES ?? "COPART,IAAI")
   .map((s) => s.trim())
   .filter(Boolean);
 
-/** Active Lots Pro allows 3 req/s; pacing at ~2.5 leaves headroom. */
+/**
+ * Minimum gap between the STARTS of two vendor requests. Active Lots Pro allows
+ * 3 req/s, so 400 ms paces at 2.5 with headroom.
+ *
+ * Measured request-to-request rather than slept after each page, which is the
+ * change that matters now. Previously this was a flat `sleep(400)` at the end of
+ * every iteration, so it was ADDED to the database work rather than overlapping
+ * it — 400 ms x 2,887 pages of pure idling on top of an already
+ * database-bound sweep. With `DB_BATCH` at 500 a flush happens every tenth page,
+ * and the nine pages between it can now use the pacing gap for real work.
+ *
+ * Deliberately NOT removed altogether: it was pointless while the database was
+ * the bottleneck at 4.7 s per page, but once that is fixed this is the only
+ * thing keeping the sweep under the plan's 3 req/s.
+ */
 const REQUEST_SPACING_MS = 400;
 
 const token = process.env.APICARS_API_TOKEN;
@@ -361,6 +390,9 @@ async function main() {
   // Stride is learned from page 1's reported total, not assumed up front.
   let stride = 1;
 
+  // The earliest the next vendor request may start. See REQUEST_SPACING_MS.
+  let nextRequestAt = 0;
+
   try {
     for (let i = 0; i < MAX_PAGES; i++) {
       const page = 1 + i * stride;
@@ -370,6 +402,12 @@ async function main() {
         reachedEnd = stride === 1;
         break;
       }
+
+      // Pace from the previous request's start, so time already spent writing to
+      // the database counts towards the gap instead of being added to it.
+      const waitMs = nextRequestAt - Date.now();
+      if (waitMs > 0) await sleep(waitMs);
+      nextRequestAt = Date.now() + REQUEST_SPACING_MS;
 
       const res = await fetchPage(page);
       if (res.status !== 200) {
@@ -434,8 +472,6 @@ async function main() {
         reachedEnd = true;
         break;
       }
-
-      await sleep(REQUEST_SPACING_MS);
     }
 
     lotsWritten += await flush(buffer, seenAt);

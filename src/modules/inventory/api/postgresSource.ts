@@ -171,6 +171,19 @@ function typeGroupCondition(typeValues: string[]) {
     if (t === "AUTOMOBILE") classes.add("automobile");
     else if (t === "MOTORCYCLE" || t === "DIRT BIKE") classes.add("motorcycle");
     else if (t.includes("TRUCK")) classes.add("truck");
+    // The eight values behind the "More" category in the picker
+    // (MORE_TYPE_TO_APIBARA_TYPE). Until vehicleClass was widened past four
+    // buckets there was nothing to map these onto, so every one of them fell
+    // through and the function returned undefined — which applied NO filter at
+    // all and answered "browse boats" with the entire catalogue.
+    else if (t === "TRAILERS" || t === "TRAILER") classes.add("trailer");
+    else if (t === "BOAT") classes.add("boat");
+    else if (t === "JET SKI") classes.add("jet_ski");
+    else if (t === "ATV") classes.add("atv");
+    else if (t === "BUS") classes.add("bus");
+    else if (t === "INDUSTRIAL EQUIPMENT") classes.add("equipment");
+    else if (t === "MOTOR HOME") classes.add("rv");
+    else if (t === "OTHER") classes.add("other");
     else if (t === "PICKUP") bodies.add("pickup");
     else if (t === "SEDAN") bodies.add("sedan");
     else if (t === "COUPE") bodies.add("coupe");
@@ -181,7 +194,13 @@ function typeGroupCondition(typeValues: string[]) {
   const parts = [];
   if (classes.size > 0) parts.push(inArray(schema.auctionLots.vehicleClass, [...classes]));
   if (bodies.size > 0) parts.push(inArray(schema.auctionLots.bodyType, [...bodies]));
-  return parts.length > 0 ? or(...parts) : undefined;
+  if (parts.length > 0) return or(...parts);
+
+  // A category we were ASKED for but cannot map must match nothing, never
+  // everything. Returning undefined here drops the condition, and the visitor
+  // who clicked "Boat" would be shown 117,747 lots of which almost none are
+  // boats — the loudest possible way to be wrong.
+  return typeValues.length > 0 ? sql`false` : undefined;
 }
 
 function buildWhere(

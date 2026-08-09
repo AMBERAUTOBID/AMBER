@@ -225,7 +225,18 @@ export function isEnhanced(raw: string | null | undefined): boolean {
 
 // ── category and body ────────────────────────────────────────────────────────
 
-export type VehicleClass = "automobile" | "motorcycle" | "truck" | "other";
+export type VehicleClass =
+  | "automobile"
+  | "motorcycle"
+  | "truck"
+  | "trailer"
+  | "boat"
+  | "jet_ski"
+  | "atv"
+  | "bus"
+  | "rv"
+  | "equipment"
+  | "other";
 
 /**
  * The top-level category tabs. Driven by `vehicle_type`, which measured 99.9%
@@ -234,30 +245,85 @@ export type VehicleClass = "automobile" | "motorcycle" | "truck" | "other";
  *
  * Copart shouts (`AUTOMOBILE`, `MEDIUM DUTY/BOX TRUCKS`) and IAAI does not
  * (`Automobile`, `Light Truck`), so case folding is the whole point.
+ *
+ * WIDENED FROM FOUR BUCKETS TO ELEVEN, 2026-08-08, for two measured reasons.
+ *
+ * First, four buckets were losing inventory outright: `SEDAN`, `PICKUP`,
+ * `COUPE`, `VAN`, `MOTOR HOME`, `PERSONAL WATERCRAFT`, `JET SKI` and
+ * `SNOWMOBILE` all fell through to null, so **575 searchable lots had no
+ * category at all** and could not be reached by browsing.
+ *
+ * Second, the old `other` bucket was hiding categories a buyer shops for by
+ * name: 1,257 trailers, 685 RVs, 546 pieces of equipment, 347 buses and 320
+ * boats and jet skis were one undifferentiated pile. The requirement was always
+ * that search reach everything Copart and IAAI list, not just cars.
+ *
+ * The eleven match what bidauto.online offers, because their list maps cleanly
+ * onto values our own `vehicle_type` already carries — both sides are reading
+ * the same auctions.
  */
 export function normalizeVehicleClass(raw: string | null | undefined): VehicleClass | null {
   const s = upper(raw);
   if (!s) return null;
+
   if (s.includes("MOTORCYCLE") || s.includes("MOPED") || s.includes("SCOOTER")) return "motorcycle";
+
+  // Before the mobile-home tests: SNOWMOBILE contains MOBILE and would otherwise
+  // be filed as a motorhome.
+  if (s.includes("SNOWMOBILE") || s.includes("ATV") || s.includes("UTV") || s.includes("OFF ROAD")) {
+    return "atv";
+  }
+
+  // Before boat: a jet ski is a boat by any keyword test, and buyers shop for
+  // the two separately.
+  if (s.includes("JET SKI") || s.includes("WATERCRAFT")) return "jet_ski";
+  if (s.includes("BOAT") || s.includes("PONTOON") || s.includes("MARINE")) return "boat";
+
+  // Before RV: a TRAVEL TRAILER is towed, which is what decides how it ships and
+  // what a buyer needs to move it.
+  if (s.includes("TRAILER")) return "trailer";
+  if (s.includes("MOTOR HOME") || s.includes("MOTORHOME") || s.includes("RECREATIONAL VEHICLE") || s === "RV") {
+    return "rv";
+  }
+
+  if (s.includes("BUS")) return "bus";
+
+  // Before equipment, because HEAVY DUTY TRUCKS contains HEAVY and would
+  // otherwise land with the diggers.
   if (s.includes("TRUCK") || s.includes("TRACTOR")) return "truck";
-  if (s.includes("AUTOMOBILE") || s === "SUV" || s.includes("PASSENGER CAR") || s.includes("MPV")) {
+
+  if (
+    s.includes("EQUIPMENT") ||
+    s.includes("INDUSTRIAL") ||
+    s.includes("CONSTRUCTION") ||
+    s.includes("AGRICULTURE") ||
+    s.includes("FARM")
+  ) {
+    return "equipment";
+  }
+
+  // The body-style words appear as top-level types on ~350 lots. They were
+  // returning NULL and vanishing from category browsing entirely; the matching
+  // `bodyType` on those rows already reads sedan/coupe/van, so filing them as
+  // automobiles is what the rest of the row already says.
+  if (
+    s.includes("AUTOMOBILE") ||
+    s.includes("PASSENGER CAR") ||
+    s.includes("MPV") ||
+    s === "SUV" ||
+    s === "SEDAN" ||
+    s === "COUPE" ||
+    s === "VAN" ||
+    s === "PICKUP" ||
+    s === "HATCHBACK" ||
+    s === "WAGON" ||
+    s === "CONVERTIBLE"
+  ) {
     return "automobile";
   }
-  // Trailers, buses, industrial equipment, recreational and incomplete vehicles.
-  // The user's requirement is that these stay searchable, so they get a real
-  // bucket rather than being dropped.
-  if (
-    s.includes("TRAILER") ||
-    s.includes("BUS") ||
-    s.includes("INDUSTRIAL") ||
-    s.includes("EQUIPMENT") ||
-    s.includes("RECREATION") ||
-    s.includes("INCOMPLETE") ||
-    s.includes("LOW SPEED") ||
-    s.includes("OFF ROAD") ||
-    s.includes("BOAT") ||
-    s.includes("ATV")
-  ) {
+
+  // Recognised, but genuinely none of the above.
+  if (s.includes("INCOMPLETE") || s.includes("LOW SPEED") || s.includes("MISCELLANEOUS") || s === "OTHER") {
     return "other";
   }
   return null;
