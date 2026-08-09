@@ -1521,6 +1521,7 @@
     "nav": {
       "label": "Pulto skiltys",
       "overview": "Apžvalga",
+      "orders": "Automobiliai",
       "deposits": "Depozitai",
       "users": "Vartotojai",
       "settings": "Nustatymai",
@@ -1586,5 +1587,216 @@
       "truncated": "Rodoma {shown} iš {total}. Patikslinkite paiešką, kad sąrašas susiaurėtų.",
       "erasedNote": "{count, plural, one {# ištrinta paskyra nerodoma} few {# ištrintos paskyros nerodomos} other {# ištrintų paskyrų nerodoma}}."
     }
+  },
+  "Orders": {
+    "title": "Mano automobiliai",
+    "subtitle": "Kiekvienas jums nupirktas automobilis ir visa jo kelionė nuo aukciono iki jūsų.",
+    "empty": {
+      "heading": "Kol kas nė vieno automobilio",
+      "body": "Kai laimėsime jums aukcioną, čia atsiras byla su nuotraukomis, dokumentais ir gabenimo eiga."
+    },
+    "reference": "Bylos Nr.",
+    "lotNumber": "Lotas",
+    "vin": "VIN",
+    "odometer": "Rida",
+    "damage": "Pažeidimai",
+    "document": "Dokumentas",
+    "keys": "Raktai",
+    "keysYes": "Yra",
+    "keysNo": "Nėra",
+    "unknown": "Nenurodyta",
+    "progress": "{step} žingsnis iš {total}",
+    "backToList": "Visi automobiliai",
+    "stage": {
+      "won": "Laimėta aukcione",
+      "paid": "Apmokėta, gautas dokumentas",
+      "to_terminal": "Kelyje į terminalą",
+      "at_terminal": "Terminale",
+      "loaded": "Pakrauta į konteinerį",
+      "at_sea": "Jūroje",
+      "arrived": "Atvyko į uostą",
+      "delivered": "Pristatyta"
+    },
+    "stageHint": {
+      "won": "Aukcionas laimėtas jūsų vardu.",
+      "paid": "Aukcionas apmokėtas, nuosavybės dokumentas gautas.",
+      "to_terminal": "Automobilis vežamas iš aukciono aikštelės į mūsų eksporto terminalą JAV.",
+      "at_terminal": "Automobilis priimtas terminale ir apžiūrėtas.",
+      "loaded": "Automobilis pakrautas į konteinerį ir paruoštas jūrų gabenimui.",
+      "at_sea": "Konteineris kelyje per Atlantą.",
+      "arrived": "Konteineris atvyko į paskirties uostą, vyksta muitinės įforminimas.",
+      "delivered": "Automobilis perduotas jums."
+    },
+    "stagePending": "Dar nepasiekta",
+    "media": {
+      "photos": "Nuotraukos",
+      "videos": "Vaizdo įrašai",
+      "documents": "Dokumentai",
+      "empty": "Šiam etapui failų dar nėra.",
+      "download": "Atsisiųsti",
+      "auctionNote": "Aukciono nuotraukos, išsaugotos pirkimo dieną."
+    },
+    "shipping": {
+      "heading": "Gabenimas",
+      "container": "Konteinerio Nr.",
+      "billOfLading": "Važtaraštis",
+      "vessel": "Laivas",
+      "departurePort": "Išvykimo uostas",
+      "destinationPort": "Paskirties uostas",
+      "eta": "Numatomas atvykimas"
+    },
+    "costs": {
+      "heading": "Kaina",
+      "empty": "Kainos eilučių dar nėra.",
+      "total": "Iš viso",
+      "paid": "Sumokėta",
+      "balance": "Liko sumokėti",
+      "settled": "Pilnai apmokėta",
+      "rateNote": "Kursas užfiksuotas {date}: 1 USD = {rate} EUR"
+    },
+    "costKind": {
+      "auction_price": "Automobilio kaina aukcione",
+      "auction_fees": "Aukciono mokesčiai",
+      "inland_transport": "Vidaus transportas JAV",
+      "terminal": "Terminalo mokesčiai",
+      "ocean_freight": "Jūrų frachtas",
+      "customs": "Muitinės įforminimas",
+      "delivery": "Pristatymas",
+      "commission": "Mūsų paslaugos mokestis",
+      "other": "Kita"
+    },
+    "payments": {
+      "heading": "Mokėjimai",
+      "empty": "Mokėjimų dar neužfiksuota.",
+      "method": {
+        "bank_transfer": "Bankinis pavedimas",
+        "cash": "Grynais",
+        "other": "Kita"
+      }
+    }
+  },
+  "AdminOrders": {
+    "heading": "Automobiliai",
+    "empty": "Bylų dar nėra.",
+    "create": "Nauja byla",
+    "createHeading": "Nauja automobilio byla",
+    "filterAll": "Visi etapai",
+    "storageOff": "R2 saugykla nesukonfigūruota — failų įkelti negalima.",
+    "lookup": {
+      "legend": "1. Automobilis",
+      "hint": "Įveskite loto numerį arba VIN — duomenis užpildysime iš aukciono.",
+      "placeholder": "Loto numeris arba VIN",
+      "search": "Ieškoti",
+      "searching": "Ieškoma…",
+      "notFound": "Tokio loto rasti nepavyko. Galite suvesti duomenis ranka.",
+      "failed": "Paieška nepavyko. Bandykite dar kartą arba veskite ranka.",
+      "found": "Rasta: {title}",
+      "photos": "{count} nuotraukų aukcione",
+      "manual": "Vesti ranka",
+      "manualHint": "Byla be aukciono nuotraukų. Naudokite, kai loto sistemoje nėra."
+    },
+    "duplicate": {
+      "heading": "Šiam lotui byla jau yra",
+      "body": "{reference} — {client}, sukurta {date}. Copart perstato neparduotus lotus tuo pačiu numeriu, tad antra byla gali būti teisėta.",
+      "continue": "Vis tiek kurti naują"
+    },
+    "client": {
+      "legend": "2. Klientas",
+      "placeholder": "Ieškoti pagal vardą ar el. paštą",
+      "search": "Ieškoti",
+      "empty": "Pagal šią paiešką klientų nerasta.",
+      "selected": "Pasirinktas: {name}"
+    },
+    "fields": {
+      "platform": "Platforma",
+      "lotNumber": "Loto numeris",
+      "vin": "VIN",
+      "year": "Metai",
+      "make": "Markė",
+      "model": "Modelis"
+    },
+    "submit": "Sukurti bylą",
+    "submitting": "Kuriama…",
+    "createFailed": "Bylos sukurti nepavyko. Bandykite dar kartą.",
+    "import": {
+      "heading": "Aukciono nuotraukos",
+      "planned": "{count} failų, apie {mb} MB",
+      "start": "Pradėti importą",
+      "importing": "Importuojama… {done} iš {total}",
+      "done": "Importuota {count} failų.",
+      "failed": "{count} nepavyko",
+      "retry": "Bandyti dar kartą",
+      "none": "Aukciono nuotraukų nėra — byla sukurta rankiniu būdu.",
+      "leaveOpen": "Neuždarykite šio lango, kol importas vyksta."
+    },
+    "stage": {
+      "heading": "Etapas",
+      "current": "Dabar: {stage}",
+      "advance": "Perkelti į „{stage}“",
+      "date": "Data",
+      "note": "Pastaba",
+      "noteHint": "Pastabos pagal nutylėjimą matomos tik jums.",
+      "showToClient": "Rodyti klientui",
+      "hiddenFromClient": "Vidinė",
+      "notify": "Pranešti klientui el. paštu",
+      "notified": "Pranešta {date}",
+      "save": "Išsaugoti",
+      "saving": "Saugoma…"
+    },
+    "files": {
+      "heading": "Failai",
+      "upload": "Įkelti failus",
+      "uploading": "Keliama {done} iš {total}…",
+      "kind": {
+        "photo": "Nuotrauka",
+        "video": "Vaizdo įrašas",
+        "document": "Dokumentas"
+      },
+      "visible": "Matoma klientui",
+      "hidden": "Nematoma klientui",
+      "delete": "Ištrinti",
+      "deleteConfirm": "Failas bus ištrintas negrįžtamai.",
+      "caption": "Aprašymas",
+      "tooLarge": "{name}: per didelis failas ({size}). Riba {max}.",
+      "wrongType": "{name}: netinkamas formatas.",
+      "failed": "{name}: įkelti nepavyko."
+    },
+    "costs": {
+      "heading": "Kaina",
+      "add": "Pridėti eilutę",
+      "kind": "Tipas",
+      "label": "Pavadinimas",
+      "amount": "Suma",
+      "currency": "Valiuta",
+      "save": "Išsaugoti",
+      "delete": "Ištrinti",
+      "rate": "Kursas: 1 USD = ? EUR",
+      "rateHint": "Įveskite kursą, kurį realiai gavote. Jis užfiksuojamas ir nebesikeičia.",
+      "visibleToClient": "Matoma klientui"
+    },
+    "payments": {
+      "heading": "Mokėjimai",
+      "add": "Pridėti mokėjimą",
+      "amount": "Suma",
+      "paidAt": "Gavimo data",
+      "method": "Būdas",
+      "reference": "Banko nuoroda",
+      "note": "Pastaba",
+      "save": "Išsaugoti",
+      "delete": "Ištrinti"
+    },
+    "internalNote": {
+      "heading": "Vidinė pastaba",
+      "hint": "Klientas šito nemato niekada.",
+      "save": "Išsaugoti"
+    }
+  },
+  "OrderEmails": {
+    "stageSubject": "{title} — {stage}",
+    "greeting": "Sveiki, {name},",
+    "stageBody": "Jūsų automobilio būsena pasikeitė: {stage}.",
+    "referenceLine": "Bylos Nr. {reference}",
+    "cta": "Peržiūrėti bylą",
+    "footer": "Šį laišką gavote, nes esate SmartAutoBid klientas."
   }
 }

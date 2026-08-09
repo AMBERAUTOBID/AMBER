@@ -1521,6 +1521,7 @@
     "nav": {
       "label": "Console sections",
       "overview": "Overview",
+      "orders": "Vehicles",
       "deposits": "Deposits",
       "users": "Users",
       "settings": "Settings",
@@ -1586,5 +1587,216 @@
       "truncated": "Showing {shown} of {total}. Search to narrow the list.",
       "erasedNote": "{count, plural, one {# erased account is not shown} other {# erased accounts are not shown}}."
     }
+  },
+  "Orders": {
+    "title": "My vehicles",
+    "subtitle": "Every car we have bought for you, and its whole journey from the auction to your door.",
+    "empty": {
+      "heading": "No vehicles yet",
+      "body": "Once we win an auction for you, a file appears here with photos, documents and shipping progress."
+    },
+    "reference": "File no.",
+    "lotNumber": "Lot",
+    "vin": "VIN",
+    "odometer": "Odometer",
+    "damage": "Damage",
+    "document": "Document",
+    "keys": "Keys",
+    "keysYes": "Yes",
+    "keysNo": "No",
+    "unknown": "Not stated",
+    "progress": "Step {step} of {total}",
+    "backToList": "All vehicles",
+    "stage": {
+      "won": "Won at auction",
+      "paid": "Paid, title received",
+      "to_terminal": "On the way to the terminal",
+      "at_terminal": "At the terminal",
+      "loaded": "Loaded into the container",
+      "at_sea": "At sea",
+      "arrived": "Arrived at port",
+      "delivered": "Delivered"
+    },
+    "stageHint": {
+      "won": "The auction was won on your behalf.",
+      "paid": "The auction is paid and the title is in hand.",
+      "to_terminal": "The car is being trucked from the auction yard to our US export terminal.",
+      "at_terminal": "The car has been received and inspected at the terminal.",
+      "loaded": "The car is loaded into the container and ready to sail.",
+      "at_sea": "The container is crossing the Atlantic.",
+      "arrived": "The container has arrived at the destination port and customs clearance is under way.",
+      "delivered": "The car has been handed over to you."
+    },
+    "stagePending": "Not reached yet",
+    "media": {
+      "photos": "Photos",
+      "videos": "Video",
+      "documents": "Documents",
+      "empty": "No files for this stage yet.",
+      "download": "Download",
+      "auctionNote": "Auction photos, saved on the day of purchase."
+    },
+    "shipping": {
+      "heading": "Shipping",
+      "container": "Container no.",
+      "billOfLading": "Bill of lading",
+      "vessel": "Vessel",
+      "departurePort": "Departure port",
+      "destinationPort": "Destination port",
+      "eta": "Estimated arrival"
+    },
+    "costs": {
+      "heading": "Costs",
+      "empty": "No cost lines yet.",
+      "total": "Total",
+      "paid": "Paid",
+      "balance": "Outstanding",
+      "settled": "Paid in full",
+      "rateNote": "Rate fixed on {date}: 1 USD = {rate} EUR"
+    },
+    "costKind": {
+      "auction_price": "Vehicle price at auction",
+      "auction_fees": "Auction fees",
+      "inland_transport": "Inland transport in the US",
+      "terminal": "Terminal charges",
+      "ocean_freight": "Ocean freight",
+      "customs": "Customs clearance",
+      "delivery": "Delivery",
+      "commission": "Our service fee",
+      "other": "Other"
+    },
+    "payments": {
+      "heading": "Payments",
+      "empty": "No payments recorded yet.",
+      "method": {
+        "bank_transfer": "Bank transfer",
+        "cash": "Cash",
+        "other": "Other"
+      }
+    }
+  },
+  "AdminOrders": {
+    "heading": "Vehicles",
+    "empty": "No files yet.",
+    "create": "New file",
+    "createHeading": "New vehicle file",
+    "filterAll": "All stages",
+    "storageOff": "R2 storage is not configured — files cannot be uploaded.",
+    "lookup": {
+      "legend": "1. Vehicle",
+      "hint": "Enter a lot number or VIN and we will fill in the details from the auction.",
+      "placeholder": "Lot number or VIN",
+      "search": "Look up",
+      "searching": "Looking up…",
+      "notFound": "That lot could not be found. You can enter the details by hand.",
+      "failed": "The lookup failed. Try again, or enter the details by hand.",
+      "found": "Found: {title}",
+      "photos": "{count} photos at the auction",
+      "manual": "Enter by hand",
+      "manualHint": "A file with no auction photos. Use this when the lot is not in the system."
+    },
+    "duplicate": {
+      "heading": "A file already exists for this lot",
+      "body": "{reference} — {client}, created {date}. Copart relists unsold vehicles under the same number, so a second file can be legitimate.",
+      "continue": "Create another anyway"
+    },
+    "client": {
+      "legend": "2. Client",
+      "placeholder": "Search by name or email",
+      "search": "Search",
+      "empty": "No clients match that search.",
+      "selected": "Selected: {name}"
+    },
+    "fields": {
+      "platform": "Platform",
+      "lotNumber": "Lot number",
+      "vin": "VIN",
+      "year": "Year",
+      "make": "Make",
+      "model": "Model"
+    },
+    "submit": "Create file",
+    "submitting": "Creating…",
+    "createFailed": "The file could not be created. Try again.",
+    "import": {
+      "heading": "Auction photos",
+      "planned": "{count} files, about {mb} MB",
+      "start": "Start import",
+      "importing": "Importing… {done} of {total}",
+      "done": "Imported {count} files.",
+      "failed": "{count} failed",
+      "retry": "Try again",
+      "none": "No auction photos — this file was created by hand.",
+      "leaveOpen": "Keep this page open while the import runs."
+    },
+    "stage": {
+      "heading": "Stage",
+      "current": "Now: {stage}",
+      "advance": "Move to “{stage}”",
+      "date": "Date",
+      "note": "Note",
+      "noteHint": "Notes are visible only to you unless you say otherwise.",
+      "showToClient": "Show to the client",
+      "hiddenFromClient": "Internal",
+      "notify": "Email the client",
+      "notified": "Notified {date}",
+      "save": "Save",
+      "saving": "Saving…"
+    },
+    "files": {
+      "heading": "Files",
+      "upload": "Upload files",
+      "uploading": "Uploading {done} of {total}…",
+      "kind": {
+        "photo": "Photo",
+        "video": "Video",
+        "document": "Document"
+      },
+      "visible": "Visible to the client",
+      "hidden": "Hidden from the client",
+      "delete": "Delete",
+      "deleteConfirm": "This deletes the file permanently.",
+      "caption": "Caption",
+      "tooLarge": "{name}: too large ({size}). The limit is {max}.",
+      "wrongType": "{name}: unsupported format.",
+      "failed": "{name}: upload failed."
+    },
+    "costs": {
+      "heading": "Costs",
+      "add": "Add a line",
+      "kind": "Type",
+      "label": "Label",
+      "amount": "Amount",
+      "currency": "Currency",
+      "save": "Save",
+      "delete": "Delete",
+      "rate": "Rate: 1 USD = ? EUR",
+      "rateHint": "Enter the rate you actually got. It is fixed on the file and does not change.",
+      "visibleToClient": "Visible to the client"
+    },
+    "payments": {
+      "heading": "Payments",
+      "add": "Add a payment",
+      "amount": "Amount",
+      "paidAt": "Date received",
+      "method": "Method",
+      "reference": "Bank reference",
+      "note": "Note",
+      "save": "Save",
+      "delete": "Delete"
+    },
+    "internalNote": {
+      "heading": "Internal note",
+      "hint": "The client never sees this.",
+      "save": "Save"
+    }
+  },
+  "OrderEmails": {
+    "stageSubject": "{title} — {stage}",
+    "greeting": "Hello {name},",
+    "stageBody": "Your vehicle has moved on: {stage}.",
+    "referenceLine": "File no. {reference}",
+    "cta": "View the file",
+    "footer": "You are receiving this because you are a SmartAutoBid client."
   }
 }
