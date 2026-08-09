@@ -10,7 +10,6 @@
  *
  * Deliberately absent until its feature lands:
  *
- *   /admin/vehicles  won-auction case files (photos, documents, costs)
  *   /admin/bids      bid requests, Phase 2.3
  */
 export interface AdminSectionLink {
@@ -21,6 +20,9 @@ export interface AdminSectionLink {
 
 export const ADMIN_SECTIONS: AdminSectionLink[] = [
   { key: "overview", href: "/admin" },
+  // Second, not last: once cars are moving this is the screen an operator
+  // opens all day, and the deposit queue is the one they visit occasionally.
+  { key: "orders", href: "/admin/orders" },
   { key: "deposits", href: "/admin/deposits" },
   { key: "users", href: "/admin/users" },
   { key: "settings", href: "/admin/settings" },

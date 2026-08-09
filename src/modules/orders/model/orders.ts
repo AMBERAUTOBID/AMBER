@@ -1,4 +1,4 @@
-import { and, desc, eq, like, sql } from "drizzle-orm";
+import { and, asc, desc, eq, like, sql } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 import { bumpReference, nextReference } from "./reference";
 import { INITIAL_STAGE, type OrderSnapshot } from "./orderSnapshot";
@@ -278,6 +278,50 @@ export async function listOrdersForUser(userId: string) {
     .where(eq(schema.vehicleOrders.userId, userId))
     .orderBy(desc(schema.vehicleOrders.createdAt))
     .limit(ORDERS_PAGE_SIZE);
+}
+
+/** Every file on an order, oldest stage first. */
+export async function listOrderFiles(orderId: string) {
+  return db()
+    .select()
+    .from(schema.orderFiles)
+    .where(eq(schema.orderFiles.orderId, orderId))
+    .orderBy(asc(schema.orderFiles.sortOrder));
+}
+
+/** The timeline, oldest first. */
+export async function listStageEvents(orderId: string) {
+  return db()
+    .select()
+    .from(schema.orderStageEvents)
+    .where(eq(schema.orderStageEvents.orderId, orderId))
+    .orderBy(asc(schema.orderStageEvents.happenedAt));
+}
+
+/**
+ * How the auction import stands: planned, done, still to do, given up on.
+ *
+ * `total` counts auction rows only. Files an admin uploaded are not part of
+ * an import and must not make its progress bar look incomplete forever.
+ */
+export async function auctionImportSummary(
+  orderId: string
+): Promise<{ total: number; uploaded: number; remaining: number; failed: number }> {
+  const rows = await db()
+    .select({
+      total: sql<number>`count(*)`,
+      uploaded: sql<number>`count(*) filter (where ${schema.orderFiles.uploadedAt} is not null)`,
+      failed: sql<number>`count(*) filter (where ${schema.orderFiles.importError} is not null)`,
+    })
+    .from(schema.orderFiles)
+    .where(
+      and(eq(schema.orderFiles.orderId, orderId), eq(schema.orderFiles.source, "auction"))
+    );
+
+  const total = Number(rows[0]?.total ?? 0);
+  const uploaded = Number(rows[0]?.uploaded ?? 0);
+  const failed = Number(rows[0]?.failed ?? 0);
+  return { total, uploaded, failed, remaining: total - uploaded - failed };
 }
 
 /**
