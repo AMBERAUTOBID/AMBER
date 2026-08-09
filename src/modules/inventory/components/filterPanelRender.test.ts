@@ -1,0 +1,163 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
+
+/**
+ * Does the panel actually render, and does it render the right thing?
+ *
+ * The pure URL logic is covered in `model/filterQuery.test.ts`. This covers the
+ * part that file cannot: that the component survives real facet data and puts
+ * the counts, the labels and the toggle links where they belong. A crash here
+ * takes the whole search page down, and it is the one thing about this feature
+ * that could not be checked in a browser — Next 16 refuses a second `next dev`
+ * in one directory and another session's server holds it.
+ *
+ * `renderToStaticMarkup` rather than a DOM: this stays inside the `node`
+ * environment vitest is deliberately configured with, so the suite gains
+ * coverage without gaining a browser and the run stays fast.
+ *
+ * The i18n Link is mocked to a plain anchor. It is Next's router binding, not
+ * behaviour of ours, and importing it for real is what made the first attempt at
+ * a test impossible.
+ */
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+  }: {
+    href: { pathname: string; query: Record<string, string> };
+    children: React.ReactNode;
+  }) =>
+    createElement(
+      "a",
+      { href: `${href.pathname}?${new URLSearchParams(href.query).toString()}` },
+      children
+    ),
+}));
+
+const { default: FilterPanel } = await import("./FilterPanel");
+
+/** Shaped like a real `getFacets` result, with counts measured off the mirror. */
+const FACETS = {
+  vehicle_class: [
+    { value: "automobile", count: 107859 },
+    { value: "truck", count: 4398 },
+    { value: "motorcycle", count: 1686 },
+  ],
+  title: [
+    { value: "salvage", count: 60615 },
+    { value: "clean", count: 43636 },
+    { value: "rebuildable", count: 2630 },
+  ],
+  fuel: [
+    { value: "gasoline", count: 93854 },
+    { value: "diesel", count: 3770 },
+  ],
+  // Nine options, so the tail must fold into a disclosure.
+  color: Array.from({ length: 9 }, (_, i) => ({ value: `c${i}`, count: 100 - i })),
+  // Numerals, which carry no vocabulary and must fall back to the raw value.
+  cylinders: [{ value: "4", count: 60129 }],
+};
+
+const LABELS = {
+  heading: "Filters",
+  reset: "Clear",
+  showMore: "Show {count} more",
+  groups: { vehicle_class: "Category", title: "Document", fuel: "Fuel", color: "Colour", cylinders: "Cylinders" },
+  options: {
+    "vehicle_class.automobile": "Cars",
+    "title.salvage": "Salvage",
+    "title.rebuildable": "Rebuildable",
+    "fuel.gasoline": "Petrol",
+    "fuel.diesel": "Diesel",
+  },
+};
+
+function render(query: Record<string, string> = {}) {
+  return renderToStaticMarkup(
+    createElement(FilterPanel, { facets: FACETS, query, labels: LABELS })
+  );
+}
+
+describe("FilterPanel rendering", () => {
+  it("renders without throwing on real facet data", () => {
+    expect(() => render()).not.toThrow();
+  });
+
+  it("shows the count beside every option — the thing the competitor cannot do", () => {
+    const html = render();
+    expect(html).toContain("107,859");
+    expect(html).toContain("60,615");
+    expect(html).toContain("93,854");
+  });
+
+  it("uses the translated label, not the raw class value", () => {
+    const html = render();
+    expect(html).toContain("Petrol");
+    expect(html).not.toContain(">gasoline<");
+  });
+
+  it("falls back to the raw value where a dimension has no vocabulary", () => {
+    // Cylinder counts are numerals and are deliberately untranslated.
+    expect(render()).toContain("60,129");
+  });
+
+  it("keeps Rebuildable visible as its own option", () => {
+    // Six buckets to the competitor's four, and this is the one that matters:
+    // it changes what a client may legally do with the car after import.
+    expect(render()).toContain("Rebuildable");
+  });
+
+  it("links each option to itself toggled on", () => {
+    expect(render()).toContain("/search?title=salvage");
+  });
+
+  it("links an already-selected option to itself toggled off", () => {
+    const html = render({ title: "salvage" });
+    // Selecting the only active value must produce a link with no title param
+    // at all, or the filter could never be cleared.
+    expect(html).toContain('href="/search?"');
+  });
+
+  it("carries the other filters through every link", () => {
+    const html = render({ q: "ford", fuel: "diesel" });
+    expect(html).toContain("q=ford");
+    expect(html).toContain("fuel=diesel");
+  });
+
+  it("offers a reset only when something is selected", () => {
+    expect(render()).not.toContain("Clear");
+    expect(render({ title: "salvage" })).toContain("Clear");
+  });
+
+  it("folds a long list into a disclosure rather than printing 17 colours", () => {
+    const html = render();
+    expect(html).toContain("<details");
+    expect(html).toContain("Show 3 more");
+  });
+
+  it("omits a dimension the result set cannot offer", () => {
+    // Browsing motorcycles must not show a Body Type list — which is exactly
+    // what the competitor does, offering "Sedan / SUV / Pickup" for bikes.
+    const html = renderToStaticMarkup(
+      createElement(FilterPanel, {
+        facets: { ...FACETS, body_type: [] },
+        query: {},
+        labels: { ...LABELS, groups: { ...LABELS.groups, body_type: "Body type" } },
+      })
+    );
+    expect(html).not.toContain("Body type");
+  });
+
+  it("survives a dimension the labels do not cover", () => {
+    // A new vendor value must degrade to its raw name, never crash the page.
+    const html = renderToStaticMarkup(
+      createElement(FilterPanel, {
+        facets: { fuel: [{ value: "hydrogen", count: 3 }] },
+        query: {},
+        labels: LABELS,
+      })
+    );
+    expect(html).toContain("hydrogen");
+  });
+});
