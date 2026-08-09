@@ -174,6 +174,10 @@ export interface VehicleSearchParams {
    * zero for `fuel=banana` is honest; ignoring the filter and showing petrol
    * cars is not.
    */
+  /** Category classes — `automobile,truck`. Distinct from `type`/`category`,
+   * which drive the Apibara-compatible fan-out; this filters our own column
+   * directly and is what the facet panel toggles. */
+  vehicle_class?: string;
   fuel?: string;
   drive?: string;
   body_type?: string;

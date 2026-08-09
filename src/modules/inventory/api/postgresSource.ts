@@ -233,7 +233,18 @@ function buildWhere(
   // wrong landed cost or a mileage out by 1.6x.
   conditions.push(sql`${t.auctionName} not ilike '%CANADA%'`);
 
-  if (params.platform) conditions.push(eq(t.platform, params.platform));
+  // Accepts a list as well as a single value: the header toggles send one, the
+  // facet panel toggles a comma-separated set, and both must mean the same
+  // thing. `eq` against "copart,iaai" would have matched nothing at all.
+  const platformValues = multi(params.platform);
+  if (platformValues) {
+    // The column is an enum, so unlike the free-text class columns the invalid
+    // values cannot simply be handed to `inArray`. Same rule though: if nothing
+    // the visitor asked for is a real platform, match nothing rather than
+    // quietly dropping their filter.
+    const valid = platformValues.filter((p): p is "copart" | "iaai" => p === "copart" || p === "iaai");
+    conditions.push(valid.length > 0 ? inArray(t.platform, valid) : sql`false`);
+  }
 
   // ILIKE because Copart shouts and IAAI does not: "FORD" and "Ford" are the same
   // make and a visitor should not have to know which auction listed the car.
@@ -276,6 +287,8 @@ function buildWhere(
   // Every one of these reads a NORMALISED class column, never the raw string.
   // That is the whole point of the normalisers: filtering on raw `color` would
   // mean `WHITE` and `White` are different options over 30,716 lots.
+  const vehicleClass = multi(params.vehicle_class);
+  if (vehicleClass) conditions.push(inArray(t.vehicleClass, vehicleClass));
   const fuel = multi(params.fuel);
   if (fuel) conditions.push(inArray(t.fuelClass, fuel));
   const drive = multi(params.drive);
@@ -403,7 +416,7 @@ const FACET_DIMENSIONS = [
   { key: "secondary_damage", column: "secondary_damage_class", param: "secondary_damage" },
   { key: "run_cond", column: "condition_class", param: "run_cond" },
   { key: "cylinders", column: "cylinder_count", param: "cylinders" },
-  { key: "vehicle_class", column: "vehicle_class", param: "" },
+  { key: "vehicle_class", column: "vehicle_class", param: "vehicle_class" },
   { key: "platform", column: "platform", param: "platform" },
 ] as const;
 
@@ -470,7 +483,7 @@ async function getFacets(
   const facets = await facetCounts(buildWhere(params, typeValues, activeSince), FACET_DIMENSIONS);
 
   const filtered = FACET_DIMENSIONS.filter(
-    (d) => d.param !== "" && params[d.param] !== undefined && params[d.param] !== ""
+    (d) => params[d.param] !== undefined && params[d.param] !== ""
   );
   await Promise.all(
     filtered.map(async (d) => {

@@ -6,9 +6,11 @@ import Button from "@/shared/ui/Button";
 import SearchWidget from "@/modules/inventory/components/SearchWidget";
 import LotCard from "@/modules/inventory/components/LotCard";
 import { Link } from "@/i18n/navigation";
+import FilterPanel from "@/modules/inventory/components/FilterPanel";
 import {
   getAuctionSource,
   type AuctionPlatform,
+  type SearchFacets,
   type VehicleSearchResponse,
 } from "@/modules/inventory/api";
 import { parseFreeTextQuery, CATEGORY_TYPE_GROUPS } from "@/modules/inventory/model/searchQuery";
@@ -86,6 +88,32 @@ export default async function SearchPage({
     parsedYearTo = parsed.yearTo;
   }
 
+  // The facet filters. Their URL names match the search-param names exactly, so
+  // there is no translation table between the address bar and the query — one
+  // fewer place for a filter to be silently dropped. Each is a comma-separated
+  // multi-select; an unrecognised value matches nothing rather than being
+  // ignored, which is what makes a mistyped URL honest instead of misleading.
+  const FACET_PARAMS = [
+    "vehicle_class",
+    "fuel",
+    "drive",
+    "body_type",
+    "title",
+    "color",
+    "transmission",
+    "damage",
+    "secondary_damage",
+    "run_cond",
+    "cylinders",
+    "seller",
+    "keys",
+  ] as const;
+  const facetFilters: Record<string, string> = {};
+  for (const key of FACET_PARAMS) {
+    const v = str(sp[key]);
+    if (v) facetFilters[key] = v;
+  }
+
   const baseSearchParams = {
     s,
     make: effectiveMake,
@@ -96,7 +124,15 @@ export default async function SearchPage({
     year_to: num(sp.yearTo) ?? parsedYearTo,
     odometer_from: num(sp.odoMin),
     odometer_to: num(sp.odoMax),
+    engine_from: num(sp.engineFrom),
+    engine_to: num(sp.engineTo),
+    buy_now_min: num(sp.buyNowMin),
+    buy_now_max: num(sp.buyNowMax),
+    price_min: num(sp.priceMin),
+    price_max: num(sp.priceMax),
+    enhanced: sp.enhanced === "1" ? true : undefined,
     lot_status: sp.buyNow === "1" ? ("Buy Now" as const) : undefined,
+    ...facetFilters,
     cursor,
     per_page: 20,
   };
@@ -117,12 +153,23 @@ export default async function SearchPage({
     !effectiveModel && !effectiveType && category ? CATEGORY_TYPE_GROUPS[category] : undefined;
 
   let results: VehicleSearchResponse | null = null;
+  let facets: SearchFacets | null = null;
   let error: string | null = null;
   try {
     const source = getAuctionSource();
-    results = fanOutTypes
-      ? await source.searchVehiclesAcrossTypes(baseSearchParams, fanOutTypes)
-      : await source.searchVehicles(baseSearchParams);
+    // Counts run alongside the results rather than after them: they answer a
+    // different question and neither waits on the other.
+    const [searchResult, facetResult] = await Promise.all([
+      fanOutTypes
+        ? source.searchVehiclesAcrossTypes(baseSearchParams, fanOutTypes)
+        : source.searchVehicles(baseSearchParams),
+      // Optional on the interface and absent on Apibara, whose `filters`
+      // response is an echo of the request. No facets means no sidebar, and the
+      // page behaves exactly as it did before the mirror existed.
+      source.getFacets?.(baseSearchParams, fanOutTypes) ?? Promise.resolve(null),
+    ]);
+    results = searchResult;
+    facets = facetResult;
   } catch (e) {
     error = e instanceof Error ? e.message : "Unknown error";
   }
@@ -146,6 +193,10 @@ export default async function SearchPage({
   if (str(sp.odoMin)) basePageQuery.odoMin = str(sp.odoMin)!;
   if (str(sp.odoMax)) basePageQuery.odoMax = str(sp.odoMax)!;
   if (sp.buyNow === "1") basePageQuery.buyNow = "1";
+  // Facet selections belong in every link the page emits — paging, and each
+  // option's own toggle. Leaving them out is how a visitor loses their filters
+  // by clicking "next".
+  for (const [key, value] of Object.entries(facetFilters)) basePageQuery[key] = value;
 
   return (
     <>
@@ -190,6 +241,26 @@ export default async function SearchPage({
 
       <section className="pb-20">
         <Container>
+          {/* Two columns only when there is a panel to put in the first one.
+              Apibara produces no facets, so on Apibara this is the single
+              full-width column the page has always had. */}
+          <div className={facets ? "grid gap-6 lg:grid-cols-[16rem_1fr]" : ""}>
+            {facets && (
+              <div className="lg:sticky lg:top-6 lg:self-start">
+                <FilterPanel
+                  facets={facets}
+                  query={basePageQuery}
+                  labels={{
+                    heading: t("filters.heading"),
+                    reset: t("filters.reset"),
+                    showMore: t("filters.showMore"),
+                    groups: t.raw("filters.groups") as Record<string, string>,
+                    options: t.raw("filters.options") as Record<string, string>,
+                  }}
+                />
+              </div>
+            )}
+            <div>
           {error && (
             <Reveal className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
               {t("results.error", { error })}
@@ -203,8 +274,17 @@ export default async function SearchPage({
             </Reveal>
           )}
 
+          {/* The result count the aggregator structurally cannot provide — its
+              `meta` carries no total at all. Rendered only when there is one, so
+              the Apibara path is unchanged. */}
+          {results && typeof results.meta.total === "number" && (
+            <p className="mb-4 text-sm text-char-500">
+              {t("results.count", { count: results.meta.total.toLocaleString() })}
+            </p>
+          )}
+
           {results && results.data.length > 0 && (
-            <Reveal className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <Reveal className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
               {/* Shares LotCard with the vehicle page's similar-lots grid, so
                   the "no bids yet" and "odometer not reported" cases can't be
                   handled correctly in one grid and wrongly in the other. */}
@@ -252,6 +332,9 @@ export default async function SearchPage({
               )}
             </div>
           )}
+
+            </div>
+          </div>
 
           <Reveal
             delay={0.15}

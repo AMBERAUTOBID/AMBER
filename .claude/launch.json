@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3101,
       "autoPort": true
+    },
+    {
+      "name": "amberautobid-mirror",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/dev-mirror.mjs", "--port", "3102"],
+      "port": 3102,
+      "autoPort": true
     }
   ]
 }
