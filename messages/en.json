@@ -1407,6 +1407,23 @@
   "Admin": {
     "title": "Admin console",
     "subtitle": "Confirm deposits, activate plans, and see who is on one.",
+    "nav": {
+      "label": "Console sections",
+      "overview": "Overview",
+      "deposits": "Deposits",
+      "users": "Users",
+      "settings": "Settings",
+      "backToAccount": "My account"
+    },
+    "overview": {
+      "heading": "Overview"
+    },
+    "deposits": {
+      "heading": "Deposits"
+    },
+    "settings": {
+      "heading": "Settings"
+    },
     "queueHeading": "Pending deposits",
     "queueEmpty": "No deposits awaiting confirmation.",
     "confirmDeposit": "Confirm deposit",

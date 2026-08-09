@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import Container from "@/shared/ui/Container";
 import { Link } from "@/i18n/navigation";
 import LogoutButton from "@/modules/auth/components/LogoutButton";
-import AccountNav from "./AccountNav";
+import SectionNav from "@/shared/ui/SectionNav";
 import { ACCOUNT_SECTIONS } from "../model/sections";
 
 interface AccountShellProps {
@@ -34,7 +34,13 @@ export default async function AccountShell({ locale, user, children }: AccountSh
             </p>
 
             <div className="mt-6 border-t border-char-200/70 pt-4">
-              <AccountNav sections={ACCOUNT_SECTIONS} />
+              <SectionNav
+                label={t("nav.label")}
+                items={ACCOUNT_SECTIONS.map((s) => ({
+                  href: s.href,
+                  label: t(`nav.${s.key}`),
+                }))}
+              />
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-char-200/70 pt-4">

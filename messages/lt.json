@@ -1407,6 +1407,23 @@
   "Admin": {
     "title": "Administratoriaus pultas",
     "subtitle": "Patvirtinkite depozitus, aktyvuokite planus ir matykite, kas juos turi.",
+    "nav": {
+      "label": "Pulto skiltys",
+      "overview": "Apžvalga",
+      "deposits": "Depozitai",
+      "users": "Vartotojai",
+      "settings": "Nustatymai",
+      "backToAccount": "Mano paskyra"
+    },
+    "overview": {
+      "heading": "Apžvalga"
+    },
+    "deposits": {
+      "heading": "Depozitai"
+    },
+    "settings": {
+      "heading": "Nustatymai"
+    },
     "queueHeading": "Laukiantys depozitai",
     "queueEmpty": "Nėra depozitų, laukiančių patvirtinimo.",
     "confirmDeposit": "Patvirtinti depozitą",

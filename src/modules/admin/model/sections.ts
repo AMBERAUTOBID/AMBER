@@ -1,0 +1,27 @@
+/**
+ * The admin console's sidebar — the one list, so the nav and the pages can't
+ * drift apart. Mirrors `modules/account/model/sections.ts` deliberately.
+ *
+ * ⚠️ Same rule as the client area: a section goes in here only once it has
+ * real data behind it. An entry that opens onto "nothing yet" is worse than no
+ * entry, and in a staff tool it is worse still — it teaches the operator that
+ * some links don't work, which is exactly the habit you don't want when one of
+ * the links refunds money.
+ *
+ * Deliberately absent until its feature lands:
+ *
+ *   /admin/vehicles  won-auction case files (photos, documents, costs)
+ *   /admin/bids      bid requests, Phase 2.3
+ */
+export interface AdminSectionLink {
+  /** Message key under `Admin.nav`. */
+  key: string;
+  href: string;
+}
+
+export const ADMIN_SECTIONS: AdminSectionLink[] = [
+  { key: "overview", href: "/admin" },
+  { key: "deposits", href: "/admin/deposits" },
+  { key: "users", href: "/admin/users" },
+  { key: "settings", href: "/admin/settings" },
+];
