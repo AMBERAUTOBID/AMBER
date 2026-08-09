@@ -232,6 +232,15 @@ const UPSERT_SET = (() => {
   const set: Record<string, unknown> = {};
   for (const [key, col] of Object.entries(getTableColumns(schema.auctionLots))) {
     if (key === "id" || key === "platform" || key === "lotNumber" || key === "firstSeenAt") continue;
+    // A GENERATED ALWAYS column computes itself from the other columns, and
+    // Postgres rejects any attempt to assign one: "column can only be updated to
+    // DEFAULT". Adding `searchTsv` in migration 0012 therefore broke every
+    // upsert this sweep makes — the batch failed, the row-by-row fallback caught
+    // it so nothing was lost, and a 2,931-page sweep would have crawled.
+    //
+    // Read off the column rather than named explicitly, so the next generated
+    // column does not reintroduce this.
+    if ((col as { generated?: unknown }).generated) continue;
     set[key] = sql.raw(`excluded."${col.name}"`);
   }
   return set;
