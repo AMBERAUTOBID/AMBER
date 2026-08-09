@@ -11,6 +11,7 @@
  *
  * Pure and database-free so it can be tested without a connection.
  */
+import { displayImageUrl } from "./imageProxy";
 import type { VehicleListItem } from "../api/types";
 
 const KM_PER_MILE = 1.609344;
@@ -113,7 +114,10 @@ export function mirrorRowToVehicleListItem(
   const thumbs = images
     .slice()
     .sort((a, b) => a.position - b.position)
-    .map((i) => i.sourceUrl);
+    // Hotlinked to the auction CDN unless IMAGE_PROXY is on — see imageProxy.ts.
+    // The switch exists because a Referer check on their side blanks every photo
+    // on the site at once, and the fix should not need a deploy.
+    .map((i) => displayImageUrl(i.sourceUrl));
 
   return {
     platform: row.platform as VehicleListItem["platform"],
