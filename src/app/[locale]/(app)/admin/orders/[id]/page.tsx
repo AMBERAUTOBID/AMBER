@@ -16,6 +16,8 @@ import { ORDER_STAGES, hasReached, stageProgress } from "@/modules/orders/model/
 import { signFiles } from "@/modules/orders/api/signFiles";
 import StageBadge from "@/modules/orders/components/StageBadge";
 import ImportProgress from "@/modules/orders/components/ImportProgress";
+import StageEditor from "@/modules/orders/components/StageEditor";
+import FileUploader from "@/modules/orders/components/FileUploader";
 import AdminSection from "@/modules/admin/components/AdminSection";
 
 export async function generateMetadata({
@@ -148,7 +150,12 @@ export default async function AdminOrderPage({
             rather than hidden, so the whole route is visible from the start —
             an operator planning work needs to see what is still ahead. */}
         <AdminSection title={t("stage.heading")}>
-          <ol className="space-y-4">
+          {/* The editor sits above the timeline rather than inside a stage:
+              recording an event and moving the car are one action, and the
+              stage it applies to is a field in it. */}
+          <StageEditor orderId={id} currentStage={order.stage} />
+
+          <ol className="mt-6 space-y-6">
             {ORDER_STAGES.map((stage) => {
               const reached = hasReached(order.stage, stage);
               const event = eventByStage.get(stage);
@@ -179,6 +186,10 @@ export default async function AdminOrderPage({
                     </p>
                   )}
                   {stageFiles.length > 0 && <FileStrip files={stageFiles} />}
+                  {/* Every stage takes files, including ones the car has not
+                      reached yet — documents often arrive before the event
+                      they belong to. */}
+                  <FileUploader orderId={id} stage={stage} />
                 </li>
               );
             })}
