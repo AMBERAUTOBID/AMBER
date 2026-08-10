@@ -219,7 +219,7 @@ export default async function AdminOrderPage({
         {/* The title, the consignee and the shipping references. Placed above
             money because a car with no title is not going anywhere, whatever
             the balance says. */}
-        <AdminSection title={t("details.consignee.heading")}>
+        <AdminSection title={t("details.heading")}>
           <OrderDetailsEditor
             orderId={id}
             details={{
