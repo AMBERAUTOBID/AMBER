@@ -45,6 +45,41 @@ const DIMENSIONS = [
   { key: "secondary_damage", param: "secondary_damage", vocab: "damage" },
 ] as const;
 
+/**
+ * A dot of actual paint beside each colour option.
+ *
+ * Colour is the one dimension where the word is a poor label — "Beige" and
+ * "Gold" are the same thought until you see them, and a Lithuanian or Russian
+ * reader is matching a translated word to a car they picture rather than to a
+ * name they use daily. The competitor shows swatches for the same reason.
+ *
+ * Values are the paint, not the brand palette, so they are literal hex rather
+ * than Tailwind tokens. `white` needs the ring every swatch carries or it
+ * disappears against the panel.
+ */
+const COLOR_SWATCH: Record<string, string> = {
+  white: "#FFFFFF",
+  black: "#1F2124",
+  gray: "#9AA0A6",
+  silver: "#C9CED4",
+  blue: "#2563EB",
+  red: "#DC2626",
+  green: "#16A34A",
+  brown: "#7A4A24",
+  beige: "#E0D2B4",
+  gold: "#D4AF37",
+  burgundy: "#7B1E3A",
+  yellow: "#F5C518",
+  orange: "#EA6A0C",
+  purple: "#7E22CE",
+  teal: "#0D9488",
+  pink: "#EC4899",
+};
+
+/** Two-tone and multi-colour lots: no single swatch is honest, so show that
+ * it is more than one rather than picking a winner. */
+const MULTI_SWATCH = "conic-gradient(#DC2626, #F5C518, #16A34A, #2563EB, #DC2626)";
+
 /** How many options to show before folding the rest into a `<details>`. Six
  * covers the common choices in every dimension we measured while keeping the
  * whole panel scannable; colour and damage have 17 and 25. */
@@ -65,11 +100,14 @@ function Option({
   count,
   active,
   href,
+  swatch,
 }: {
   label: string;
   count: number;
   active: boolean;
   href: { pathname: string; query: Record<string, string> };
+  /** A CSS colour or gradient, on the colour dimension only. */
+  swatch?: string;
 }) {
   return (
     <Link
@@ -87,6 +125,15 @@ function Option({
             active ? "border-amber-500 bg-amber-500" : "border-char-300"
           }`}
         />
+        {swatch && (
+          // Decorative: the option is already named in the text beside it, so a
+          // screen reader gains nothing from the colour and would only repeat.
+          <span
+            aria-hidden
+            className="h-3.5 w-3.5 shrink-0 rounded-full ring-1 ring-inset ring-black/15"
+            style={{ background: swatch }}
+          />
+        )}
         <span className="truncate">{label}</span>
       </span>
       <span className="shrink-0 tabular-nums text-xs text-char-400">
@@ -150,6 +197,7 @@ export default function FilterPanel({
                 count={o.count}
                 active={selected.has(o.value)}
                 href={toggleHref(query, d.param, o.value)}
+                swatch={d.vocab === "color" ? (COLOR_SWATCH[o.value] ?? MULTI_SWATCH) : undefined}
               />
             ))}
             {tail.length > 0 && (
@@ -166,6 +214,7 @@ export default function FilterPanel({
                     count={o.count}
                     active={selected.has(o.value)}
                     href={toggleHref(query, d.param, o.value)}
+                swatch={d.vocab === "color" ? (COLOR_SWATCH[o.value] ?? MULTI_SWATCH) : undefined}
                   />
                 ))}
               </details>

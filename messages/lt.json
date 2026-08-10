@@ -515,7 +515,8 @@
       "soldOn": "Parduota {date}",
       "note": "Pateikti pasiūlymo šiam lotui nebegalima — puslapis išsaugotas kaip kainos orientyras. Galime paieškoti panašaus automobilio artimiausiuose aukcionuose.",
       "ctaSearch": "Rasti panašių automobilių"
-    }
+    },
+    "viewOnAuction": "Peržiūrėti šį lotą {auction} svetainėje"
   },
   "Shipping": {
     "hero": {

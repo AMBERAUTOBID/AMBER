@@ -10,6 +10,7 @@ import VehicleCostPanel from "@/modules/pricing/components/VehicleCostPanel";
 import PastSalesTable from "@/modules/inventory/components/PastSalesTable";
 import LotCard from "@/modules/inventory/components/LotCard";
 import SaveLotButton from "@/modules/favorites/components/SaveLotButton";
+import { auctionDisplayName, auctionLotUrl } from "@/modules/inventory/model/auctionLotUrl";
 import { currentUser } from "@/modules/auth/model/currentUser";
 import { savedLotKeys, lotKey } from "@/modules/favorites/model/favorites";
 import {
@@ -33,6 +34,7 @@ import {
   Storefront,
   CalendarBlank,
   Archive,
+  ArrowSquareOut,
 } from "@phosphor-icons/react/dist/ssr";
 
 const DELIVERY_PORTS = ["Klaipėda, Lithuania", "Rotterdam, Netherlands", "Poti, Georgia"];
@@ -149,6 +151,8 @@ export default async function VehicleDetailPage({
   // offer to bid on it - it becomes a price-reference record instead. Treated
   // as closed on either signal, since `state` and `diff_minutes` are computed
   // independently by the source and either one alone can lag.
+  const auctionUrl = auctionLotUrl(detail.platform, detail.lot_number);
+  const auctionName = auctionDisplayName(detail.platform);
   const saleClosed = detail.auction?.state === "finished" || !isUpcoming;
   // One query, and only when somebody is signed in. This page is noindex and
   // already dynamic, so reading the session costs it nothing.
@@ -204,9 +208,29 @@ export default async function VehicleDetailPage({
       <section className="border-b border-char-100 bg-gradient-to-b from-amber-50/50 to-background py-8 sm:py-10">
         <Container>
           <Reveal className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wider text-char-400">
-            <span className="rounded-full bg-char-900 px-2.5 py-1 text-white">
-              {detail.platform}
-            </span>
+            {/* The platform badge doubles as a link to the lot on the auction's
+                own site, so a client can check this page against the source.
+                A trust feature, and the reason it is the badge rather than a
+                separate button: it is where somebody already looks to see which
+                auction the car is at. Falls back to a plain badge when the lot
+                number or platform is not something we can build a URL from —
+                see auctionLotUrl, which refuses to guess. */}
+            {auctionUrl ? (
+              <a
+                href={auctionUrl}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="inline-flex items-center gap-1.5 rounded-full bg-char-900 px-2.5 py-1 text-white transition-colors hover:bg-amber-600"
+                title={t("viewOnAuction", { auction: auctionName ?? detail.platform })}
+              >
+                {detail.platform}
+                <ArrowSquareOut size={12} weight="bold" />
+              </a>
+            ) : (
+              <span className="rounded-full bg-char-900 px-2.5 py-1 text-white">
+                {detail.platform}
+              </span>
+            )}
             <span>{t("lot", { number: detail.lot_number })}</span>
             {saleClosed && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-char-200 px-2.5 py-1 text-char-700">
