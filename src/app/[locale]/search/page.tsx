@@ -253,7 +253,13 @@ export default async function SearchPage({
                   labels={{
                     heading: t("filters.heading"),
                     reset: t("filters.reset"),
-                    showMore: t("filters.showMore"),
+                    // `.raw` deliberately: the message carries a literal
+                    // `{count}` that FilterPanel substitutes per group, and
+                    // `t()` would read it as an ICU placeholder, demand a
+                    // parameter it cannot be given once for twelve groups, and
+                    // render the key itself. Caught in the browser — no unit
+                    // test sees next-intl's interpolation.
+                    showMore: t.raw("filters.showMore") as string,
                     groups: t.raw("filters.groups") as Record<string, string>,
                     options: t.raw("filters.options") as Record<string, string>,
                   }}
