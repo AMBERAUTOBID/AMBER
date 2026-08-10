@@ -91,8 +91,30 @@ export interface FilterPanelLabels {
   showMore: string;
   /** Group headings, keyed by dimension. */
   groups: Record<string, string>;
-  /** Option labels, keyed by `dimension.value`, e.g. `fuel.gasoline`. */
-  options: Record<string, string>;
+  /**
+   * Option labels, nested by dimension and then value — `options.fuel.gasoline`.
+   *
+   * NESTED RATHER THAN A DOTTED KEY, AND IT HAS TO BE. next-intl reads "." in a
+   * message key as nesting and refuses a literal one, so the flat
+   * `"fuel.gasoline"` this started as threw INVALID_KEY over all 89 options and
+   * took the dev server down with it. It only failed in development — the
+   * production bundle skips that validation — which is the worst shape for a
+   * bug: the site builds, and nobody can run it locally.
+   */
+  options: Record<string, Record<string, string>>;
+}
+
+/**
+ * The translated label for one option, falling back to the raw database value.
+ *
+ * The fallback is deliberate: a value the auctions introduce next month appears
+ * in the facets before anyone writes a translation for it, and showing
+ * `sport_utility` is honest where showing nothing would silently drop a filter
+ * the visitor can see results for.
+ */
+function optionLabel(labels: FilterPanelLabels, vocab: string | null, value: string): string {
+  if (!vocab) return value;
+  return labels.options[vocab]?.[value] ?? value;
 }
 
 function Option({
@@ -193,7 +215,7 @@ export default function FilterPanel({
             {head.map((o) => (
               <Option
                 key={o.value}
-                label={d.vocab ? (labels.options[`${d.vocab}.${o.value}`] ?? o.value) : o.value}
+                label={optionLabel(labels, d.vocab, o.value)}
                 count={o.count}
                 active={selected.has(o.value)}
                 href={toggleHref(query, d.param, o.value)}
@@ -210,7 +232,7 @@ export default function FilterPanel({
                 {tail.map((o) => (
                   <Option
                     key={o.value}
-                    label={d.vocab ? (labels.options[`${d.vocab}.${o.value}`] ?? o.value) : o.value}
+                    label={optionLabel(labels, d.vocab, o.value)}
                     count={o.count}
                     active={selected.has(o.value)}
                     href={toggleHref(query, d.param, o.value)}

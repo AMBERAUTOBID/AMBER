@@ -57,9 +57,41 @@ const loaded = Object.fromEntries(
   ])
 );
 
+/**
+ * Message keys may not contain a dot.
+ *
+ * next-intl reads "." as nesting and throws INVALID_KEY over a literal one, but
+ * ONLY in development — the production bundle skips that validation entirely.
+ * So a flat `"fuel.gasoline"` key builds and deploys happily while taking down
+ * every developer's `next dev` with an exit 255, which is the worst way round
+ * for a bug to fail.
+ *
+ * The parity check above could never have caught it: it compares key sets
+ * BETWEEN locales, and all three files were wrong in exactly the same way. This
+ * is a check on the shape of a key rather than on where it appears, which is why
+ * it needs to be its own pass.
+ */
+function dottedKeys(value, prefix = "") {
+  const found = [];
+  for (const [key, child] of Object.entries(value)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (key.includes(".")) found.push(path);
+    if (child && typeof child === "object" && !Array.isArray(child)) {
+      found.push(...dottedKeys(child, path));
+    }
+  }
+  return found;
+}
+
 const referenceKeys = new Set(flatten(loaded[REFERENCE]));
 const referenceArrays = arrayLengths(loaded[REFERENCE]);
 const problems = [];
+
+for (const locale of LOCALES) {
+  for (const path of dottedKeys(loaded[locale])) {
+    problems.push(`${locale}: key contains "." — next-intl reads it as nesting: ${path}`);
+  }
+}
 
 for (const locale of LOCALES.filter((l) => l !== REFERENCE)) {
   const keys = new Set(flatten(loaded[locale]));

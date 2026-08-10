@@ -37,6 +37,9 @@ vi.mock("@/i18n/navigation", () => ({
 
 const { default: FilterPanel } = await import("./FilterPanel");
 
+/** The shipped English messages, read as the search page reads them. */
+const enMessages = (await import("../../../../messages/en.json")).default;
+
 /** Shaped like a real `getFacets` result, with counts measured off the mirror. */
 const FACETS = {
   vehicle_class: [
@@ -64,12 +67,13 @@ const LABELS = {
   reset: "Clear",
   showMore: "Show {count} more",
   groups: { vehicle_class: "Category", title: "Document", fuel: "Fuel", color: "Colour", cylinders: "Cylinders" },
+  // Nested, because next-intl refuses a message key containing a dot. These
+  // fixtures were flat once, matched the component, and both were wrong
+  // together — which is exactly why the test below reads the real file instead.
   options: {
-    "vehicle_class.automobile": "Cars",
-    "title.salvage": "Salvage",
-    "title.rebuildable": "Rebuildable",
-    "fuel.gasoline": "Petrol",
-    "fuel.diesel": "Diesel",
+    vehicle_class: { automobile: "Cars" },
+    title: { salvage: "Salvage", rebuildable: "Rebuildable" },
+    fuel: { gasoline: "Petrol", diesel: "Diesel" },
   },
 };
 
@@ -100,6 +104,22 @@ describe("FilterPanel rendering", () => {
   it("falls back to the raw value where a dimension has no vocabulary", () => {
     // Cylinder counts are numerals and are deliberately untranslated.
     expect(render()).toContain("60,129");
+  });
+
+  it("reads the real en.json labels, in the shape next-intl can deliver", () => {
+    // THE REGRESSION THIS EXISTS FOR: the options were flat "fuel.gasoline"
+    // keys, the component looked them up the same way, and these tests passed
+    // — while next-intl threw INVALID_KEY and killed `next dev`, because it
+    // reads "." as nesting. Fixtures agreeing with the component proved
+    // nothing; only the real file can. `check:locales` guards the same rule
+    // from the other side.
+    const labels = { ...LABELS, options: enMessages.Search.filters.options };
+    const html = renderToStaticMarkup(
+      createElement(FilterPanel, { facets: FACETS, query: {}, labels })
+    );
+    expect(html).toContain("Salvage");
+    expect(html).toContain("Rebuildable");
+    expect(html).not.toContain(">salvage<");
   });
 
   it("keeps Rebuildable visible as its own option", () => {

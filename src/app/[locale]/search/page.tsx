@@ -261,7 +261,7 @@ export default async function SearchPage({
                     // test sees next-intl's interpolation.
                     showMore: t.raw("filters.showMore") as string,
                     groups: t.raw("filters.groups") as Record<string, string>,
-                    options: t.raw("filters.options") as Record<string, string>,
+                    options: t.raw("filters.options") as Record<string, Record<string, string>>,
                   }}
                 />
               </div>
