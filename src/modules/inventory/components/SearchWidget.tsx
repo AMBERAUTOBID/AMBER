@@ -24,6 +24,8 @@ import { MORE_TYPE_TO_APIBARA_TYPE } from "@/modules/inventory/model/searchQuery
 import ScrollingPlaceholder from "@/shared/ui/ScrollingPlaceholder";
 import ScrollableSelect from "@/shared/ui/ScrollableSelect";
 import OdometerRange, { ODO_MIN, ODO_MAX } from "./OdometerRange";
+import EngineRange, { ENGINE_MIN, ENGINE_MAX } from "./EngineRange";
+import { rangeParams } from "@/modules/inventory/model/rangeQuery";
 
 const CATEGORY_ICONS: Record<VehicleCategory, typeof Car> = {
   automobile: Car,
@@ -83,6 +85,8 @@ export default function SearchWidget({
     searchFilterPlaceholder: string;
     odometer: string;
     odometerReset: string;
+    engine: string;
+    engineReset: string;
   };
   variant?: "light" | "elevated";
 }) {
@@ -94,12 +98,20 @@ export default function SearchWidget({
   const [yearTo, setYearTo] = useState("");
   const [odoMin, setOdoMin] = useState(ODO_MIN);
   const [odoMax, setOdoMax] = useState(ODO_MAX);
+  const [engineMin, setEngineMin] = useState(ENGINE_MIN);
+  const [engineMax, setEngineMax] = useState(ENGINE_MAX);
   const [buyNowOnly, setBuyNowOnly] = useState(false);
   const [copartOn, setCopartOn] = useState(true);
   const [iaaiOn, setIaaiOn] = useState(true);
 
   const router = useRouter();
-  const hasOdometer = category !== null && category !== "more";
+  /**
+   * Odometer and engine size are shown together, and only once a category is
+   * picked. Both are meaningless for "more" — the bucket holding trailers,
+   * boats and industrial equipment — where a mileage reading is often absent
+   * and an engine size says nothing a buyer of a trailer is looking for.
+   */
+  const hasRanges = category !== null && category !== "more";
 
   /**
    * True for a 17-character VIN (the standard excludes I, O and Q so they
@@ -159,9 +171,20 @@ export default function SearchWidget({
     }
     if (yearFrom) query.yearFrom = yearFrom;
     if (yearTo) query.yearTo = yearTo;
-    if (hasOdometer && (odoMin > ODO_MIN || odoMax < ODO_MAX)) {
-      query.odoMin = String(odoMin);
-      query.odoMax = String(odoMax);
+    if (hasRanges) {
+      // Each end is sent only if it was actually moved. Leaving the top thumb
+      // at its stop means "and above", so sending the ceiling would contradict
+      // the "+" the control prints right next to it — see `rangeParams`.
+      const odo = rangeParams({ min: odoMin, max: odoMax }, { min: ODO_MIN, max: ODO_MAX });
+      if (odo.from) query.odoMin = odo.from;
+      if (odo.to) query.odoMax = odo.to;
+
+      const engine = rangeParams(
+        { min: engineMin, max: engineMax },
+        { min: ENGINE_MIN, max: ENGINE_MAX }
+      );
+      if (engine.from) query.engineFrom = engine.from;
+      if (engine.to) query.engineTo = engine.to;
     }
     if (buyNowOnly) query.buyNow = "1";
 
@@ -299,17 +322,29 @@ export default function SearchWidget({
                 />
               </div>
 
-              {hasOdometer && (
-                <OdometerRange
-                  min={odoMin}
-                  max={odoMax}
-                  onChange={(lo, hi) => {
-                    setOdoMin(lo);
-                    setOdoMax(hi);
-                  }}
-                  title={labels.odometer}
-                  resetLabel={labels.odometerReset}
-                />
+              {hasRanges && (
+                <>
+                  <OdometerRange
+                    min={odoMin}
+                    max={odoMax}
+                    onChange={(lo, hi) => {
+                      setOdoMin(lo);
+                      setOdoMax(hi);
+                    }}
+                    title={labels.odometer}
+                    resetLabel={labels.odometerReset}
+                  />
+                  <EngineRange
+                    min={engineMin}
+                    max={engineMax}
+                    onChange={(lo, hi) => {
+                      setEngineMin(lo);
+                      setEngineMax(hi);
+                    }}
+                    title={labels.engine}
+                    resetLabel={labels.engineReset}
+                  />
+                </>
               )}
 
               <div className="flex flex-wrap items-center gap-2.5">

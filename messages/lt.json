@@ -216,7 +216,9 @@
       "modelPlaceholder": "Pasirinkite modelį",
       "searchFilterPlaceholder": "Ieškoti...",
       "odometer": "Rida",
-      "odometerReset": "Atstatyti"
+      "odometerReset": "Atstatyti",
+      "engine": "Variklio tūris",
+      "engineReset": "Atstatyti"
     },
     "helper": {
       "title": "Nesate tikri, ko tiksliai ieškote?",
@@ -1819,6 +1821,7 @@
       "save": "Išsaugoti"
     },
     "details": {
+      "heading": "Dokumentai ir gabenimas",
       "title": {
         "waiting": "Dokumento dar negavome",
         "received": "Dokumentas gautas {date}",

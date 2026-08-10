@@ -216,7 +216,9 @@
       "modelPlaceholder": "Выберите модель",
       "searchFilterPlaceholder": "Поиск...",
       "odometer": "Пробег",
-      "odometerReset": "Сбросить"
+      "odometerReset": "Сбросить",
+      "engine": "Объём двигателя",
+      "engineReset": "Сбросить"
     },
     "helper": {
       "title": "Не уверены, что именно искать?",
@@ -1819,6 +1821,7 @@
       "save": "Сохранить"
     },
     "details": {
+      "heading": "Документы и доставка",
       "title": {
         "waiting": "Документ ещё не получен",
         "received": "Документ получен {date}",

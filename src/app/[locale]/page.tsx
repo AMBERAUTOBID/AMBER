@@ -101,6 +101,8 @@ export default async function HomePage({
               searchFilterPlaceholder: tSearch("widget.searchFilterPlaceholder"),
               odometer: tSearch("widget.odometer"),
               odometerReset: tSearch("widget.odometerReset"),
+              engine: tSearch("widget.engine"),
+              engineReset: tSearch("widget.engineReset"),
             }}
           />
         </Reveal>

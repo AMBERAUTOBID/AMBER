@@ -216,7 +216,9 @@
       "modelPlaceholder": "Choose model",
       "searchFilterPlaceholder": "Search...",
       "odometer": "Odometer",
-      "odometerReset": "Reset"
+      "odometerReset": "Reset",
+      "engine": "Engine size",
+      "engineReset": "Reset"
     },
     "helper": {
       "title": "Not sure exactly what you want?",
@@ -1819,6 +1821,7 @@
       "save": "Save"
     },
     "details": {
+      "heading": "Paperwork and shipping",
       "title": {
         "waiting": "Title not received yet",
         "received": "Title received {date}",

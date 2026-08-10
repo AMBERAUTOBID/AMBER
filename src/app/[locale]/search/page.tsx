@@ -233,6 +233,8 @@ export default async function SearchPage({
                 searchFilterPlaceholder: t("widget.searchFilterPlaceholder"),
                 odometer: t("widget.odometer"),
                 odometerReset: t("widget.odometerReset"),
+                engine: t("widget.engine"),
+                engineReset: t("widget.engineReset"),
               }}
             />
           </Reveal>
