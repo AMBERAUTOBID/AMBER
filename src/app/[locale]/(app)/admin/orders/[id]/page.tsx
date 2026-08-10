@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { FileText, FilmSlate, Image as ImageIcon } from "@phosphor-icons/react/dist/ssr";
 import { Link } from "@/i18n/navigation";
 import { UUID } from "@/shared/validation";
 import { currentAdmin } from "@/modules/admin/model/currentAdmin";
@@ -20,6 +19,7 @@ import StageBadge from "@/modules/orders/components/StageBadge";
 import ImportProgress from "@/modules/orders/components/ImportProgress";
 import StageEditor from "@/modules/orders/components/StageEditor";
 import FileUploader from "@/modules/orders/components/FileUploader";
+import FileStrip from "@/modules/orders/components/FileStrip";
 import MoneyEditor from "@/modules/orders/components/MoneyEditor";
 import OrderDetailsEditor from "@/modules/orders/components/OrderDetailsEditor";
 import AdminSection from "@/modules/admin/components/AdminSection";
@@ -205,7 +205,7 @@ export default async function AdminOrderPage({
                       {event.note}
                     </p>
                   )}
-                  {stageFiles.length > 0 && <FileStrip files={stageFiles} />}
+                  {stageFiles.length > 0 && <FileStrip orderId={id} files={stageFiles} />}
                   {/* Every stage takes files, including ones the car has not
                       reached yet — documents often arrive before the event
                       they belong to. */}
@@ -283,38 +283,3 @@ function Fact({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-function FileStrip({
-  files,
-}: {
-  files: Array<{ id: string; kind: string; url: string | null; fileName: string }>;
-}) {
-  return (
-    <div className="mt-3 flex flex-wrap gap-2">
-      {files.map((file) => {
-        if (file.kind === "photo" && file.url) {
-          return (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={file.id}
-              src={file.url}
-              alt={file.fileName}
-              loading="lazy"
-              className="h-16 w-24 rounded-lg object-cover"
-            />
-          );
-        }
-        const Icon = file.kind === "video" ? FilmSlate : file.kind === "photo" ? ImageIcon : FileText;
-        return (
-          <a
-            key={file.id}
-            href={file.url ?? undefined}
-            className="inline-flex h-16 w-24 items-center justify-center rounded-lg border border-char-200 bg-char-50 text-char-500 transition-colors hover:border-amber-400"
-            title={file.fileName}
-          >
-            <Icon size={20} />
-          </a>
-        );
-      })}
-    </div>
-  );
-}
