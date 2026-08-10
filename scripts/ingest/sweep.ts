@@ -131,6 +131,20 @@ const AUCTION_NAMES = (process.env.INGEST_AUCTION_NAMES ?? "COPART,IAAI")
  */
 const REQUEST_SPACING_MS = 400;
 
+/**
+ * Whether an incomplete sweep should be reported as a failed process.
+ *
+ * OFF BY DEFAULT, because a capped 300-page development run is incomplete on
+ * purpose and exiting 1 on it would be a lie. ON in the nightly workflow, where
+ * incomplete means something went wrong: without it the scheduled run shows a
+ * green tick after stopping at page 12 with an HTTP 402, and the whole point of
+ * scheduling it is that nobody is watching.
+ *
+ * The run row still records exactly what happened either way; this only decides
+ * whether the exit code agrees with it.
+ */
+const REQUIRE_COMPLETE = process.env.INGEST_REQUIRE_COMPLETE === "1";
+
 const token = process.env.APICARS_API_TOKEN;
 const dbUrl = process.env.DATABASE_URL_MIRROR_UNPOOLED ?? process.env.DATABASE_URL_MIRROR;
 
@@ -524,6 +538,12 @@ async function main() {
   }
   console.log(`isPartial     : ${!complete}${complete ? "" : "  <- cannot be used to mark lots as gone"}`);
   if (note) console.log(`note          : ${note}`);
+
+  // Set only after the run row is written, so the record survives regardless.
+  if (!complete && REQUIRE_COMPLETE) {
+    console.error(`\nINGEST_REQUIRE_COMPLETE is set and this sweep did not complete.`);
+    process.exitCode = 1;
+  }
 }
 
 main().catch((e) => {

@@ -1,0 +1,100 @@
+name: Auction mirror sweep
+
+# Refills the auction_lots mirror from apicars.auction once a day, then checks
+# that it actually worked and shouts if it did not.
+#
+# Why here and not Vercel: the free Hobby plan caps cron at once a day with no
+# room to spare, and a sweep takes 3.5-4 hours - far past any serverless
+# timeout. Actions gives a 6-hour job on a runner, free, and the Telegram bot
+# already proves the pattern works for this repo.
+#
+# WHY 22:17 UTC: the sweep finishes around 02:00 UTC, which is 05:00 in Vilnius,
+# so the mirror is complete before anyone in our market opens the site. The odd
+# minute is deliberate - GitHub queues scheduled workflows worst at the top of
+# the hour, and a run delayed by 40 minutes eats into that margin.
+#
+# ONE THING THIS CANNOT WATCH: itself. GitHub disables scheduled workflows in a
+# repository with no activity for 60 days, and a cron that never fires also
+# never alerts. If the repo goes quiet, check the Actions tab.
+on:
+  schedule:
+    - cron: "17 22 * * *"
+  workflow_dispatch: {}
+
+# Read-only. Unlike the Telegram bot this commits nothing back - the only thing
+# it writes is rows in the Neon mirror branch.
+permissions:
+  contents: read
+
+# A manual run started while the nightly one is still going would have two
+# sweeps writing the same rows and stamping different run ids. Queue it instead,
+# and never cancel a sweep already in progress: a half-finished run is exactly
+# the state the health check exists to complain about.
+concurrency:
+  group: auction-sweep
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    # The hard runner limit is 6 h. Staying under it matters: a job killed at the
+    # limit stops dead and the notify step never runs, so the failure would be
+    # silent - the one outcome this workflow exists to prevent.
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Full sweep
+        # Measured at 201 and 240 minutes for the two complete sweeps on record.
+        # 300 leaves room for a slow night while still failing the step - and so
+        # alerting - rather than being killed with the job.
+        timeout-minutes: 300
+        env:
+          APICARS_API_TOKEN: ${{ secrets.APICARS_API_TOKEN }}
+          # The mirror branch, never production. sweep.ts aborts outright if this
+          # resolves to the production endpoint, and refuses to fall back to
+          # DATABASE_URL.
+          DATABASE_URL_MIRROR_UNPOOLED: ${{ secrets.DATABASE_URL_MIRROR_UNPOOLED }}
+          # ~2,950 pages today. The cap is a runaway guard, not a budget: Active
+          # Lots Pro is unlimited, so there is no per-request cost to sizing it
+          # generously above the catalogue.
+          INGEST_MAX_PAGES: "4000"
+          # A strided run samples the catalogue and can NEVER be marked complete,
+          # which would make the disappearance rule permanently unusable. The
+          # nightly run must walk consecutively.
+          INGEST_STRIDE: "0"
+          # Make the exit code tell the truth. Without it the script records the
+          # failure and exits 0, and a broken sweep shows a green tick.
+          INGEST_REQUIRE_COMPLETE: "1"
+        run: npm run sweep:run
+
+      # Runs even when the sweep step failed: its report is what the alert
+      # quotes, and it is also the step that catches a sweep which "succeeded"
+      # while bringing back a fraction of the catalogue.
+      - name: Check the mirror is current
+        if: always()
+        env:
+          DATABASE_URL_MIRROR_UNPOOLED: ${{ secrets.DATABASE_URL_MIRROR_UNPOOLED }}
+        run: npm run sweep:health
+
+      # No renormalise step on purpose: the mapper classifies every filter column
+      # as it writes, so renormalize.ts is only needed after the normalisers
+      # themselves change - a code change, not a nightly event.
+
+      - name: Tell someone
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          # A PRIVATE chat with the bot, not the public listings channel. Unset
+          # is handled: the script prints the alert and leaves GitHub's own
+          # failure email as the notification.
+          TELEGRAM_ALERT_CHAT_ID: ${{ secrets.TELEGRAM_ALERT_CHAT_ID }}
+          DATABASE_URL_MIRROR_UNPOOLED: ${{ secrets.DATABASE_URL_MIRROR_UNPOOLED }}
+        run: npx tsx scripts/ingest/notify-sweep-failure.ts "The nightly sweep or its health check failed on GitHub Actions."
