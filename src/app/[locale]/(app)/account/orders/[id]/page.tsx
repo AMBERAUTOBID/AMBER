@@ -14,7 +14,7 @@ import {
 } from "@/modules/orders/model/orders";
 import { orderTitle } from "@/modules/orders/model/orderSnapshot";
 import { ORDER_STAGES, hasReached, stageProgress } from "@/modules/orders/model/stages";
-import { formatMoney, formatRate, orderMoney } from "@/modules/orders/model/money";
+import { clientCostRows, formatMoney, formatRate, orderMoney } from "@/modules/orders/model/money";
 import { signFiles } from "@/modules/orders/api/signFiles";
 import StageBadge from "@/modules/orders/components/StageBadge";
 
@@ -55,11 +55,28 @@ export default async function ClientOrderPage({
   const t = await getTranslations({ locale, namespace: "Orders" });
   const format = await getFormatter({ locale });
 
+  /**
+   * Files and timeline events are fetched already filtered — what the client
+   * may see is decided in the query, so no forgotten `if` in JSX can leak one.
+   *
+   * ⚠️ **Money is deliberately fetched UNFILTERED, and this is not an
+   * oversight.** Hiding a cost line withholds what it is for, not the fact
+   * that it is owed; asking the database for the visible ones and totalling
+   * those would quietly reduce the client's balance and could report a file as
+   * paid in full while money was outstanding. The filtering happens in
+   * `clientCostRows`, which folds the hidden lines into a residual so the
+   * table still adds up to the total beneath it.
+   *
+   * Payments are read in full for a different reason: nothing may hide one.
+   * A payment missing from this list is the single most alarming thing a
+   * client can find, their bank statement is the counter-record, and there is
+   * no admin control that sets the flag in the first place.
+   */
   const [files, events, costLines, payments] = await Promise.all([
     listVisibleOrderFiles(id),
     listVisibleStageEvents(id),
-    listCostLines(id, true),
-    listPayments(id, true),
+    listCostLines(id),
+    listPayments(id),
   ]);
 
   const signed = await signFiles(files);
@@ -73,6 +90,7 @@ export default async function ClientOrderPage({
   const eventByStage = new Map(events.map((e) => [e.stage, e]));
   const progress = stageProgress(order.stage);
   const money = orderMoney(costLines, payments, order.usdToEurMicros);
+  const shownCosts = clientCostRows(costLines);
 
   return (
     <div className="max-w-2xl">
@@ -229,7 +247,7 @@ export default async function ClientOrderPage({
           <>
             <table className="mt-4 w-full text-sm">
               <tbody>
-                {costLines.map((line) => (
+                {shownCosts.map((line) => (
                   <tr key={line.id} className="border-b border-char-100 last:border-0">
                     <td className="py-2 text-char-700">
                       {line.label || t(`costKind.${line.kind}`)}

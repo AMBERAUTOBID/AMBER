@@ -82,11 +82,21 @@ export interface OrderMoney {
 /**
  * Everything the money panel needs, from the rows it has.
  *
- * `settled` is deliberately conservative: it is true only when a balance
- * could actually be computed and is at or below zero. A file whose rate is
- * missing reports `false` rather than guessing, because "paid in full" is a
- * statement nobody should make on incomplete information — least of all to
- * the person who would then stop paying.
+ * ⚠️ **PASS EVERY ROW, INCLUDING THE ONES THE CLIENT MAY NOT SEE.** Hiding a
+ * cost line withholds the DETAIL, not the debt — see `clientCostRows`. Handing
+ * this function a filtered list produces a smaller balance that looks entirely
+ * correct, and the person it misleads is the one deciding whether they still
+ * owe money.
+ *
+ * `settled` is deliberately conservative: true only when a balance could
+ * actually be computed and is at or below zero, on a file that has at least
+ * one cost line. A file whose rate is missing reports `false` rather than
+ * guessing, because "paid in full" is a statement nobody should make on
+ * incomplete information — least of all to the person who would then stop
+ * paying. A file with no cost lines at all reports `false` for the same
+ * reason: 0 − 0 ≤ 0 is arithmetic, not a statement about anybody's account,
+ * and a brand-new case file that greets its admin with "paid in full" is
+ * telling them something it cannot possibly know yet.
  */
 export function orderMoney(
   costLines: MoneyRow[],
@@ -102,7 +112,83 @@ export function orderMoney(
     cost.totalEur !== null && paid.totalEur !== null ? cost.totalEur - paid.totalEur : null;
 
   const known = balanceUsd ?? balanceEur;
-  return { cost, paid, balanceUsd, balanceEur, settled: known !== null && known <= 0 };
+  return {
+    cost,
+    paid,
+    balanceUsd,
+    balanceEur,
+    settled: costLines.length > 0 && known !== null && known <= 0,
+  };
+}
+
+export interface CostLineRow extends MoneyRow {
+  id: string;
+  kind: string;
+  label: string | null;
+  visibleToClient: boolean;
+}
+
+/** A cost line as the client sees it. No `visibleToClient` — nothing here is hidden. */
+export interface ClientCostRow {
+  id: string;
+  kind: string;
+  label: string | null;
+  amountCents: number;
+  currency: OrderCurrency;
+}
+
+/**
+ * The itemisation a client may read, with the hidden lines folded into a
+ * residual rather than dropped.
+ *
+ * **Hiding a cost line hides what it is FOR, never that it is owed.** The
+ * motive is not charging in secret — it is not itemising our margin on its
+ * own line. Dropping those rows from the client's table would have made the
+ * table disagree with the total underneath it, and a client who adds up an
+ * invoice and gets a different number to the one they are asked to pay is
+ * right to distrust everything else on the page.
+ *
+ * **The residual is per currency**, because a hidden USD line and a hidden
+ * EUR line are not one number and merging them would need a rate this
+ * function does not have — and must not guess at, since the whole point of
+ * the frozen rate is that it is the one the bank actually gave us.
+ *
+ * The residual carries kind `other`, which already reads as "Kita" / "Other"
+ * in all three languages. A file may therefore show two `other` rows, one the
+ * admin typed and one summed here. That is honest: they are different money,
+ * and merging them would rewrite a line somebody entered by hand.
+ */
+export function clientCostRows(lines: CostLineRow[]): ClientCostRow[] {
+  const shown: ClientCostRow[] = [];
+  let hiddenUsd = 0;
+  let hiddenEur = 0;
+
+  for (const line of lines) {
+    if (line.visibleToClient) {
+      shown.push({
+        id: line.id,
+        kind: line.kind,
+        label: line.label,
+        amountCents: line.amountCents,
+        currency: line.currency,
+      });
+    } else if (line.currency === "USD") {
+      hiddenUsd += line.amountCents;
+    } else {
+      hiddenEur += line.amountCents;
+    }
+  }
+
+  // Zero is not shown. A residual of nothing is not a line, and printing
+  // "Other — €0.00" invites a question with no answer behind it.
+  if (hiddenUsd !== 0) {
+    shown.push({ id: "hidden-usd", kind: "other", label: null, amountCents: hiddenUsd, currency: "USD" });
+  }
+  if (hiddenEur !== 0) {
+    shown.push({ id: "hidden-eur", kind: "other", label: null, amountCents: hiddenEur, currency: "EUR" });
+  }
+
+  return shown;
 }
 
 /**

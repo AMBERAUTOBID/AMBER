@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  clientCostRows,
   eurCentsToUsd,
   formatRate,
   orderMoney,
   parseAmountToCents,
   parseRateToMicros,
   usdCentsToEur,
+  type CostLineRow,
   type MoneyRow,
+  type OrderCurrency,
 } from "./money";
 
 /** 0.925 EUR per USD, the shape the column stores. */
@@ -107,8 +110,80 @@ describe("settled", () => {
     expect(money.settled).toBe(false);
   });
 
-  it("is true for an empty file, which owes nothing", () => {
-    expect(orderMoney([], [], null).settled).toBe(true);
+  it("is FALSE for an empty file, which knows nothing rather than owing nothing", () => {
+    // This used to be true, on the arithmetic that 0 − 0 ≤ 0. It meant a case
+    // file opened the moment a car was won greeted its admin with "paid in
+    // full" before a single figure had been entered — a confident answer to a
+    // question nobody had the data to answer.
+    expect(orderMoney([], [], null).settled).toBe(false);
+    expect(orderMoney([], [usd(50_000)], null).settled).toBe(false);
+  });
+});
+
+describe("clientCostRows — hiding the detail, never the debt", () => {
+  const line = (
+    id: string,
+    cents: number,
+    currency: OrderCurrency,
+    visibleToClient: boolean,
+    kind = "auction_fees"
+  ): CostLineRow => ({ id, kind, label: null, amountCents: cents, currency, visibleToClient });
+
+  it("passes visible lines through untouched", () => {
+    const rows = clientCostRows([line("a", 100_000, "USD", true), line("b", 20_000, "EUR", true)]);
+    expect(rows.map((r) => r.id)).toEqual(["a", "b"]);
+  });
+
+  it("folds hidden lines into one residual per currency", () => {
+    const rows = clientCostRows([
+      line("a", 100_000, "USD", true),
+      line("b", 30_000, "USD", false),
+      line("c", 20_000, "USD", false),
+      line("d", 5_000, "EUR", false),
+    ]);
+    expect(rows).toHaveLength(3);
+    expect(rows[1]).toMatchObject({ kind: "other", amountCents: 50_000, currency: "USD" });
+    expect(rows[2]).toMatchObject({ kind: "other", amountCents: 5_000, currency: "EUR" });
+  });
+
+  it("never merges currencies — that would need a rate it does not have", () => {
+    const rows = clientCostRows([line("a", 1, "USD", false), line("b", 1, "EUR", false)]);
+    expect(rows.map((r) => r.currency)).toEqual(["USD", "EUR"]);
+  });
+
+  it("shows no residual when nothing is hidden", () => {
+    const rows = clientCostRows([line("a", 100_000, "USD", true)]);
+    expect(rows).toHaveLength(1);
+  });
+
+  it("drops the client's only itemisation but keeps every cent when all are hidden", () => {
+    const rows = clientCostRows([line("a", 100_000, "USD", false), line("b", 40_000, "USD", false)]);
+    expect(rows).toEqual([
+      { id: "hidden-usd", kind: "other", label: null, amountCents: 140_000, currency: "USD" },
+    ]);
+  });
+
+  /**
+   * The property the whole fix exists for. Whatever is hidden, the rows the
+   * client can add up must reach the total printed underneath them — otherwise
+   * they are looking at an invoice that disagrees with itself.
+   */
+  it("always sums to the same total as the unfiltered cost lines", () => {
+    const lines = [
+      line("a", 1_420_000, "USD", true),
+      line("b", 85_000, "USD", false),
+      line("c", 60_000, "EUR", true),
+      line("d", 12_500, "EUR", false),
+      line("e", 0, "USD", false),
+    ];
+    const shown = clientCostRows(lines);
+    const money = orderMoney(lines, [], RATE);
+
+    const shownUsd = shown.filter((r) => r.currency === "USD").reduce((n, r) => n + r.amountCents, 0);
+    const shownEur = shown.filter((r) => r.currency === "EUR").reduce((n, r) => n + r.amountCents, 0);
+
+    expect(shownUsd).toBe(money.cost.usdOnly);
+    expect(shownEur).toBe(money.cost.eurOnly);
   });
 });
 
