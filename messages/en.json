@@ -1474,14 +1474,14 @@
     "features": {
       "bidLimit": "Bidding limit up to {amount}",
       "bidUnlimited": "Unlimited bidding power",
-      "concurrent": "Up to {count} active bids at once",
+      "concurrent": "Up to {count, plural, one {# active bid} other {# active bids}} at once",
       "concurrentUnlimited": "Unlimited active bids",
       "fee": "Service fee: {amount} per vehicle",
       "nightReserve": "See night auction reserve prices",
       "liveAuction": "Take part in live auctions",
       "selfBidding": "Self-bidding available on request",
       "consultant": "A dedicated consultant assigned to you",
-      "concurrentConditional": "Bid on up to {count} lots at a time (when each bid is under {threshold})"
+      "concurrentConditional": "Bid on up to {count, plural, one {# lot} other {# lots}} at a time (when each bid is under {threshold})"
     },
     "tiers": {
       "bronze": {
@@ -1491,18 +1491,18 @@
       },
       "silver": {
         "name": "Silver",
-        "tagline": "Bid on your own, one lot at a time.",
-        "terms": "The Silver plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $10,000 with one active bid at a time, and a service fee of {fee} per vehicle purchased. This plan opens once our own auction access is live."
+        "tagline": "Your first deposit tier — one lot in play at a time.",
+        "terms": "The Silver plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $10,000 with one active bid at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
       },
       "gold": {
         "name": "Gold",
         "tagline": "More bidding power, two lots in play at once.",
-        "terms": "The Gold plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $25,000 with two active bids at a time, and a service fee of {fee} per vehicle purchased. This plan opens once our own auction access is live."
+        "terms": "The Gold plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $25,000 with two active bids at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
       },
       "platinum": {
         "name": "Platinum",
         "tagline": "Our highest limits, built for regular buyers.",
-        "terms": "The Platinum plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $50,000 with five active bids at a time, and a service fee of {fee} per vehicle purchased. Self-bidding can be arranged on this plan after speaking with us. This plan opens once our own auction access is live."
+        "terms": "The Platinum plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $50,000 with five active bids at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
       }
     },
     "comingSoon": "Coming soon",

@@ -28,7 +28,19 @@ export interface Actor {
 }
 
 export type Action =
-  | { type: "place_bid_request"; amountUsd: number; activeBidCount: number }
+  /**
+   * `activeBidsUsd` is the AMOUNTS of the bids already live for this client,
+   * not merely how many there are.
+   *
+   * It carries the amounts because the conditional rule — "N lots at a time,
+   * when each bid is under $X" — is a statement about every bid in the set,
+   * not just the incoming one. Given only a count, a client holding one
+   * $20,000 bid could add a $5,000 one and end up with two live bids where
+   * the plan promised two only while each stayed under $10,000. The count is
+   * still available as `.length`, so nothing is lost by passing the fuller
+   * fact.
+   */
+  | { type: "place_bid_request"; amountUsd: number; activeBidsUsd: number[] }
   | { type: "view_night_reserve" }
   | { type: "join_live_auction" }
   | { type: "self_bid" }
@@ -106,6 +118,26 @@ export function can(actor: Actor, action: Action): Decision {
   }
 }
 
+/**
+ * The bidding rules, in the order a client would hit them.
+ *
+ * **The conditional concurrency rule is the subtle one.** A tier reads "bid
+ * on up to 2 lots at a time (when each bid is under $10,000)", and the
+ * allowance therefore depends on the SIZE of the bids, not only their number:
+ * above the threshold the client may hold exactly one, because the deposit
+ * behind the plan is what our own exposure is measured against, and two
+ * $25,000 bids on a $2,500 deposit is a different business than two $8,000
+ * ones.
+ *
+ * "Each bid" means each — the incoming one and the ones already live. A rule
+ * that only inspected the new bid would let the set drift over the threshold
+ * one small bid at a time, which is precisely the case a client would find
+ * first and we would find last.
+ *
+ * Until Phase 2.3 exists nothing calls this with real data. It is implemented
+ * anyway because the plan cards describe it to paying customers, and a limit
+ * that lives only in prose is one nobody can be held to.
+ */
 function judgeBidRequest(
   plan: Plan,
   action: Extract<Action, { type: "place_bid_request" }>
@@ -113,7 +145,15 @@ function judgeBidRequest(
   if (plan.maxBidUsd !== null && action.amountUsd > plan.maxBidUsd) {
     return deny("bid_amount_over_plan_limit");
   }
-  if (plan.maxConcurrentBids !== null && action.activeBidCount >= plan.maxConcurrentBids) {
+  if (plan.maxConcurrentBids === null) return allow;
+
+  const threshold = plan.concurrencyThresholdUsd;
+  const anyOverThreshold =
+    threshold !== null &&
+    (action.amountUsd > threshold || action.activeBidsUsd.some((amount) => amount > threshold));
+
+  const allowance = anyOverThreshold ? 1 : plan.maxConcurrentBids;
+  if (action.activeBidsUsd.length >= allowance) {
     return deny("concurrent_bid_limit_reached");
   }
   return allow;

@@ -10,10 +10,31 @@
  * fees alike. (The landed-cost calculator in modules/pricing is a separate
  * concern and still quotes destination currencies; nothing here changes it.)
  *
- * AVAILABILITY: only Bronze can currently be taken. Silver, Gold and Platinum
- * are shown but locked behind `available: false` until SmartAutoBid holds its
- * own auction access codes. That flag gates *new requests* only — if a plan
- * were ever withdrawn, existing holders would keep what they paid for.
+ * AVAILABILITY: all four tiers can be taken. Silver, Gold and Platinum were
+ * locked behind `available: false` until the deposit side was ready; they open
+ * now that the flow they actually need — request, admin approval, reduced
+ * per-vehicle fee — is proved end to end. That flag gates *new requests*
+ * only; if a plan were ever withdrawn, existing holders would keep what they
+ * paid for.
+ *
+ * ⚠️ **WHAT A DEPOSIT TIER BUYS TODAY IS THE $200 RATE AND THE BIDDING TERMS,
+ * NOT SOFTWARE.** We still place every bid ourselves, exactly as with Bronze.
+ * The caps below are commercial terms honoured by hand — and set as Bid Limits
+ * on the broker platform — not features of this website. Which is why two
+ * flags are deliberately `false` on every tier:
+ *
+ *   - `nightReserveVisible` — would need a reserve-price display that does not
+ *     exist. A card line promising it is the pricing page lying, which is the
+ *     exact failure `planFeatures.ts` was written to prevent.
+ *   - `selfBiddingEligible` — would need the BidManager broker account that
+ *     issues per-client access codes. "Self-bidding on request" on a $5,000
+ *     tier is a promise we cannot keep this week.
+ *
+ * `liveAuctionAccess` STAYS true on the deposit tiers: joining a live auction
+ * with us bidding is something a person does, not a page we have to ship.
+ *
+ * Turning either flag back on is one line here — the card, the dialog and
+ * `can()` all follow, because none of them restate it.
  *
  * ── ALL FIGURES CONFIRMED BY THE OWNER ──────────────────────────────────
  * The four names; Bronze free at $350 per vehicle; Silver/Gold/Platinum
@@ -96,11 +117,11 @@ export const PLANS: Record<PlanKey, Plan> = {
     maxBidUsd: 10000,
     maxConcurrentBids: 1,
     concurrencyThresholdUsd: null,
-    nightReserveVisible: true,
+    nightReserveVisible: false,
     liveAuctionAccess: true,
     feesPerVehicleUsdCents: [20000], // $200 — the reduced rate a deposit buys
     selfBiddingEligible: false,
-    available: false,
+    available: true,
     featured: false,
   },
 
@@ -111,11 +132,11 @@ export const PLANS: Record<PlanKey, Plan> = {
     maxBidUsd: 25000,
     maxConcurrentBids: 2,
     concurrencyThresholdUsd: 10000,
-    nightReserveVisible: true,
+    nightReserveVisible: false,
     liveAuctionAccess: true,
     feesPerVehicleUsdCents: [20000],
     selfBiddingEligible: false,
-    available: false,
+    available: true,
     featured: false,
   },
 
@@ -126,11 +147,12 @@ export const PLANS: Record<PlanKey, Plan> = {
     maxBidUsd: 50000,
     maxConcurrentBids: 5,
     concurrencyThresholdUsd: 10000,
-    nightReserveVisible: true,
+    nightReserveVisible: false,
     liveAuctionAccess: true,
     feesPerVehicleUsdCents: [20000],
-    selfBiddingEligible: true,
-    available: false,
+    // Turn back on together with the broker account — see AVAILABILITY above.
+    selfBiddingEligible: false,
+    available: true,
     featured: false,
   },
 };

@@ -49,7 +49,7 @@ describe("bid amount limits — derived from the plan table", () => {
         const d = can(client({ activePlanKey: key }), {
           type: "place_bid_request",
           amountUsd: 10_000_000,
-          activeBidCount: 0,
+          activeBidsUsd: [],
         });
         expect(d.allowed).toBe(true);
       });
@@ -58,14 +58,14 @@ describe("bid amount limits — derived from the plan table", () => {
         const at = can(client({ activePlanKey: key }), {
           type: "place_bid_request",
           amountUsd: cap,
-          activeBidCount: 0,
+          activeBidsUsd: [],
         });
         expect(at.allowed).toBe(true);
 
         const over = can(client({ activePlanKey: key }), {
           type: "place_bid_request",
           amountUsd: cap + 1,
-          activeBidCount: 0,
+          activeBidsUsd: [],
         });
         expect(over).toEqual({ allowed: false, reason: "bid_amount_over_plan_limit" });
       });
@@ -82,23 +82,25 @@ describe("concurrent bid limits — derived from the plan table", () => {
         const d = can(client({ activePlanKey: key }), {
           type: "place_bid_request",
           amountUsd: 1,
-          activeBidCount: 500,
+          activeBidsUsd: new Array(500).fill(1),
         });
         expect(d.allowed).toBe(true);
       });
     } else {
       it(`${key}: allows the ${limit}th bid, refuses the ${limit + 1}th`, () => {
+        // Amounts of 1 keep every plan's conditional threshold out of the way,
+        // so this test measures the plain count and nothing else.
         const under = can(client({ activePlanKey: key }), {
           type: "place_bid_request",
           amountUsd: 1,
-          activeBidCount: limit - 1,
+          activeBidsUsd: new Array(limit - 1).fill(1),
         });
         expect(under.allowed).toBe(true);
 
         const at = can(client({ activePlanKey: key }), {
           type: "place_bid_request",
           amountUsd: 1,
-          activeBidCount: limit,
+          activeBidsUsd: new Array(limit).fill(1),
         });
         expect(at).toEqual({ allowed: false, reason: "concurrent_bid_limit_reached" });
       });
@@ -124,8 +126,24 @@ describe("self-bidding: plan eligibility AND per-user grant, in that order", () 
   const eligible = PLAN_KEYS.filter((k) => PLANS[k].selfBiddingEligible);
   const ineligible = PLAN_KEYS.filter((k) => !PLANS[k].selfBiddingEligible);
 
-  it("exactly one tier is self-bidding eligible — widening this is a business decision, not a refactor", () => {
-    expect(eligible).toHaveLength(1);
+  it("at most one tier is self-bidding eligible — widening this is a business decision, not a refactor", () => {
+    // Currently ZERO, deliberately: self-bidding needs the broker account that
+    // issues per-client access codes, so Platinum's flag was turned off rather
+    // than have a $5,000 tier advertise it. This used to assert exactly one.
+    // The danger it guards has not changed and is not "one versus none" — it
+    // is a second tier quietly acquiring the most powerful thing a plan can
+    // grant, which is why the ceiling stays.
+    expect(eligible.length).toBeLessThanOrEqual(1);
+  });
+
+  it("no tier grants self-bidding on the plan alone — the admin grant is always required", () => {
+    // Holds at zero eligible tiers too, which is the point: the assertion is
+    // about the SHAPE of the rule, so it keeps working when Platinum is
+    // switched back on and would fail the moment the grant stopped mattering.
+    for (const key of PLAN_KEYS) {
+      const d = can(client({ activePlanKey: key, selfBiddingGranted: false }), { type: "self_bid" });
+      expect(d.allowed).toBe(false);
+    }
   });
 
   for (const key of ineligible) {
@@ -209,7 +227,11 @@ describe("admin", () => {
   });
 
   it("admins bypass plan limits — they bid on clients' behalf", () => {
-    const d = can(admin, { type: "place_bid_request", amountUsd: 1_000_000, activeBidCount: 99 });
+    const d = can(admin, {
+      type: "place_bid_request",
+      amountUsd: 1_000_000,
+      activeBidsUsd: new Array(99).fill(1_000_000),
+    });
     expect(d.allowed).toBe(true);
   });
 
@@ -228,7 +250,7 @@ describe("admin", () => {
   it("an UNVERIFIED admin gets no plan-limit bypass either", () => {
     const d = can(
       { ...admin, emailVerified: false },
-      { type: "place_bid_request", amountUsd: 1, activeBidCount: 0 }
+      { type: "place_bid_request", amountUsd: 1, activeBidsUsd: [] }
     );
     expect(d).toEqual({ allowed: false, reason: "email_not_verified" });
   });
@@ -287,18 +309,94 @@ describe("catalogue sanity — these fail if a plans.ts edit breaks an invariant
 });
 
 /**
- * The conditional-concurrency rule ("N lots at a time, if each bid is under
- * $X") is described on the plan cards but NOT yet implemented in
- * judgeBidRequest. That is safe only while every plan carrying a threshold is
- * unavailable. This test is the tripwire: flipping such a plan to available
- * without implementing the rule turns it red, instead of silently letting a
- * paying customer hold five $50,000 bids the plan never promised.
+ * The conditional-concurrency rule — "N lots at a time, when each bid is under
+ * $X". This used to be a tripwire asserting that no AVAILABLE plan carried an
+ * unenforced threshold, which held only while every such tier was locked.
+ * Opening them is what the tripwire was waiting for, so it is replaced by the
+ * enforcement it was standing in for.
+ *
+ * The case worth keeping in mind is the last one: "each bid" includes the
+ * bids already live. A rule that read only the incoming amount would let a
+ * client drift over the threshold one small bid at a time.
  */
-describe("conditional concurrency is not yet enforced", () => {
-  it("no AVAILABLE plan carries an unenforced concurrency threshold", () => {
-    const offenders = PLAN_KEYS.filter(
-      (k) => PLANS[k].available && PLANS[k].concurrencyThresholdUsd !== null
-    );
-    expect(offenders).toEqual([]);
+describe("conditional concurrency — the allowance depends on bid size", () => {
+  const conditional = PLAN_KEYS.filter(
+    (k) => PLANS[k].concurrencyThresholdUsd !== null && PLANS[k].maxConcurrentBids !== null
+  );
+
+  it("some tier actually uses the rule — otherwise these tests prove nothing", () => {
+    expect(conditional.length).toBeGreaterThan(0);
+  });
+
+  for (const key of conditional) {
+    const plan = PLANS[key];
+    const limit = plan.maxConcurrentBids!;
+    const threshold = plan.concurrencyThresholdUsd!;
+
+    it(`${key}: under the threshold, the full allowance of ${limit} applies`, () => {
+      const d = can(client({ activePlanKey: key }), {
+        type: "place_bid_request",
+        amountUsd: threshold,
+        activeBidsUsd: new Array(limit - 1).fill(threshold),
+      });
+      expect(d.allowed).toBe(true);
+    });
+
+    it(`${key}: a bid over $${threshold} is allowed, but only as the only one`, () => {
+      const alone = can(client({ activePlanKey: key }), {
+        type: "place_bid_request",
+        amountUsd: threshold + 1,
+        activeBidsUsd: [],
+      });
+      expect(alone.allowed).toBe(true);
+
+      const second = can(client({ activePlanKey: key }), {
+        type: "place_bid_request",
+        amountUsd: threshold + 1,
+        activeBidsUsd: [1],
+      });
+      expect(second).toEqual({ allowed: false, reason: "concurrent_bid_limit_reached" });
+    });
+
+    it(`${key}: a small bid is refused while a bid over $${threshold} is already live`, () => {
+      // The drift case. Judged on the incoming amount alone this reads as a
+      // $1 bid against an allowance of ${limit} and sails through, leaving the
+      // client holding a set the plan never promised.
+      const d = can(client({ activePlanKey: key }), {
+        type: "place_bid_request",
+        amountUsd: 1,
+        activeBidsUsd: [threshold + 1],
+      });
+      expect(d).toEqual({ allowed: false, reason: "concurrent_bid_limit_reached" });
+    });
+  }
+});
+
+/**
+ * Availability is a commercial state, and these assert the shape it must keep
+ * rather than which tiers happen to be open today.
+ */
+describe("what an available tier is allowed to claim", () => {
+  it("no available tier advertises a feature this site cannot perform", () => {
+    // Both flags describe SOFTWARE — a reserve-price display and a
+    // per-client self-bidding code — neither of which exists. The bidding
+    // caps are excluded on purpose: those are commercial terms honoured by
+    // hand, and honouring them by hand is what we sell. See plans.ts.
+    for (const key of PLAN_KEYS) {
+      if (!PLANS[key].available) continue;
+      expect(PLANS[key].nightReserveVisible).toBe(false);
+      expect(PLANS[key].selfBiddingEligible).toBe(false);
+    }
+  });
+
+  it("every deposit tier charges less per vehicle than the free one", () => {
+    // The entire reason to pay a deposit. If this ever inverts, the offer has
+    // no shape and nobody should be able to ship it quietly.
+    const free = PLANS[PLAN_KEYS.find((k) => PLANS[k].depositUsdCents === 0)!];
+    const freeFee = Math.min(...free.feesPerVehicleUsdCents);
+    for (const key of PLAN_KEYS) {
+      if (PLANS[key].depositUsdCents === 0) continue;
+      expect(Math.min(...PLANS[key].feesPerVehicleUsdCents)).toBeLessThan(freeFee);
+    }
   });
 });
