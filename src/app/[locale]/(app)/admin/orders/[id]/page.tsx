@@ -8,7 +8,9 @@ import { currentAdmin } from "@/modules/admin/model/currentAdmin";
 import {
   auctionImportSummary,
   getOrder,
+  listCostLines,
   listOrderFiles,
+  listPayments,
   listStageEvents,
 } from "@/modules/orders/model/orders";
 import { orderTitle } from "@/modules/orders/model/orderSnapshot";
@@ -18,6 +20,7 @@ import StageBadge from "@/modules/orders/components/StageBadge";
 import ImportProgress from "@/modules/orders/components/ImportProgress";
 import StageEditor from "@/modules/orders/components/StageEditor";
 import FileUploader from "@/modules/orders/components/FileUploader";
+import MoneyEditor from "@/modules/orders/components/MoneyEditor";
 import AdminSection from "@/modules/admin/components/AdminSection";
 
 export async function generateMetadata({
@@ -57,10 +60,12 @@ export default async function AdminOrderPage({
   const t = await getTranslations({ locale, namespace: "AdminOrders" });
   const tOrders = await getTranslations({ locale, namespace: "Orders" });
 
-  const [files, events, importState] = await Promise.all([
+  const [files, events, importState, costs, payments] = await Promise.all([
     listOrderFiles(id),
     listStageEvents(id),
     auctionImportSummary(id),
+    listCostLines(id),
+    listPayments(id),
   ]);
 
   const signed = await signFiles(files);
@@ -194,6 +199,33 @@ export default async function AdminOrderPage({
               );
             })}
           </ol>
+        </AdminSection>
+
+        <AdminSection title={t("costs.heading")}>
+          <MoneyEditor
+            orderId={id}
+            locale={locale}
+            rateMicros={order.usdToEurMicros}
+            rateSetAt={order.rateSetAt?.toISOString() ?? null}
+            costs={costs.map((c) => ({
+              id: c.id,
+              kind: c.kind,
+              label: c.label,
+              amountCents: c.amountCents,
+              currency: c.currency,
+              visibleToClient: c.visibleToClient,
+            }))}
+            payments={payments.map((p) => ({
+              id: p.id,
+              amountCents: p.amountCents,
+              currency: p.currency,
+              // ISO across the boundary — Dates don't survive it intact.
+              paidAt: p.paidAt.toISOString(),
+              method: p.method,
+              reference: p.reference,
+              visibleToClient: p.visibleToClient,
+            }))}
+          />
         </AdminSection>
       </div>
     </div>

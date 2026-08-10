@@ -3,6 +3,8 @@ import {
   eurCentsToUsd,
   formatRate,
   orderMoney,
+  parseAmountToCents,
+  parseRateToMicros,
   usdCentsToEur,
   type MoneyRow,
 } from "./money";
@@ -107,6 +109,95 @@ describe("settled", () => {
 
   it("is true for an empty file, which owes nothing", () => {
     expect(orderMoney([], [], null).settled).toBe(true);
+  });
+});
+
+describe("parseAmountToCents — where money bugs live", () => {
+  it("reads the plain cases", () => {
+    expect(parseAmountToCents("1420")).toBe(142_000);
+    expect(parseAmountToCents("1420.50")).toBe(142_050);
+    expect(parseAmountToCents("0.99")).toBe(99);
+    expect(parseAmountToCents("0")).toBe(0);
+  });
+
+  it("reads a Lithuanian decimal comma", () => {
+    // The admin working in Lithuanian types this. Treating the comma as a
+    // thousands separator would give 142050 instead of 1420.50 — a
+    // hundredfold error in the field that decides what a client owes.
+    expect(parseAmountToCents("1420,50")).toBe(142_050);
+  });
+
+  it("reads an American figure pasted from an invoice", () => {
+    expect(parseAmountToCents("1,420.50")).toBe(142_050);
+    expect(parseAmountToCents("14,200")).toBe(1_420_000);
+  });
+
+  it("reads a European figure with dots as thousands", () => {
+    expect(parseAmountToCents("1.420,50")).toBe(142_050);
+    expect(parseAmountToCents("14.200,00")).toBe(1_420_000);
+  });
+
+  it("resolves the ambiguity by POSITION, not by locale", () => {
+    // The page's locale says nothing about what was pasted into it. Whichever
+    // separator comes last is the decimal one.
+    expect(parseAmountToCents("1,420")).toBe(142_000);
+    expect(parseAmountToCents("1.420")).toBe(142_000);
+  });
+
+  it("ignores the spaces and symbols a paste brings along", () => {
+    expect(parseAmountToCents(" $1 420.50 ")).toBe(142_050);
+    expect(parseAmountToCents("1 420,50 €")).toBe(142_050);
+    expect(parseAmountToCents("1’420.50")).toBe(142_050);
+  });
+
+  it("treats EXACTLY three digits as a thousands group, ambiguity and all", () => {
+    // `1,420` and `10.005` are the same shape, and only the domain decides.
+    // Here the amounts are car prices, auction fees and ocean freight, and
+    // money is never entered to three decimals — so reading `1,420` as 1.42
+    // would understate a cost line by a factor of a thousand.
+    expect(parseAmountToCents("10.005")).toBe(1_000_500);
+    expect(parseAmountToCents("1,420")).toBe(142_000);
+  });
+
+  it("but reads four or more decimals as a decimal, and rounds", () => {
+    // Four digits is not a thousands group, it is a paste artefact. Stripping
+    // the separator there would multiply the figure instead of rounding it.
+    expect(parseAmountToCents("10.0051")).toBe(1001);
+    expect(parseAmountToCents("10.0049")).toBe(1000);
+  });
+
+  it("returns NULL, never zero, for something that is not an amount", () => {
+    // Zero is a real amount somebody might mean. A silent zero on a cost line
+    // is worse than a form that refuses to submit.
+    for (const bad of ["", "  ", "abc", "-", "1.2.3.4x", "€", "--5"]) {
+      expect(parseAmountToCents(bad), bad).toBeNull();
+    }
+  });
+
+  it("refuses a negative amount", () => {
+    // A refund is a payment with its own row, not a negative cost line.
+    expect(parseAmountToCents("-100")).toBeNull();
+  });
+});
+
+describe("parseRateToMicros", () => {
+  it("reads a rate to four decimals", () => {
+    expect(parseRateToMicros("0.925")).toBe(925_000);
+    expect(parseRateToMicros("0,9250")).toBe(925_000);
+    expect(parseRateToMicros("1.0850")).toBe(1_085_000);
+  });
+
+  it("refuses anything outside a plausible range", () => {
+    // A misplaced decimal or micros pasted in by mistake would quietly restate
+    // every euro figure on the file by a factor of ten.
+    expect(parseRateToMicros("0.0925")).toBeNull();
+    expect(parseRateToMicros("92.5")).toBeNull();
+    expect(parseRateToMicros("925000")).toBeNull();
+  });
+
+  it("refuses nonsense", () => {
+    expect(parseRateToMicros("")).toBeNull();
+    expect(parseRateToMicros("abc")).toBeNull();
   });
 });
 

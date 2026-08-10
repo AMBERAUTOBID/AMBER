@@ -125,3 +125,80 @@ export function formatMoney(cents: number, currency: OrderCurrency, locale: stri
 export function formatRate(rateMicros: number): string {
   return (rateMicros / MICROS).toFixed(4);
 }
+
+/**
+ * A typed amount, in cents — or null if it isn't one.
+ *
+ * This is where money bugs live, so it is deliberately strict about the one
+ * thing that matters and forgiving about everything else.
+ *
+ * **The comma is the whole problem.** An admin working in Lithuanian types
+ * `1420,50`; the same person pasting from an American invoice gets
+ * `1,420.50`. Treating the comma as a decimal separator in the second case
+ * gives 1.42, and treating it as a thousands separator in the first gives
+ * 142050 — a hundredfold error, in a field that decides what a client owes.
+ * The rule below resolves it by position rather than by locale, because the
+ * page's locale says nothing about what was pasted into it.
+ *
+ * Returns null rather than 0 for unparseable input: zero is a real amount
+ * somebody might mean, and a silent zero is worse than a rejected form.
+ */
+export function parseAmountToCents(input: string): number | null {
+  const cleaned = input.replace(/[\s '’]/g, "").replace(/[€$]/g, "");
+  if (!cleaned) return null;
+
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+
+  let normalised: string;
+  if (lastComma === -1 && lastDot === -1) {
+    normalised = cleaned;
+  } else {
+    // Whichever separator comes LAST is the decimal one — true for both
+    // `1.420,50` and `1,420.50`, and for a bare `1420,50` or `1420.50`.
+    const decimalAt = Math.max(lastComma, lastDot);
+    const whole = cleaned.slice(0, decimalAt).replace(/[.,]/g, "");
+    const fraction = cleaned.slice(decimalAt + 1);
+
+    /**
+     * EXACTLY three digits after the final separator is genuinely ambiguous —
+     * `1,420` is one thousand four hundred and twenty, and `10.005` could be
+     * ten and a half cents. It is resolved in favour of the thousands group,
+     * because in this form the amounts are car prices, auction fees and ocean
+     * freight, and **money is never entered here to three decimals**. Reading
+     * `1,420` as 1.42 would understate a cost line by a factor of a thousand.
+     *
+     * FOUR or more is not a real amount at all — it is a paste artefact — and
+     * there the decimal reading is the safe one, because stripping the
+     * separator would multiply the figure instead of rounding it.
+     */
+    if (fraction.length === 3) normalised = cleaned.replace(/[.,]/g, "");
+    else normalised = `${whole}.${fraction}`;
+  }
+
+  if (!/^-?\d*\.?\d*$/.test(normalised) || !/\d/.test(normalised)) return null;
+
+  const value = Number(normalised);
+  if (!Number.isFinite(value) || value < 0) return null;
+
+  // Rounded, not truncated: 0.005 entered as a third decimal should not
+  // silently become 0.00.
+  return Math.round(value * 100);
+}
+
+/**
+ * A typed exchange rate, in micros — or null.
+ *
+ * Bounded deliberately. A rate outside 0.1–10 is a typo (a misplaced decimal,
+ * or micros pasted in by mistake), and accepting it would quietly restate
+ * every euro figure on the file by a factor of ten.
+ */
+export function parseRateToMicros(input: string): number | null {
+  const cents = parseAmountToCents(input);
+  if (cents === null) return null;
+  // parseAmountToCents gives hundredths; a rate needs four decimals, so read
+  // the raw string once more for the precision it deserves.
+  const value = Number(input.replace(/[\s ]/g, "").replace(",", "."));
+  if (!Number.isFinite(value) || value < 0.1 || value > 10) return null;
+  return Math.round(value * MICROS);
+}
