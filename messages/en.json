@@ -218,7 +218,10 @@
       "odometer": "Odometer",
       "odometerReset": "Reset",
       "engine": "Engine size",
-      "engineReset": "Reset"
+      "engineReset": "Reset",
+      "retail": "Estimated retail value",
+      "retailReset": "Reset",
+      "retailNote": "What the vehicle is worth retail in the US — not the final cost. Lots without an estimate are hidden while this is set."
     },
     "helper": {
       "title": "Not sure exactly what you want?",

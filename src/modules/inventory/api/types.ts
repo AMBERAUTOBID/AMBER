@@ -152,6 +152,34 @@ export interface VehicleSearchParams {
   price_max?: number;
   buy_now_min?: number;
   buy_now_max?: number;
+
+  /**
+   * Estimated US retail value, in whole currency units. **This is the range the
+   * search widget actually exposes**, and the reason is coverage.
+   *
+   * MEASURED over the 132,711 upcoming lots: a current bid exists on 34.6% and a
+   * buy-now price on 37.2%, but an estimated retail value on **88.0%**. Bids do
+   * not fill in as the sale approaches either — lots selling within four days
+   * carry one only 36.1% of the time — so no amount of sweeping more often fixes
+   * it.
+   *
+   * The current bid is also not a price. Its median across upcoming lots is
+   * **$225**: an opening bid on a salvage car that will sell for thousands. A
+   * visitor asking for "up to $1,000" would be shown cars that go for $8,000,
+   * which is worse than showing nothing.
+   *
+   * bidauto.online exposes this same field as "Price New" and it is populated on
+   * about 6.9% of their catalogue — setting their filter to $1–$500,000, a range
+   * containing every possible value, drops their result count from 595,081 to
+   * 41,104. The idea is right and their data is not there. Ours is.
+   *
+   * It is an estimate of what the car is worth retail, NOT what it will cost, and
+   * the label has to say so. The 12% without one are excluded when this is set,
+   * for the same reason as above: an unknown value cannot be claimed to fall in
+   * the requested range.
+   */
+  retail_min?: number;
+  retail_max?: number;
   year_from?: number;
   year_to?: number;
   odometer_from?: number;

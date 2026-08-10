@@ -103,6 +103,9 @@ export default async function HomePage({
               odometerReset: tSearch("widget.odometerReset"),
               engine: tSearch("widget.engine"),
               engineReset: tSearch("widget.engineReset"),
+              retail: tSearch("widget.retail"),
+              retailReset: tSearch("widget.retailReset"),
+              retailNote: tSearch("widget.retailNote"),
             }}
           />
         </Reveal>

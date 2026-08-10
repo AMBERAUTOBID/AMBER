@@ -25,6 +25,7 @@ import ScrollingPlaceholder from "@/shared/ui/ScrollingPlaceholder";
 import ScrollableSelect from "@/shared/ui/ScrollableSelect";
 import OdometerRange, { ODO_MIN, ODO_MAX } from "./OdometerRange";
 import EngineRange, { ENGINE_MIN, ENGINE_MAX } from "./EngineRange";
+import RetailRange, { RETAIL_MIN, RETAIL_MAX } from "./RetailRange";
 import { rangeParams } from "@/modules/inventory/model/rangeQuery";
 
 const CATEGORY_ICONS: Record<VehicleCategory, typeof Car> = {
@@ -87,6 +88,9 @@ export default function SearchWidget({
     odometerReset: string;
     engine: string;
     engineReset: string;
+    retail: string;
+    retailReset: string;
+    retailNote: string;
   };
   variant?: "light" | "elevated";
 }) {
@@ -100,6 +104,8 @@ export default function SearchWidget({
   const [odoMax, setOdoMax] = useState(ODO_MAX);
   const [engineMin, setEngineMin] = useState(ENGINE_MIN);
   const [engineMax, setEngineMax] = useState(ENGINE_MAX);
+  const [retailMin, setRetailMin] = useState(RETAIL_MIN);
+  const [retailMax, setRetailMax] = useState(RETAIL_MAX);
   const [buyNowOnly, setBuyNowOnly] = useState(false);
   const [copartOn, setCopartOn] = useState(true);
   const [iaaiOn, setIaaiOn] = useState(true);
@@ -112,6 +118,12 @@ export default function SearchWidget({
    * and an engine size says nothing a buyer of a trailer is looking for.
    */
   const hasRanges = category !== null && category !== "more";
+  /**
+   * Retail value is offered for "more" as well, unlike the other two: a trailer
+   * or a forklift is worth a number even when a mileage reading and an engine
+   * size say nothing about it.
+   */
+  const hasRetail = category !== null;
 
   /**
    * True for a 17-character VIN (the standard excludes I, O and Q so they
@@ -185,6 +197,14 @@ export default function SearchWidget({
       );
       if (engine.from) query.engineFrom = engine.from;
       if (engine.to) query.engineTo = engine.to;
+    }
+    if (hasRetail) {
+      const retail = rangeParams(
+        { min: retailMin, max: retailMax },
+        { min: RETAIL_MIN, max: RETAIL_MAX }
+      );
+      if (retail.from) query.retailMin = retail.from;
+      if (retail.to) query.retailMax = retail.to;
     }
     if (buyNowOnly) query.buyNow = "1";
 
@@ -345,6 +365,28 @@ export default function SearchWidget({
                     resetLabel={labels.engineReset}
                   />
                 </>
+              )}
+
+              {hasRetail && (
+                <div>
+                  <RetailRange
+                    min={retailMin}
+                    max={retailMax}
+                    onChange={(lo, hi) => {
+                      setRetailMin(lo);
+                      setRetailMax(hi);
+                    }}
+                    title={labels.retail}
+                    resetLabel={labels.retailReset}
+                  />
+                  {/* Said out loud rather than left to be discovered. 12% of
+                      lots carry no estimated value and drop out the moment this
+                      is touched — small enough to be worth the filter, large
+                      enough that a visitor deserves to be told. */}
+                  <p className="mt-1.5 px-1 text-[11px] leading-snug text-char-500">
+                    {labels.retailNote}
+                  </p>
+                </div>
               )}
 
               <div className="flex flex-wrap items-center gap-2.5">

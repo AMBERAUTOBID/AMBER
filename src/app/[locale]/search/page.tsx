@@ -130,6 +130,8 @@ export default async function SearchPage({
     buy_now_max: num(sp.buyNowMax),
     price_min: num(sp.priceMin),
     price_max: num(sp.priceMax),
+    retail_min: num(sp.retailMin),
+    retail_max: num(sp.retailMax),
     enhanced: sp.enhanced === "1" ? true : undefined,
     lot_status: sp.buyNow === "1" ? ("Buy Now" as const) : undefined,
     ...facetFilters,
@@ -235,6 +237,9 @@ export default async function SearchPage({
                 odometerReset: t("widget.odometerReset"),
                 engine: t("widget.engine"),
                 engineReset: t("widget.engineReset"),
+                retail: t("widget.retail"),
+                retailReset: t("widget.retailReset"),
+                retailNote: t("widget.retailNote"),
               }}
             />
           </Reveal>

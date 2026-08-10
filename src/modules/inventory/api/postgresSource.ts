@@ -274,6 +274,10 @@ function buildWhere(
   if (params.price_max !== undefined) conditions.push(lte(t.currentBidCents, params.price_max * 100));
   if (params.buy_now_min !== undefined) conditions.push(gte(t.buyNowCents, params.buy_now_min * 100));
   if (params.buy_now_max !== undefined) conditions.push(lte(t.buyNowCents, params.buy_now_max * 100));
+  // Estimated retail value — 88.0% populated against 34.6% for a bid, which is
+  // why this is the range the widget exposes. See VehicleSearchParams.
+  if (params.retail_min !== undefined) conditions.push(gte(t.estRetailCents, params.retail_min * 100));
+  if (params.retail_max !== undefined) conditions.push(lte(t.estRetailCents, params.retail_max * 100));
 
   // Auction date. Parsed defensively: a malformed value must narrow nothing
   // rather than throw and take the whole search page down.

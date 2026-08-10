@@ -218,7 +218,10 @@
       "odometer": "Rida",
       "odometerReset": "Atstatyti",
       "engine": "Variklio tūris",
-      "engineReset": "Atstatyti"
+      "engineReset": "Atstatyti",
+      "retail": "Rinkos vertė JAV",
+      "retailReset": "Atstatyti",
+      "retailNote": "Kiek automobilis vertas JAV rinkoje — ne galutinė kaina. Kol filtras įjungtas, lotai be įvertinimo nerodomi."
     },
     "helper": {
       "title": "Nesate tikri, ko tiksliai ieškote?",

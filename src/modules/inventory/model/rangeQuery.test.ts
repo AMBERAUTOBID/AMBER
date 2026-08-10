@@ -3,6 +3,7 @@ import { isRangeActive, rangeParams } from "./rangeQuery";
 
 const ODO = { min: 0, max: 500_000 };
 const ENGINE = { min: 0, max: 8_000 };
+const RETAIL = { min: 0, max: 50_000 };
 
 describe("rangeParams", () => {
   it("sends nothing when neither end has been moved", () => {
@@ -37,6 +38,18 @@ describe("rangeParams", () => {
   it("works for engine size, where the bounds differ", () => {
     expect(rangeParams({ min: 1_600, max: 8_000 }, ENGINE)).toEqual({ from: "1600" });
     expect(rangeParams({ min: 0, max: 2_500 }, ENGINE)).toEqual({ to: "2500" });
+  });
+
+  it("keeps the expensive lots reachable on retail value", () => {
+    // p95 of the estimated retail value is $38,400 and p99 is $66,625, so a
+    // slider stopping at 50,000 has a real tail above it. Asking for "$20,000
+    // and up" must not quietly cap at the top stop.
+    expect(rangeParams({ min: 20_000, max: 50_000 }, RETAIL)).toEqual({ from: "20000" });
+    expect(rangeParams({ min: 0, max: 12_000 }, RETAIL)).toEqual({ to: "12000" });
+    expect(rangeParams({ min: 5_000, max: 15_000 }, RETAIL)).toEqual({
+      from: "5000",
+      to: "15000",
+    });
   });
 });
 
