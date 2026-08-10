@@ -295,7 +295,18 @@
           "wagon": "Estate",
           "convertible": "Convertible",
           "truck": "Truck",
-          "motorcycle": "Motorcycle"
+          "motorcycle": "Motorcycle",
+          "tractor": "Semi tractor",
+          "chassis": "Chassis cab",
+          "cruiser": "Cruiser",
+          "sport": "Sport bike",
+          "touring": "Touring bike",
+          "standard": "Standard",
+          "street": "Road / street",
+          "enduro": "Enduro",
+          "scooter": "Scooter",
+          "atv": "ATV",
+          "side_by_side": "Side by side"
         },
         "fuel": {
           "gasoline": "Petrol",

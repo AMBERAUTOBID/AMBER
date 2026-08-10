@@ -318,10 +318,93 @@ describe("normalizeBodyType", () => {
     expect(normalizeBodyType("Convertible")).toBe("convertible");
   });
 
+  it("reads the source's eight-character truncations", () => {
+    // The same corruption that produced "Sport Utility Vehicl" and "SILVE".
+    expect(normalizeBodyType("4DR SPOR")).toBe("suv"); // 417
+    expect(normalizeBodyType("HATCHBAC")).toBe("hatchback"); // 42
+    expect(normalizeBodyType("CREW PIC")).toBe("pickup"); // 93
+    expect(normalizeBodyType("4DR EXT")).toBe("pickup"); // 42
+    expect(normalizeBodyType("CONVERTI")).toBe("convertible"); // 12
+    expect(normalizeBodyType("CONVENTI")).toBe("truck"); // 21, heavy trucks
+  });
+
+  it("does not mistake a cut-off van for a sports machine", () => {
+    // "SPORTS V" and "CARGO VA" both stop BEFORE the word van is complete, so
+    // a plain "VAN" test misses them — and SPORTS V then falls through to the
+    // SPORT test. Verified against the models: Odyssey, Caravan, Sedona.
+    expect(normalizeBodyType("SPORTS V")).toBe("van"); // 36
+    expect(normalizeBodyType("CARGO VA")).toBe("van"); // 23
+  });
+
+  it("reads Utility on a car as an SUV", () => {
+    // Equinox, Rogue, Explorer, RAV4, Grand Cherokee, CR-V — checked, not guessed.
+    expect(normalizeBodyType("Utility")).toBe("suv"); // 489
+    expect(normalizeBodyType("Suv 4 Door")).toBe("suv"); // 160
+    expect(normalizeBodyType("Supercrew")).toBe("pickup"); // 122, Maverick and Ranger
+  });
+
+  it("keeps three marketing names out of the motorcycle buckets", () => {
+    // Each of these contains SPORT and none of them is a bike.
+    expect(normalizeBodyType("Sports Activity Vehicle")).toBe("suv"); // BMW X3, X5
+    expect(normalizeBodyType("Quattro Sportback")).toBe("hatchback"); // Audi A5
+    expect(normalizeBodyType("SPORT PI")).toBe("pickup"); // Avalanche, Escalade EXT
+  });
+
+  it("separates commercial chassis from pickups, and semis from trucks", () => {
+    // "CAB CHASSIS" used to land in pickup on the bare CAB test — 380 lots of
+    // bare cab-and-frame sold as if they were F-150s.
+    expect(normalizeBodyType("CAB CHASSIS")).toBe("chassis"); // 380
+    expect(normalizeBodyType("CUTAWAY")).toBe("chassis"); // 404
+    expect(normalizeBodyType("INCOMPLETE (STRIP CHASSIS)")).toBe("chassis"); // 46
+    expect(normalizeBodyType("TRACTOR TRUCK")).toBe("tractor"); // 532
+    expect(normalizeBodyType("Truck Tractor")).toBe("tractor"); // 45
+  });
+
+  it("gives motorcycles a vocabulary of their own", () => {
+    // 2,000-odd bikes carried a real style and every one landed in the same
+    // heap. This is where the panel gets furthest ahead of bidauto.online.
+    expect(normalizeBodyType("Cruiser")).toBe("cruiser"); // 349
+    expect(normalizeBodyType("Sport")).toBe("sport"); // 454
+    expect(normalizeBodyType("RACER")).toBe("sport"); // 66
+    expect(normalizeBodyType("Touring")).toBe("touring"); // 312
+    expect(normalizeBodyType("Traditional")).toBe("standard"); // 72, CB650 and friends
+    expect(normalizeBodyType("Enduro")).toBe("enduro"); // 52
+    expect(normalizeBodyType("Dirt Bike")).toBe("enduro"); // 2
+    expect(normalizeBodyType("Side By Side")).toBe("side_by_side"); // 203
+    expect(normalizeBodyType("Atv")).toBe("atv"); // 35
+    // Used to be swallowed by the generic MOTORCYCLE test.
+    expect(normalizeBodyType("MOTOR SCOOTER")).toBe("scooter"); // 14
+  });
+
+  it("keeps ROAD as its own bucket, and off-road out of it", () => {
+    // The machines under ROAD are both cruisers and tourers (Harley FL is a
+    // tourer, FX a cruiser), so folding it either way would assert something
+    // the field does not say.
+    expect(normalizeBodyType("ROAD")).toBe("street"); // 183
+    expect(normalizeBodyType("ROAD/STREET")).toBe("street"); // 4
+    // Contains the word and is not a road bike.
+    expect(normalizeBodyType("OFF-ROAD VEHICLE - MULTIPURPOS")).toBeNull();
+    // A roadster is a convertible, and is tested before any of this.
+    expect(normalizeBodyType("Roadster")).toBe("convertible");
+  });
+
+  it("leaves a size descriptor alone rather than inventing a shape", () => {
+    // "Compact" is a Nissan NV200 — a size, not a body. Claiming a shape from
+    // it would be a guess dressed as data.
+    expect(normalizeBodyType("Compact")).toBeNull(); // 43
+    expect(normalizeBodyType("FULL-SIZE")).toBeNull(); // 50
+  });
+
   it("returns null for N/A and the unrecognised", () => {
     expect(normalizeBodyType("N/A")).toBeNull();
     expect(normalizeBodyType(null)).toBeNull();
-    expect(normalizeBodyType("Utility")).toBeNull();
+    // "Utility" was asserted null here until 2026-08-10, on the reasoning that
+    // it could be a utility trailer as easily as a utility vehicle. Profiling
+    // settled it: all 489 are cars — Equinox, Rogue, Explorer, RAV4, Grand
+    // Cherokee, CR-V — and none is a trailer. See the SUV test above. The rule
+    // that produced the original caution still stands; the fact changed, not
+    // the rule.
+    expect(normalizeBodyType("Some Shape We Have Never Seen")).toBeNull();
   });
 });
 

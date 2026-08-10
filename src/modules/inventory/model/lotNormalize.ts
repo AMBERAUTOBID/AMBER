@@ -339,32 +339,158 @@ export type BodyType =
   | "wagon"
   | "convertible"
   | "truck"
-  | "motorcycle";
+  // Commercial shapes that are not "a truck" to anyone buying one.
+  | "tractor"
+  | "chassis"
+  // Two wheels. `motorcycle` stays for lots that say only that.
+  | "motorcycle"
+  | "cruiser"
+  | "sport"
+  | "touring"
+  | "standard"
+  | "street"
+  | "enduro"
+  | "scooter"
+  | "atv"
+  | "side_by_side";
 
 /**
  * Body Type, folded from a badly fragmented field: `Sport Utility`,
  * `SPORT UTILITY VEHICLE`, `4DR SPORT UTILITY`, `SUV` and the literally
  * truncated `Sport Utility Vehicl` are all one thing, and `Sedan` / `SEDAN` /
  * `SEDAN 4DR` another.
+ *
+ * ## Widened 2026-08-10, from 10 buckets to 20
+ *
+ * 12,563 lots had no body type at all. Profiling the raw values showed the gap
+ * was three separate problems, not one:
+ *
+ * 1. **The source truncates at eight characters** — the same corruption that
+ *    produced `Sport Utility Vehicl` and `SILVE` in colour. `4DR SPOR` (417),
+ *    `HATCHBAC`, `CREW PIC`, `CARGO VA`, `CONVERTI`, `CONVENTI` and `SPORTS V`
+ *    are all whole words cut in half. Matched on the stem.
+ * 2. **Motorcycles had no vocabulary at all.** 2,000-odd bikes carry a real
+ *    style — `Cruiser`, `Sport`, `Touring`, `Enduro`, `Scooter` — and every one
+ *    of them landed in the same undifferentiated heap. This is where we get
+ *    furthest ahead of bidauto.online, whose panel is static: browsing
+ *    motorcycles there still offers "Sedan / SUV / Pickup".
+ * 3. **Commercial chassis are not pickups.** `CUTAWAY`, `Chassis`,
+ *    `INCOMPLETE (STRIP CHASSIS)` and `CREW CHASSIS` are cab-and-frame units
+ *    sold to be built on, and `TRACTOR` is a semi unit. Both were falling
+ *    through to null, or worse, into `pickup` via the bare `CAB` test.
+ *
+ * **EVERY MAPPING BELOW WAS CHECKED AGAINST THE ACTUAL VEHICLES**, because the
+ * abbreviations do not mean what they look like. `SPORTS V` reads like a sports
+ * car and is in fact `SPORTS VAN` — Odyssey, Caravan, Sedona. `Utility` on a car
+ * is Equinox, Rogue, RAV4, CR-V, so it is an SUV, not a utility trailer.
+ * `Compact` is a Nissan NV200 van, a size and not a shape, so it stays null.
+ *
+ * **ORDER IS LOAD-BEARING**, as it is in `normalizeTitle`. Chassis must be tested
+ * before the `CAB` test or `CREW CHASSIS` files as a pickup; `SPORTS VAN` must
+ * be tested before `SPORT`, or 32 minivans become sports bikes.
+ *
+ * **Deliberately NOT added: `bus`, `trailer`, `motorhome`.** Each would restate
+ * `vehicle_class` exactly rather than say anything new within it, and a filter
+ * whose options duplicate the category above it makes the panel longer without
+ * making it more useful. The ~570 lots concerned are already reachable by
+ * category.
  */
 export function normalizeBodyType(raw: string | null | undefined): BodyType | null {
   const s = upper(raw);
   if (!s) return null;
+
+  // Built on a bare cab and frame, not driven off the lot as-is. Ahead of every
+  // CAB test below, because "CREW CHASSIS" contains neither CAB nor TRUCK but
+  // "CAB CHASSIS" contains both.
+  if (s.includes("CHASSIS") || s.includes("CUTAWAY")) return "chassis";
+  if (s.includes("TRACTOR")) return "tractor";
+
   // "SPORT UTILITY VEHICL" appears truncated in the source data, so match on the
-  // stem rather than the full phrase.
-  if (s.includes("SPORT UTILITY") || s === "SUV" || s.includes("UTILITY VEHICL")) return "suv";
-  if (s.includes("CONVERTIBLE") || s.includes("ROADSTER")) return "convertible";
-  if (s.includes("HATCHBACK") || s.includes("LIFTBACK")) return "hatchback";
+  // stem rather than the full phrase. "4DR SPOR" is the same word cut shorter
+  // still, and "UTILITY" alone on a car is an SUV — verified against the models.
+  if (
+    // "SPORT UT" rather than "SPORT UTILITY", so the truncated "Sport Ut Truck
+    // 4Dr" is caught by the same test.
+    s.includes("SPORT UT") ||
+    s.includes("SUV") ||
+    s.includes("UTILITY VEHICL") ||
+    s === "UTILITY" ||
+    s.includes("4DR SPOR") ||
+    // BMW's own name for an SUV — X3, X5. Ahead of the SPORT test below, which
+    // would otherwise sell them as sport motorcycles.
+    s.includes("SPORTS ACTIVITY")
+  ) {
+    return "suv";
+  }
+
+  if (s.includes("CONVERTI") || s.includes("ROADSTER")) return "convertible";
+  // SPORTBACK is Audi's liftback — a car, and again ahead of the SPORT test.
+  if (s.includes("HATCHBAC") || s.includes("LIFTBACK") || s.includes("SPORTBACK")) {
+    return "hatchback";
+  }
   if (s.includes("WAGON")) return "wagon";
-  if (s.includes("VAN")) return "van";
-  // Cab styles are how the auctions describe pickups.
-  if (s.includes("PICKUP") || s.includes("CREW CAB") || s.includes("EXT CAB") || s.includes("CAB")) {
+
+  /**
+   * Vans, and the two truncations that make this trickier than it looks.
+   *
+   * `SPORTS V` and `CARGO VA` are both cut off BEFORE the word "van" is
+   * complete, so a plain `includes("VAN")` misses both — and `SPORTS V` would
+   * then fall through to the `SPORT` test below and file 32 Odysseys and
+   * Caravans as sport motorcycles. Matched on the truncated stems, ahead of
+   * everything that could claim them.
+   */
+  if (s.includes("VAN") || s.includes("SPORTS V") || s.includes("CARGO VA")) return "van";
+
+  // Cab styles are how the auctions describe pickups. "SUPERCREW" is Ford's own
+  // name for one — Maverick and Ranger, checked.
+  if (
+    s.includes("PICKUP") ||
+    s.includes("CREW PIC") ||
+    s.includes("SUPERCREW") ||
+    s.includes("CREW CAB") ||
+    s.includes("EXT CAB") ||
+    s.includes("4DR EXT") ||
+    // "SPORT PICKUP", cut at eight characters — Avalanche and Escalade EXT.
+    s.includes("SPORT PI") ||
+    s.includes("CAB")
+  ) {
     return "pickup";
   }
+
   if (s.includes("COUPE")) return "coupe";
   if (s.includes("SEDAN")) return "sedan";
-  if (s.includes("MOTORCYCLE") || s.includes("SCOOTER")) return "motorcycle";
-  if (s.includes("TRUCK")) return "truck";
+
+  // ── two wheels ──
+  // Ordered longest-phrase-first: "SIDE BY SIDE" before anything, and "SCOOTER"
+  // before the generic MOTORCYCLE test that used to swallow it.
+  if (s.includes("SIDE BY SIDE")) return "side_by_side";
+  if (s.includes("SCOOTER")) return "scooter";
+  if (s.includes("ATV")) return "atv";
+  if (s.includes("CRUISER")) return "cruiser";
+  if (s.includes("TOURING")) return "touring";
+  // RACER and COMPETITION are the same machine sold under another word.
+  if (s.includes("SPORT") || s.includes("RACER") || s.includes("COMPETITION")) return "sport";
+  if (s.includes("ENDURO") || s.includes("DIRT")) return "enduro";
+  // A "traditional" bike is what the rest of the world calls a standard or
+  // naked — CB650, Royal Enfield INT 650, DL650. Checked against the models.
+  if (s.includes("TRADITIONAL") || s.includes("STANDARD")) return "standard";
+  /**
+   * `ROAD`, `ROAD/STR`, `ROAD/STREET` — IAAI's own word, kept as its own bucket
+   * rather than folded into cruiser or touring.
+   *
+   * The 190 machines under it are both: Harley FL is a tourer, FX and the
+   * Sportster are cruisers, Honda GL is a tourer and the VT/VTX are cruisers.
+   * Picking either would assert something about each individual bike that the
+   * field does not say. Its own option is the honest answer, and a rider
+   * searching for a road bike gets exactly what the auction called one.
+   */
+  // "OFF-ROAD VEHICLE" is not a road bike, and it contains the word. Excluded
+  // explicitly rather than left to matching order, since nothing else here
+  // would have caught it.
+  if (s.includes("ROAD") && !s.includes("OFF")) return "street";
+  if (s.includes("MOTORCYCLE")) return "motorcycle";
+
+  if (s.includes("TRUCK") || s.includes("CONVENTI")) return "truck";
   return null;
 }
 

@@ -295,7 +295,18 @@
           "wagon": "Universalas",
           "convertible": "Kabrioletas",
           "truck": "Sunkvežimis",
-          "motorcycle": "Motociklas"
+          "motorcycle": "Motociklas",
+          "tractor": "Vilkikas",
+          "chassis": "Važiuoklė su kabina",
+          "cruiser": "Cruiser",
+          "sport": "Sportinis motociklas",
+          "touring": "Turistinis motociklas",
+          "standard": "Klasikinis",
+          "street": "Miesto / kelio",
+          "enduro": "Enduro",
+          "scooter": "Motoroleris",
+          "atv": "Keturratis",
+          "side_by_side": "Bagis (side-by-side)"
         },
         "fuel": {
           "gasoline": "Benzinas",

@@ -295,7 +295,18 @@
           "wagon": "Универсал",
           "convertible": "Кабриолет",
           "truck": "Грузовик",
-          "motorcycle": "Мотоцикл"
+          "motorcycle": "Мотоцикл",
+          "tractor": "Седельный тягач",
+          "chassis": "Шасси с кабиной",
+          "cruiser": "Круизер",
+          "sport": "Спортбайк",
+          "touring": "Туристический мотоцикл",
+          "standard": "Классический",
+          "street": "Дорожный",
+          "enduro": "Эндуро",
+          "scooter": "Скутер",
+          "atv": "Квадроцикл",
+          "side_by_side": "Багги (side-by-side)"
         },
         "fuel": {
           "gasoline": "Бензин",
