@@ -21,6 +21,7 @@ import ImportProgress from "@/modules/orders/components/ImportProgress";
 import StageEditor from "@/modules/orders/components/StageEditor";
 import FileUploader from "@/modules/orders/components/FileUploader";
 import MoneyEditor from "@/modules/orders/components/MoneyEditor";
+import OrderDetailsEditor from "@/modules/orders/components/OrderDetailsEditor";
 import AdminSection from "@/modules/admin/components/AdminSection";
 
 export async function generateMetadata({
@@ -101,8 +102,22 @@ export default async function AdminOrderPage({
         <StageBadge stage={order.stage} />
       </div>
 
-      <p className="mt-2 text-sm text-char-600">
+      <p className="mt-2 flex flex-wrap items-center gap-3 text-sm text-char-600">
         {tOrders("progress", progress)}
+        {/* Surfaced beside the stage, not buried in a panel. A missing title
+            blocks export regardless of where the car is, so it has to be
+            visible from the same glance that answers "where is it". */}
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+            order.titleReceivedAt ? "bg-green-50 text-green-800" : "bg-amber-50 text-amber-800"
+          }`}
+        >
+          {order.titleReceivedAt
+            ? t("details.title.received", {
+                date: order.titleReceivedAt.toISOString().slice(0, 10),
+              })
+            : t("details.title.waiting")}
+        </span>
       </p>
 
       {/* The import is the only thing on this page that is still happening,
@@ -199,6 +214,31 @@ export default async function AdminOrderPage({
               );
             })}
           </ol>
+        </AdminSection>
+
+        {/* The title, the consignee and the shipping references. Placed above
+            money because a car with no title is not going anywhere, whatever
+            the balance says. */}
+        <AdminSection title={t("details.consignee.heading")}>
+          <OrderDetailsEditor
+            orderId={id}
+            details={{
+              titleReceivedAt: order.titleReceivedAt?.toISOString() ?? null,
+              consigneeName: order.consigneeName,
+              consigneeCompany: order.consigneeCompany,
+              consigneePhone: order.consigneePhone,
+              consigneeEmail: order.consigneeEmail,
+              consigneeAddress: order.consigneeAddress,
+              consigneeCountry: order.consigneeCountry,
+              containerNumber: order.containerNumber,
+              billOfLading: order.billOfLading,
+              vesselName: order.vesselName,
+              departurePort: order.departurePort,
+              destinationPort: order.destinationPort,
+              etaAt: order.etaAt?.toISOString() ?? null,
+              internalNote: order.internalNote,
+            }}
+          />
         </AdminSection>
 
         <AdminSection title={t("costs.heading")}>

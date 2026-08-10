@@ -896,6 +896,24 @@ export const vehicleOrders = pgTable(
     /** When the auction actually sold it. */
     soldAt: timestamp("sold_at", { withTimezone: true }),
     /**
+     * When the PHYSICAL title reached us — null until it does.
+     *
+     * ⚠️ **This is a different fact from `titleClass`, and conflating them is
+     * the mistake this column exists to prevent.** `titleClass` says what kind
+     * of document the car has (clean, salvage, rebuildable); this says whether
+     * the paper is actually in our hands. A car can sit at the terminal for
+     * weeks with a perfectly clean title that has not arrived, and it cannot
+     * be exported until it does.
+     *
+     * Deliberately NOT a stage. A title arrives on its own schedule, unrelated
+     * to where the car is — it can turn up before the car leaves the auction
+     * or after it is already at sea — so modelling it as a step in the journey
+     * would force a false ordering. The freight forwarder whose portal
+     * prompted this keeps it as a separate column and a separate filter for
+     * exactly that reason.
+     */
+    titleReceivedAt: timestamp("title_received_at", { withTimezone: true }),
+    /**
      * The full source payload as it was on the day, for the fields nobody
      * thought to give a column yet.
      *
@@ -906,6 +924,43 @@ export const vehicleOrders = pgTable(
      * listing, it can never be re-fetched once the auction drops the lot.
      */
     lotSnapshot: jsonb("lot_snapshot"),
+
+    // ── who actually receives the car ───────────────────────────────────────
+    /**
+     * The consignee: the person or company taking delivery at the far end.
+     *
+     * Not the same as `userId`, and that is the whole point. A client
+     * routinely has the car released to somebody else — a brother, their own
+     * company, a dealer they resell through — and customs paperwork names the
+     * consignee, not the buyer. Today that arrangement lives in WhatsApp and
+     * gets typed onto a bill of lading from memory.
+     *
+     * It also changes late, often in the last week before arrival, which is
+     * the worst possible time for the authoritative answer to be a chat
+     * message nobody can find.
+     *
+     * ⚠️ **No personal or company code column, deliberately.** Customs in
+     * several destinations wants one, but `asmens kodas` and its equivalents
+     * are exactly the class of identifier ARCHITECTURE.md §6a rules out
+     * collecting for now (alongside IBAN). Adding it needs the same
+     * conversation that decision came from, not a quiet column.
+     */
+    consigneeName: text("consignee_name"),
+    consigneeCompany: text("consignee_company"),
+    consigneePhone: text("consignee_phone"),
+    consigneeEmail: text("consignee_email"),
+    /**
+     * One free-text block rather than street/city/postcode columns.
+     *
+     * The destinations here are Lithuania, Georgia, the Netherlands, the UAE
+     * and more, and their address shapes genuinely disagree — a structured
+     * form built around one of them mangles the others. This text is copied
+     * verbatim onto the bill of lading, so what matters is that it reads
+     * correctly to a customs officer, not that it parses.
+     */
+    consigneeAddress: text("consignee_address"),
+    /** Kept separate from the address because it drives duty and routing. */
+    consigneeCountry: text("consignee_country"),
 
     // ── shipping, one value each per order ──────────────────────────────────
     containerNumber: text("container_number"),

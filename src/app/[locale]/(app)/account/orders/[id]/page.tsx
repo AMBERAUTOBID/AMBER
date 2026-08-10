@@ -117,6 +117,44 @@ export default async function ClientOrderPage({
         />
       </dl>
 
+      {/* The title, on its own line and colour-coded. It is the single most
+          asked question after "where is it", and it is a different fact from
+          the document type shown above. */}
+      <p
+        className={`mt-3 inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold ${
+          order.titleReceivedAt ? "bg-green-50 text-green-800" : "bg-amber-50 text-amber-800"
+        }`}
+      >
+        {order.titleReceivedAt
+          ? t("titleReceived", {
+              date: format.dateTime(order.titleReceivedAt, { dateStyle: "medium" }),
+            })
+          : t("titleWaiting")}
+      </p>
+
+      {/* Shown to the client precisely so they can catch a wrong name before
+          it reaches a bill of lading. Correcting a consignee after customs
+          paperwork is filed is expensive; correcting it here is a message. */}
+      {(order.consigneeName || order.consigneeCompany || order.consigneeAddress) && (
+        <section className="mt-6 rounded-2xl border border-char-200/70 bg-white p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-char-500">
+            {t("consignee.heading")}
+          </h2>
+          <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-char-800">
+            {[
+              order.consigneeName,
+              order.consigneeCompany,
+              order.consigneeAddress,
+              order.consigneeCountry,
+              order.consigneePhone,
+            ]
+              .filter(Boolean)
+              .join("\n")}
+          </p>
+          <p className="mt-3 text-xs text-char-500">{t("consignee.hint")}</p>
+        </section>
+      )}
+
       {/* ── shipping, only once there is something in it ─────────────── */}
       {(order.containerNumber || order.vesselName || order.destinationPort || order.etaAt) && (
         <section className="mt-6 rounded-2xl border border-char-200/70 bg-white p-5">

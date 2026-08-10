@@ -1630,6 +1630,12 @@
       "delivered": "Automobilis perduotas jums."
     },
     "stagePending": "Dar nepasiekta",
+    "titleWaiting": "Nuosavybės dokumento dar laukiame",
+    "titleReceived": "Nuosavybės dokumentas gautas {date}",
+    "consignee": {
+      "heading": "Automobilį atsiima",
+      "hint": "Jei kas nors netikslu, praneškite mums prieš pakraunant — muitinės dokumentuose keisti gavėją vėliau brangu."
+    },
     "media": {
       "photos": "Nuotraukos",
       "videos": "Vaizdo įrašai",
@@ -1791,6 +1797,25 @@
       "heading": "Vidinė pastaba",
       "hint": "Klientas šito nemato niekada.",
       "save": "Išsaugoti"
+    },
+    "details": {
+      "title": {
+        "waiting": "Dokumento dar negavome",
+        "received": "Dokumentas gautas {date}",
+        "hint": "Tai fizinis title, ne jo tipas. Kol jo nėra, automobilio eksportuoti negalima.",
+        "mark": "Žymėti gautu",
+        "undo": "Atšaukti"
+      },
+      "consignee": {
+        "heading": "Gavėjas",
+        "hint": "Kas atsiima automobilį. Gali skirtis nuo kliento — muitinės dokumentuose nurodomas gavėjas, ne pirkėjas.",
+        "name": "Vardas, pavardė",
+        "company": "Įmonė",
+        "phone": "Telefonas",
+        "email": "El. paštas",
+        "address": "Adresas",
+        "country": "Šalis"
+      }
     }
   },
   "OrderEmails": {

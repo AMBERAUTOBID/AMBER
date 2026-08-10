@@ -1630,6 +1630,12 @@
       "delivered": "The car has been handed over to you."
     },
     "stagePending": "Not reached yet",
+    "titleWaiting": "Waiting for the title",
+    "titleReceived": "Title received {date}",
+    "consignee": {
+      "heading": "Collected by",
+      "hint": "If anything here is wrong, tell us before loading — changing the consignee on customs paperwork later is expensive."
+    },
     "media": {
       "photos": "Photos",
       "videos": "Video",
@@ -1791,6 +1797,25 @@
       "heading": "Internal note",
       "hint": "The client never sees this.",
       "save": "Save"
+    },
+    "details": {
+      "title": {
+        "waiting": "Title not received yet",
+        "received": "Title received {date}",
+        "hint": "This is the physical title, not its type. The car cannot be exported until it arrives.",
+        "mark": "Mark received",
+        "undo": "Undo"
+      },
+      "consignee": {
+        "heading": "Consignee",
+        "hint": "Who collects the car. It can differ from the client — customs paperwork names the consignee, not the buyer.",
+        "name": "Full name",
+        "company": "Company",
+        "phone": "Phone",
+        "email": "Email",
+        "address": "Address",
+        "country": "Country"
+      }
     }
   },
   "OrderEmails": {
