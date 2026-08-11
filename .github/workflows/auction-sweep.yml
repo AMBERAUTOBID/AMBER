@@ -46,7 +46,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # 24, not 20 — see the long note in checks.yml. Node 20 ships npm 10,
+          # which refuses this lock file, so `npm ci` failed here too and every
+          # step after it died with exit 127 (`tsx: command not found`) because
+          # node_modules was never created. The missing secrets were a second,
+          # independent problem hidden behind this one.
+          node-version: "24"
           cache: "npm"
 
       - run: npm ci

@@ -32,8 +32,21 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # Matches the telegram-bot workflow. Next 16 requires Node 20.9+.
-          node-version: "20"
+          # ⚠️ MUST MATCH THE NODE EVERYONE DEVELOPS ON. This said "20" for two
+          # weeks and this workflow NEVER ONCE PASSED — every run died at
+          # `npm ci` with "Missing: @swc/helpers@0.5.23 from lock file", so the
+          # typecheck, tests, lint and build below were never reached and the
+          # gate was decorative.
+          #
+          # Node 20 ships npm 10; the lock file is written by npm 11, which
+          # resolves that entry itself where npm 10 refuses. Reproduced exactly
+          # with `npx npm@10 ci --dry-run` against this same lock file.
+          #
+          # Bumping is the fix rather than regenerating the lock under npm 10:
+          # anyone on npm 11 would rewrite it straight back and the two would
+          # fight forever. GitHub also now reports Node 20 as deprecated and
+          # force-runs the actions themselves on Node 24.
+          node-version: "24"
           cache: "npm"
 
       - run: npm ci
