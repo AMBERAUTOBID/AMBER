@@ -20,16 +20,34 @@
  * a missing variable stops the run instead of quietly ingesting 140,000 rows
  * into the customer database.
  */
+/**
+ * Empty is not "set". GitHub Actions substitutes an UNSET secret as an empty
+ * string, so `??` would accept `""` and hand it on as a connection string —
+ * the workflow passes both the new and the old name, and whichever secret has
+ * not been created yet arrives empty. `??` only skips null and undefined, so
+ * the fallback chain would stop at the empty one and the sweep would try to
+ * connect to nothing. Trimmed, because a stray newline pasted into a secret
+ * is the other way this arrives looking set.
+ */
+function firstSet(...values: (string | undefined)[]): string | undefined {
+  for (const v of values) {
+    const trimmed = v?.trim();
+    if (trimmed) return trimmed;
+  }
+  return undefined;
+}
+
 export function auctionDbUrl(opts: { unpooled: boolean }): string | undefined {
+  const {
+    DATABASE_URL_AUCTION_UNPOOLED: auctionDirect,
+    DATABASE_URL_MIRROR_UNPOOLED: mirrorDirect,
+    DATABASE_URL_AUCTION: auctionPooled,
+    DATABASE_URL_MIRROR: mirrorPooled,
+  } = process.env;
+
   return opts.unpooled
-    ? (process.env.DATABASE_URL_AUCTION_UNPOOLED ??
-        process.env.DATABASE_URL_MIRROR_UNPOOLED ??
-        process.env.DATABASE_URL_AUCTION ??
-        process.env.DATABASE_URL_MIRROR)
-    : (process.env.DATABASE_URL_AUCTION ??
-        process.env.DATABASE_URL_MIRROR ??
-        process.env.DATABASE_URL_AUCTION_UNPOOLED ??
-        process.env.DATABASE_URL_MIRROR_UNPOOLED);
+    ? firstSet(auctionDirect, mirrorDirect, auctionPooled, mirrorPooled)
+    : firstSet(auctionPooled, mirrorPooled, auctionDirect, mirrorDirect);
 }
 
 /** The message every caller printed by hand, so they cannot disagree. */

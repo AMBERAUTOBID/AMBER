@@ -63,9 +63,14 @@ jobs:
         timeout-minutes: 300
         env:
           APICARS_API_TOKEN: ${{ secrets.APICARS_API_TOKEN }}
-          # The mirror branch, never production. sweep.ts aborts outright if this
-          # resolves to the production endpoint, and refuses to fall back to
+          # The auction branch, never production. sweep.ts aborts outright if
+          # this resolves to the production endpoint, and refuses to fall back to
           # DATABASE_URL.
+          #
+          # Both names are passed so either secret works: scripts prefer
+          # _AUCTION_ and fall back to _MIRROR_ (see scripts/ingest/auctionDbUrl).
+          # An unset secret becomes an empty string, which the resolver skips.
+          DATABASE_URL_AUCTION_UNPOOLED: ${{ secrets.DATABASE_URL_AUCTION_UNPOOLED }}
           DATABASE_URL_MIRROR_UNPOOLED: ${{ secrets.DATABASE_URL_MIRROR_UNPOOLED }}
           # ~2,950 pages today. The cap is a runaway guard, not a budget: Active
           # Lots Pro is unlimited, so there is no per-request cost to sizing it
@@ -86,6 +91,7 @@ jobs:
       - name: Check the mirror is current
         if: always()
         env:
+          DATABASE_URL_AUCTION_UNPOOLED: ${{ secrets.DATABASE_URL_AUCTION_UNPOOLED }}
           DATABASE_URL_MIRROR_UNPOOLED: ${{ secrets.DATABASE_URL_MIRROR_UNPOOLED }}
         run: npm run sweep:health
 
@@ -101,5 +107,6 @@ jobs:
           # is handled: the script prints the alert and leaves GitHub's own
           # failure email as the notification.
           TELEGRAM_ALERT_CHAT_ID: ${{ secrets.TELEGRAM_ALERT_CHAT_ID }}
+          DATABASE_URL_AUCTION_UNPOOLED: ${{ secrets.DATABASE_URL_AUCTION_UNPOOLED }}
           DATABASE_URL_MIRROR_UNPOOLED: ${{ secrets.DATABASE_URL_MIRROR_UNPOOLED }}
         run: npx tsx scripts/ingest/notify-sweep-failure.ts "The nightly sweep or its health check failed on GitHub Actions."
