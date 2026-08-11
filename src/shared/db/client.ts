@@ -32,4 +32,39 @@ export function db(): NeonHttpDatabase<typeof schema> {
   return instance;
 }
 
+let auctionInstance: NeonHttpDatabase<typeof schema> | null = null;
+
+/**
+ * The mirrored auction catalogue, which is a DIFFERENT database from `db()`.
+ *
+ * WHY THIS EXISTS. `postgresSource` used to query `db()`, so serving search
+ * from the mirror would have meant pointing `DATABASE_URL` at the mirror
+ * branch — and that is the whole application, not just search. Client
+ * accounts, sessions, deposits, favourites and orders would have been read
+ * from, and written to, a copy. The two were already diverging when this was
+ * found: the mirror held a `vehicle_orders` row production did not. One env
+ * var away from a split nobody could have merged back.
+ *
+ * So the catalogue gets its own connection. Search reads `auctionDb()`;
+ * everything a customer owns stays on `db()`, whatever either points at.
+ *
+ * SEPARATE COMPUTE IS THE SECOND REASON. A full sweep saturates a 0.25 CU
+ * Neon endpoint for ~2.5 hours. Sharing one endpoint means the customer-
+ * facing site crawls every night; on its own, the sweep is invisible.
+ *
+ * FALLS BACK TO `DATABASE_URL` ON PURPOSE. Unset — which is every environment
+ * today — this returns exactly what `db()` returns, so nothing changes until
+ * the variable is deliberately set. `scripts/dev-mirror.mjs` keeps working
+ * untouched: it points DATABASE_URL at the mirror and both clients follow.
+ * The fallback is also the right answer for anyone genuinely running one
+ * database.
+ */
+export function auctionDb(): NeonHttpDatabase<typeof schema> {
+  const url = process.env.DATABASE_URL_AUCTION;
+  if (!url) return db();
+  if (auctionInstance) return auctionInstance;
+  auctionInstance = drizzle(neon(url), { schema });
+  return auctionInstance;
+}
+
 export { schema };

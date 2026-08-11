@@ -21,7 +21,7 @@
  * columns the search API never accepted, and immunity to vendor downtime.
  */
 import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
-import { db, schema } from "@/shared/db/client";
+import { auctionDb, schema } from "@/shared/db/client";
 import { apibaraSource } from "./apibaraSource";
 import type { AuctionSource, SearchFacets } from "./source";
 import type { VehicleDetailResponse, VehicleSearchParams, VehicleSearchResponse } from "./types";
@@ -87,7 +87,7 @@ async function activeSetCutoff(): Promise<Date | null> {
   const now = Date.now();
   if (cutoffCache && now - cutoffCache.at < CUTOFF_TTL_MS) return cutoffCache.value;
 
-  const runs = await db()
+  const runs = await auctionDb()
     .select({ startedAt: schema.auctionIngestRuns.startedAt })
     .from(schema.auctionIngestRuns)
     .where(
@@ -443,7 +443,7 @@ async function facetCounts(
   const columns = sql.raw(dimensions.map((d) => `"${d.column}"`).join(", "));
   const sets = sql.raw(dimensions.map((d) => `("${d.column}")`).join(", "));
 
-  const result = await db().execute(sql`
+  const result = await auctionDb().execute(sql`
     select ${columns}, count(*)::int as n
     from auction_lots
     where ${where}
@@ -528,7 +528,7 @@ async function runSearch(
 
   const fetchPage = async (fuzzy: boolean) => {
     const where = buildWhere(params, typeValues, activeSince, fuzzy);
-    const pageRows = await db()
+    const pageRows = await auctionDb()
       .select()
       .from(t)
       .where(where)
@@ -540,7 +540,7 @@ async function runSearch(
     // The result counter the aggregator's API structurally cannot provide — its
     // `meta` carries no total at all, which is why "Search Results (256,934)" was
     // impossible before owning the rows.
-    const [{ total: n }] = await db().select({ total: count() }).from(t).where(where);
+    const [{ total: n }] = await auctionDb().select({ total: count() }).from(t).where(where);
     return { pageRows, n };
   };
 
@@ -558,7 +558,7 @@ async function runSearch(
   const images =
     rows.length === 0
       ? []
-      : await db()
+      : await auctionDb()
           .select({
             lotId: schema.auctionLotImages.lotId,
             sourceUrl: schema.auctionLotImages.sourceUrl,
@@ -618,7 +618,7 @@ async function getVehicleDetailWithFallback(vinOrLot: string): Promise<VehicleDe
   } catch (upstreamError) {
     const t = schema.auctionLots;
     const term = vinOrLot.trim();
-    const [row] = await db()
+    const [row] = await auctionDb()
       .select()
       .from(t)
       // Resolves either identifier, matching upstream's behaviour: salvage rows
@@ -628,7 +628,7 @@ async function getVehicleDetailWithFallback(vinOrLot: string): Promise<VehicleDe
 
     if (!row) throw upstreamError;
 
-    const images = await db()
+    const images = await auctionDb()
       .select({
         sourceUrl: schema.auctionLotImages.sourceUrl,
         kind: schema.auctionLotImages.kind,
