@@ -7,7 +7,22 @@ import { routing, localeNames, type AppLocale } from "@/i18n/routing";
 import { Globe, CaretDown } from "@phosphor-icons/react/dist/ssr";
 import { clsx } from "clsx";
 
-export default function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
+/**
+ * `compact` shows the locale code ("LT") instead of its name ("Lietuvių").
+ *
+ * Only the header's desktop row asks for it, and only because the row is
+ * width-critical: the full names run 119px where the code runs 60, and
+ * those 59px are part of what lets the nav appear at 1280px instead of
+ * 1536. The full name stays everywhere with room for it — the burger menu
+ * and the footer — and remains the accessible name in both modes.
+ */
+export default function LanguageSwitcher({
+  dark = false,
+  compact = false,
+}: {
+  dark?: boolean;
+  compact?: boolean;
+}) {
   const locale = useLocale() as AppLocale;
   const pathname = usePathname();
   const router = useRouter();
@@ -31,15 +46,17 @@ export default function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-label={compact ? localeNames[locale] : undefined}
         className={clsx(
-          "flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium transition-colors",
+          "flex items-center gap-1.5 rounded-full py-2 text-sm font-medium transition-colors",
+          compact ? "px-2.5" : "px-3",
           dark
             ? "text-char-200 hover:bg-white/10 hover:text-white"
             : "text-char-600 hover:bg-char-100 hover:text-char-900"
         )}
       >
         <Globe size={18} weight="bold" aria-hidden />
-        <span>{localeNames[locale]}</span>
+        <span>{compact ? locale.toUpperCase() : localeNames[locale]}</span>
         <CaretDown size={12} weight="bold" aria-hidden />
       </button>
       {open && (

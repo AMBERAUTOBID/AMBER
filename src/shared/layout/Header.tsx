@@ -40,13 +40,16 @@ export default function Header({ account, accountMobile }: HeaderProps) {
     setOpen(false);
   }
 
+  // Four, not six. "Home" and "Contact" are both already reachable from this
+  // same bar — the wordmark links home, and the amber CTA goes to /contact —
+  // so listing them again spent 145px of a row that had none to spare. They
+  // are gone from the burger menu too, which carries the same CTA at its
+  // foot and the same wordmark above it.
   const links = [
-    { href: "/", label: t("home") },
     { href: "/search", label: t("search") },
     { href: "/plans", label: t("plans") },
     { href: "/shipping", label: t("shipping") },
     { href: "/about", label: t("about") },
-    { href: "/contact", label: t("contact") },
   ];
 
   return (
@@ -84,12 +87,16 @@ export default function Header({ account, accountMobile }: HeaderProps) {
           </span>
         </Link>
 
-        {/* 2xl, not xl. Six nav links plus language, Log in and the CTA need
-            ~1,100px in English and ~1,120px in Lithuanian, against roughly
-            945px available at 1280px — so the row overflowed the viewport and
-            gave every page a horizontal scrollbar. Below 1536px the burger
-            menu carries the identical set, so nothing is unreachable. */}
-        <div className="hidden flex-1 items-center gap-1 2xl:flex">
+        {/* xl. This used to be 2xl, which meant every 1280, 1366 and 1440px
+            laptop — most of them — got the burger menu on a desktop screen.
+            The old comment was right that the row did not fit: measured in
+            Lithuanian, the longest locale, it needed 1,133px against 960px
+            available. The fix is fewer things in the row rather than a
+            higher breakpoint. Dropping the two duplicated links (-145px)
+            and shortening the language button to its code (-59px) brings it
+            to ~941px, which clears 960 with room for a scrollbar. Re-measure
+            in Lithuanian before adding anything back. */}
+        <div className="hidden flex-1 items-center gap-1 xl:flex">
           {links.map((link) => {
             const active = pathname === link.href;
             return (
@@ -121,7 +128,7 @@ export default function Header({ account, accountMobile }: HeaderProps) {
             <Phone size={16} weight="fill" className="text-amber-500" />
             {SITE.phone.display}
           </a>
-          <LanguageSwitcher />
+          <LanguageSwitcher compact />
           {/* This header is still static: the slot resolves the session on
               the client after hydration, so every marketing page keeps its
               pre-rendered HTML. See HeaderAccount. */}
@@ -144,14 +151,14 @@ export default function Header({ account, accountMobile }: HeaderProps) {
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-char-700 hover:bg-char-100 2xl:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-char-700 hover:bg-char-100 xl:hidden"
         >
           {open ? <X size={22} /> : <List size={22} />}
         </button>
       </div>
 
       {open && (
-        <div className="border-t border-char-200/70 bg-background px-5 pb-6 pt-2 2xl:hidden">
+        <div className="border-t border-char-200/70 bg-background px-5 pb-6 pt-2 xl:hidden">
           <nav className="flex flex-col gap-1">
             {links.map((link) => {
               const active = pathname === link.href;
@@ -180,18 +187,23 @@ export default function Header({ account, accountMobile }: HeaderProps) {
               {SITE.phone.display}
             </a>
           </nav>
-          <div className="mt-4 flex items-center justify-between gap-3 border-t border-char-200/70 pt-4">
-            <LanguageSwitcher />
-            <div className="flex items-center gap-2">
+          {/* The CTA gets its own row. All three on one line overflowed a
+              375px screen — "Lietuvių" plus a signed-in first name plus
+              "Gauti nemokamą pasiūlymą" needs ~430px against 335px of
+              content width, and the button was cut off at the right edge.
+              Full width also gives the primary action a proper tap target. */}
+          <div className="mt-4 border-t border-char-200/70 pt-4">
+            <div className="flex items-center justify-between gap-3">
+              <LanguageSwitcher />
               {accountMobile}
-              <Link
-                href="/contact"
-                className="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white"
-              >
-                {t("cta")}
-                <ArrowRight size={15} weight="bold" />
-              </Link>
             </div>
+            <Link
+              href="/contact"
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full bg-amber-500 px-4 py-3 text-sm font-semibold text-white"
+            >
+              {t("cta")}
+              <ArrowRight size={15} weight="bold" />
+            </Link>
           </div>
         </div>
       )}
