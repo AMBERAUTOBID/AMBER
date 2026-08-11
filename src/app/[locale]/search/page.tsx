@@ -6,7 +6,8 @@ import Button from "@/shared/ui/Button";
 import SearchWidget from "@/modules/inventory/components/SearchWidget";
 import LotCard from "@/modules/inventory/components/LotCard";
 import { Link } from "@/i18n/navigation";
-import FilterPanel from "@/modules/inventory/components/FilterPanel";
+import FilterPanel, { countActiveFilters } from "@/modules/inventory/components/FilterPanel";
+import FilterDisclosure from "@/modules/inventory/components/FilterDisclosure";
 import {
   getAuctionSource,
   type AuctionPlatform,
@@ -254,23 +255,32 @@ export default async function SearchPage({
           <div className={facets ? "grid gap-6 lg:grid-cols-[16rem_1fr]" : ""}>
             {facets && (
               <div className="lg:sticky lg:top-6 lg:self-start">
-                <FilterPanel
-                  facets={facets}
-                  query={basePageQuery}
-                  labels={{
-                    heading: t("filters.heading"),
-                    reset: t("filters.reset"),
-                    // `.raw` deliberately: the message carries a literal
-                    // `{count}` that FilterPanel substitutes per group, and
-                    // `t()` would read it as an ICU placeholder, demand a
-                    // parameter it cannot be given once for twelve groups, and
-                    // render the key itself. Caught in the browser — no unit
-                    // test sees next-intl's interpolation.
-                    showMore: t.raw("filters.showMore") as string,
-                    groups: t.raw("filters.groups") as Record<string, string>,
-                    options: t.raw("filters.options") as Record<string, Record<string, string>>,
-                  }}
-                />
+                {/* Collapsed below lg, where the panel sits above the results
+                    rather than beside them and pushes every car off the
+                    screen. The panel itself is unchanged and still a server
+                    component — see FilterDisclosure. */}
+                <FilterDisclosure
+                  label={t("filters.heading")}
+                  activeCount={countActiveFilters(basePageQuery)}
+                >
+                  <FilterPanel
+                    facets={facets}
+                    query={basePageQuery}
+                    labels={{
+                      heading: t("filters.heading"),
+                      reset: t("filters.reset"),
+                      // `.raw` deliberately: the message carries a literal
+                      // `{count}` that FilterPanel substitutes per group, and
+                      // `t()` would read it as an ICU placeholder, demand a
+                      // parameter it cannot be given once for twelve groups, and
+                      // render the key itself. Caught in the browser — no unit
+                      // test sees next-intl's interpolation.
+                      showMore: t.raw("filters.showMore") as string,
+                      groups: t.raw("filters.groups") as Record<string, string>,
+                      options: t.raw("filters.options") as Record<string, Record<string, string>>,
+                    }}
+                  />
+                </FilterDisclosure>
               </div>
             )}
             <div>

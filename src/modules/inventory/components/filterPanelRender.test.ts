@@ -35,7 +35,7 @@ vi.mock("@/i18n/navigation", () => ({
     ),
 }));
 
-const { default: FilterPanel } = await import("./FilterPanel");
+const { default: FilterPanel, countActiveFilters } = await import("./FilterPanel");
 
 /** The shipped English messages, read as the search page reads them. */
 const enMessages = (await import("../../../../messages/en.json")).default;
@@ -179,5 +179,46 @@ describe("FilterPanel rendering", () => {
       })
     );
     expect(html).toContain("hydrogen");
+  });
+});
+
+/**
+ * The badge on the mobile disclosure button.
+ *
+ * It is what makes collapsing the panel by default safe: closed, the panel
+ * would otherwise hide that anything is filtering at all, and "why are there
+ * only 40 results" becomes unanswerable without opening it. A wrong number is
+ * worse than none, so the counting rule is pinned here rather than left to
+ * whoever next edits DIMENSIONS.
+ */
+describe("countActiveFilters", () => {
+  it("counts nothing on an unfiltered search", () => {
+    expect(countActiveFilters({})).toBe(0);
+    expect(countActiveFilters({ q: "bmw", category: "automobile" })).toBe(0);
+  });
+
+  it("counts values rather than dimensions", () => {
+    // Two classes and a colour is three filters to a shopper, not two
+    // dimensions — the badge has to agree with what they think they ticked.
+    expect(
+      countActiveFilters({ vehicle_class: "truck,motorcycle", color: "red" })
+    ).toBe(3);
+  });
+
+  it("ignores the ranges the panel does not own", () => {
+    // Odometer, engine and retail belong to the search widget above. Counting
+    // them would put a number on a button that opens a panel not containing
+    // them.
+    expect(
+      countActiveFilters({ odoMin: "1000", retailMax: "20000", engineFrom: "2" })
+    ).toBe(0);
+  });
+
+  it("is not fooled by an empty or ragged param", () => {
+    // These arrive from hand-edited URLs. A trailing comma must not read as
+    // one more filter than the panel shows ticked.
+    expect(countActiveFilters({ color: "" })).toBe(0);
+    expect(countActiveFilters({ color: "red,," })).toBe(1);
+    expect(countActiveFilters({ color: " red , blue " })).toBe(2);
   });
 });

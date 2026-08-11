@@ -46,6 +46,22 @@ const DIMENSIONS = [
 ] as const;
 
 /**
+ * How many individual values are ticked across every dimension.
+ *
+ * Counts values, not dimensions: two makes and a colour reads as 3, which is
+ * what a shopper means by "I have three filters on". Lives here because
+ * DIMENSIONS is the list it has to agree with, and a copy elsewhere would
+ * drift the first time a dimension is added.
+ *
+ * Only the dimensions this panel renders. The odometer, engine and retail
+ * ranges belong to the search widget above, and counting them here would
+ * label a number the panel cannot explain when opened.
+ */
+export function countActiveFilters(query: Record<string, string>): number {
+  return DIMENSIONS.reduce((n, d) => n + parseSelected(query[d.param]).size, 0);
+}
+
+/**
  * A dot of actual paint beside each colour option.
  *
  * Colour is the one dimension where the word is a poor label — "Beige" and
@@ -179,8 +195,14 @@ export default function FilterPanel({
 
   return (
     <aside className="rounded-2xl border border-char-200 bg-white p-4">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-sm font-bold text-char-900">{labels.heading}</h2>
+      <div className="flex items-baseline justify-end lg:justify-between">
+        {/* Below lg the disclosure button above already says "Filters", and
+            repeating it here read as two headings for one panel. The reset
+            link keeps its place either way, which is why the row switches to
+            justify-end rather than disappearing with the heading. */}
+        <h2 className="hidden text-sm font-bold text-char-900 lg:block">
+          {labels.heading}
+        </h2>
         {anyActive && (
           <Link
             href={{
