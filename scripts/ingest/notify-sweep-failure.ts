@@ -25,6 +25,7 @@
 import { neon } from "@neondatabase/serverless";
 import { telegramCall } from "../../src/modules/telegram/api/botApi";
 import { assessSweepHealth, type IngestRunRecord } from "../../src/modules/inventory/model/sweepHealth";
+import { auctionDbUrl } from "./auctionDbUrl";
 
 const reason = process.argv.slice(2).join(" ").trim() || "the nightly sweep did not finish cleanly";
 
@@ -47,7 +48,7 @@ function runUrl(): string | null {
  * database was unreachable, and in that case the alert must still go out.
  */
 async function problemsFromRunLog(): Promise<string[]> {
-  const url = process.env.DATABASE_URL_MIRROR_UNPOOLED ?? process.env.DATABASE_URL_MIRROR;
+  const url = auctionDbUrl({ unpooled: true });
   if (!url) return [];
   try {
     const sql = neon(url);

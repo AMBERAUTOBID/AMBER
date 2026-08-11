@@ -21,6 +21,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq, getTableColumns, inArray, sql } from "drizzle-orm";
 import * as schema from "../../src/shared/db/schema";
+import { auctionDbUrl, AUCTION_DB_URL_MISSING } from "./auctionDbUrl";
 import {
   mapApicarsLot,
   type AuctionLotImageRow,
@@ -146,14 +147,16 @@ const REQUEST_SPACING_MS = 400;
 const REQUIRE_COMPLETE = process.env.INGEST_REQUIRE_COMPLETE === "1";
 
 const token = process.env.APICARS_API_TOKEN;
-const dbUrl = process.env.DATABASE_URL_MIRROR_UNPOOLED ?? process.env.DATABASE_URL_MIRROR;
+// Unpooled: this writes ~140k rows in batches, and bulk writes belong on the
+// direct endpoint rather than the transaction pooler. See auctionDbUrl.
+const dbUrl = auctionDbUrl({ unpooled: true });
 
 if (!token) {
   console.error("APICARS_API_TOKEN is not set.");
   process.exit(1);
 }
 if (!dbUrl) {
-  console.error("DATABASE_URL_MIRROR_UNPOOLED is not set. Refusing to fall back to DATABASE_URL.");
+  console.error(AUCTION_DB_URL_MISSING);
   process.exit(1);
 }
 if (dbUrl.includes(PRODUCTION_ENDPOINT)) {

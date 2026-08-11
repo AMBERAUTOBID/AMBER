@@ -10,12 +10,13 @@
  * point it at the live database and every reason not to make that easy.
  */
 import { neon } from "@neondatabase/serverless";
+import { auctionDbUrl, AUCTION_DB_URL_MISSING } from "./auctionDbUrl";
 
 const PRODUCTION_ENDPOINT = "ep-gentle-meadow-astnmx3w";
-const url = process.env.DATABASE_URL_MIRROR ?? process.env.DATABASE_URL_MIRROR_UNPOOLED;
+const url = auctionDbUrl({ unpooled: false });
 
 if (!url) {
-  console.error("DATABASE_URL_MIRROR is not set.");
+  console.error(AUCTION_DB_URL_MISSING);
   process.exit(1);
 }
 if (url.includes(PRODUCTION_ENDPOINT)) {

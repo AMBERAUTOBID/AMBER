@@ -11,12 +11,13 @@
  * to re-run 0000 and fail on an existing `users` table.
  */
 import { neon } from "@neondatabase/serverless";
+import { auctionDbUrl, AUCTION_DB_URL_MISSING } from "./auctionDbUrl";
 
 const MAIN_ENDPOINT = "ep-gentle-meadow-astnmx3w"; // production — must never match
 
-const url = process.env.DATABASE_URL_MIRROR;
+const url = auctionDbUrl({ unpooled: false });
 if (!url) {
-  console.error("DATABASE_URL_MIRROR is not set. Refusing to guess.");
+  console.error(AUCTION_DB_URL_MISSING);
   process.exit(1);
 }
 

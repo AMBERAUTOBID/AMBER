@@ -44,9 +44,15 @@ alerts. If the repo goes quiet for a while, check the Actions tab.
 
 - `APICARS_API_TOKEN` — the vendor key, same value as in `.env.local`. Shown in
   full only at creation, so a lost one must be rotated rather than recovered.
-- `DATABASE_URL_MIRROR_UNPOOLED` — the **mirror** branch's unpooled connection
+- `DATABASE_URL_MIRROR_UNPOOLED` — the auction branch's unpooled connection
   string. Not production, and not the pooled URL: a transaction pooler misbehaves
   on the long-running writes a sweep makes.
+
+  The scripts now prefer **`DATABASE_URL_AUCTION_UNPOOLED`** and fall back to
+  this older name, so the secret keeps working unrenamed — see
+  `auctionDbUrl.ts`, which is the single place any of this is decided. Point it
+  at the `auction-catalogue` branch (`ep-still-thunder…`), not the retired
+  `auction-mirror` one, which held a copy of real customer rows.
 - `TELEGRAM_BOT_TOKEN` — already set for the bot; the alert reuses it.
 - `TELEGRAM_ALERT_CHAT_ID` — **optional, and the one worth setting.** A *private*
   chat with the bot, never the public listings channel. Get the number by sending
