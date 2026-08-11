@@ -30,11 +30,17 @@ export default function HeroGallery({
           animate={{ opacity: i === index ? 1 : 0 }}
           transition={{ duration: 1.4, ease: "easeInOut" }}
         >
+          {/* Only the first slide is the LCP element, so only it is
+              preloaded. `priority` on all seven emitted seven
+              <link rel="preload"> tags and pulled ~1.3 MB before first
+              paint to display 212 KB of it. The others fade in on a 5 s
+              timer — far longer than a lazy fetch needs. */}
           <Image
             src={src}
             alt=""
             fill
-            priority
+            priority={i === 0}
+            loading={i === 0 ? undefined : "lazy"}
             sizes="100vw"
             className="object-cover"
           />
