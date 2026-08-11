@@ -88,12 +88,16 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #15130f;
-    --foreground: #f2efec;
-  }
-}
+/* No `prefers-color-scheme: dark` block on purpose.
+   It used to flip --background/--foreground for anyone whose OS is in dark
+   mode, but nothing else in the design follows: every card is `bg-white`,
+   every border is `border-char-200`, and the brand scales are fixed hex.
+   The result was a half-theme that broke real things — the logo's "Smart"
+   rendered #1a1817 on a #15130f background and vanished outright, and the
+   cost calculator's placeholders and checkbox labels became unreadable
+   light-on-white. A real dark theme means auditing every component, which
+   is worth doing later; until then one theme that works beats two where
+   one is broken. Re-adding this block alone will reintroduce those bugs. */
 
 body {
   background: var(--color-background);
