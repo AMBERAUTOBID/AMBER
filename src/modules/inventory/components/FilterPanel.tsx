@@ -25,7 +25,7 @@ import { parseSelected, toggleHref } from "@/modules/inventory/model/filterQuery
 
 /** Dimensions in display order: the facet key, and the URL/search param it
  * drives. Order is by how often a buyer narrows on it, not alphabetically. */
-const DIMENSIONS = [
+export const DIMENSIONS = [
   { key: "vehicle_class", param: "vehicle_class", vocab: "vehicle_class" },
   { key: "platform", param: "platform", vocab: "platform" },
   { key: "title", param: "title", vocab: "title" },
@@ -128,7 +128,7 @@ export interface FilterPanelLabels {
  * `sport_utility` is honest where showing nothing would silently drop a filter
  * the visitor can see results for.
  */
-function optionLabel(labels: FilterPanelLabels, vocab: string | null, value: string): string {
+export function optionLabel(labels: FilterPanelLabels, vocab: string | null, value: string): string {
   if (!vocab) return value;
   return labels.options[vocab]?.[value] ?? value;
 }

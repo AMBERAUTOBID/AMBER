@@ -8,6 +8,7 @@ import LotCard from "@/modules/inventory/components/LotCard";
 import { Link } from "@/i18n/navigation";
 import FilterPanel, { countActiveFilters } from "@/modules/inventory/components/FilterPanel";
 import FilterDisclosure from "@/modules/inventory/components/FilterDisclosure";
+import ActiveFilters from "@/modules/inventory/components/ActiveFilters";
 import {
   getAuctionSource,
   type AuctionPlatform,
@@ -304,6 +305,36 @@ export default async function SearchPage({
               </div>
             )}
             <div>
+          {/* Above the count, not below it: the chips are the explanation for
+              the number, so they have to be read first. Rendered whenever
+              facets exist, which is the same condition as the panel — with no
+              panel there is nothing to have ticked. */}
+          {facets && (
+            <ActiveFilters
+              query={basePageQuery}
+              labels={{
+                heading: t("filters.heading"),
+                reset: t("filters.reset"),
+                showMore: t.raw("filters.showMore") as string,
+                groups: t.raw("filters.groups") as Record<string, string>,
+                options: t.raw("filters.options") as Record<string, Record<string, string>>,
+                clearAll: t("filters.clearAll"),
+                searchTerm: t("filters.searchTerm"),
+                browseType: t("filters.browseType"),
+                buyNow: t("widget.buyNow"),
+                vehicleTypes: t.raw("widget.vehicleTypes") as Record<string, string>,
+                // Reuses the widget's own names so a chip cannot call a range
+                // one thing while the control above calls it another.
+                ranges: {
+                  year: t("filters.rangeYear"),
+                  odometer: t("widget.odometer"),
+                  engine: t("widget.engine"),
+                  retail: t("widget.retail"),
+                },
+              }}
+            />
+          )}
+
           {error && (
             <Reveal className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
               {t("results.error", { error })}

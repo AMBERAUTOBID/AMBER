@@ -378,7 +378,11 @@
           "repair": "Ремонт",
           "other": "Другое"
         }
-      }
+      },
+      "clearAll": "Сбросить всё",
+      "searchTerm": "Поиск",
+      "rangeYear": "Год",
+      "browseType": "Тип"
     }
   },
   "VehicleDetail": {

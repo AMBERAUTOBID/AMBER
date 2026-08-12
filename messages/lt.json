@@ -378,7 +378,11 @@
           "repair": "Remontas",
           "other": "Kita"
         }
-      }
+      },
+      "clearAll": "Išvalyti viską",
+      "searchTerm": "Paieška",
+      "rangeYear": "Metai",
+      "browseType": "Tipas"
     }
   },
   "VehicleDetail": {

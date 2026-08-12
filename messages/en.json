@@ -378,7 +378,11 @@
           "repair": "Repair",
           "other": "Other"
         }
-      }
+      },
+      "clearAll": "Clear all",
+      "searchTerm": "Search",
+      "rangeYear": "Year",
+      "browseType": "Type"
     }
   },
   "VehicleDetail": {
