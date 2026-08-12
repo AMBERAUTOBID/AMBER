@@ -20,7 +20,22 @@
  * result count, one query instead of a five-request category fan-out, filters on
  * columns the search API never accepted, and immunity to vendor downtime.
  */
-import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 import { auctionDb, schema } from "@/shared/db/client";
 import { apibaraSource } from "./apibaraSource";
 import type { AuctionSource, SearchFacets } from "./source";
@@ -65,13 +80,26 @@ function decodeCursor(cursor: string | undefined): number {
  */
 const SWEEPS_BEFORE_GONE = 2;
 
-/** The cutoff changes only when a sweep finishes, i.e. at most daily, so a short
+/** The cutoffs change only when a sweep finishes, i.e. at most daily, so a short
  * cache turns a per-search round trip into roughly nothing. */
 const CUTOFF_TTL_MS = 60_000;
-let cutoffCache: { value: Date | null; at: number } | null = null;
+let cutoffCache: { value: ActiveSet; at: number } | null = null;
 
 /**
- * The instant a lot must have been seen at or after to still count as active.
+ * The two instants that decide whether a lot is still on offer. Either may be
+ * null, which always means "do not exclude on this ground".
+ */
+export interface ActiveSet {
+  /** A lot must have been seen at or after this to count as active at all —
+   *  the start of the SWEEPS_BEFORE_GONE'th most recent completed sweep. */
+  seenSince: Date | null;
+  /** The start of the MOST RECENT completed sweep. A lot whose sale date has
+   *  already passed has to clear this higher bar; see `buildWhere`. */
+  lastSweepStart: Date | null;
+}
+
+/**
+ * The instants a lot must have been seen at or after to still count as active.
  *
  * DERIVED FROM THE RUN LOG RATHER THAN MATERIALISED INTO A `gone` COLUMN, on
  * purpose. A marking job is a second thing that can fail silently — and a
@@ -79,12 +107,12 @@ let cutoffCache: { value: Date | null; at: number } | null = null;
  * Reading the run log at query time means search can never disagree with the
  * sweep history: no job to run, no drift, nothing to repair after an outage.
  *
- * Returns null — meaning "exclude nothing" — until enough completed sweeps
+ * Returns nulls — meaning "exclude nothing" — until enough completed sweeps
  * exist to justify a conclusion. Only a run with `isPartial = false` AND a
  * `finishedAt` may be used: a run that hit its page cap or died saw a slice of
  * the catalogue, and treating its blind spot as absence would empty the search.
  */
-async function activeSetCutoff(): Promise<Date | null> {
+async function activeSet(): Promise<ActiveSet> {
   const now = Date.now();
   if (cutoffCache && now - cutoffCache.at < CUTOFF_TTL_MS) return cutoffCache.value;
 
@@ -103,7 +131,10 @@ async function activeSetCutoff(): Promise<Date | null> {
 
   // Fewer completed sweeps than the rule needs: show everything. Being too
   // permissive shows a stale lot; being too strict hides a real one.
-  const value = runs.length >= SWEEPS_BEFORE_GONE ? runs[SWEEPS_BEFORE_GONE - 1].startedAt : null;
+  const value: ActiveSet = {
+    seenSince: runs.length >= SWEEPS_BEFORE_GONE ? runs[SWEEPS_BEFORE_GONE - 1].startedAt : null,
+    lastSweepStart: runs[0]?.startedAt ?? null,
+  };
   cutoffCache = { value, at: now };
   return value;
 }
@@ -207,7 +238,7 @@ function typeGroupCondition(typeValues: string[]) {
 function buildWhere(
   params: VehicleSearchParams,
   typeValues?: string[],
-  activeSince?: Date | null,
+  active?: ActiveSet,
   fuzzy = false
 ) {
   const t = schema.auctionLots;
@@ -220,13 +251,29 @@ function buildWhere(
   // rows survived the 2026-08-07 sweep unstamped, of which 823 were still
   // future-dated and therefore visible — 0.70% of everything a visitor sees.
   // Small, but it is inventory we would be advertising and cannot sell.
-  if (activeSince) conditions.push(gte(t.lastSeenAt, activeSince));
+  if (active?.seenSince) conditions.push(gte(t.lastSeenAt, active.seenSince));
   //
-  // Only lots that can still be bid on. ~11% of what the vendor calls "active"
-  // has a sale date already in the past — the same stale-lot artifact visible on
-  // both competitors' sites. We hold a real sale instant, so we can simply not
-  // show them. Reachable later through the Archived view.
-  conditions.push(gte(t.saleDate, sql`now()`));
+  // WHETHER A LOT IS STILL ON OFFER IS DECIDED BY THE VENDOR'S LIST, NOT BY ITS
+  // SALE DATE. An unsold lot is re-run in the next weekly auction — Copart does
+  // it free for three further sales — and the vendor OVERWRITES the date on the
+  // same record rather than appending, so between sweeps our row simply reads a
+  // week behind. `sale_date >= now()` used to sit here as a membership test and
+  // it was throwing that inventory away: measured 2026-08-12, 41,546 lots with a
+  // passed sale date were stamped by the most recent completed sweep — 29% of
+  // the catalogue, live cars the vendor was still listing and no visitor could
+  // see. Sale date now drives ORDER and DISPLAY only (see `runSearch`).
+  //
+  // The one thing a passed date does change is the standard of evidence. A
+  // future-dated lot gets the benefit of the two-sweep rule, because a single
+  // miss is usually pagination drift; a lot whose sale time is behind us has to
+  // have been seen by the LATEST completed sweep, because "it ended and left" is
+  // now the likelier explanation for absence. That withheld 2,239 rows on the
+  // day it was written, and it is what keeps a stalled sweep from leaving a
+  // catalogue of dead auctions on the site — the old date filter used to do that
+  // job by accident.
+  if (active?.lastSweepStart) {
+    conditions.push(or(gte(t.saleDate, sql`now()`), gte(t.lastSeenAt, active.lastSweepStart))!);
+  }
   //
   // Canadian lots are withheld until their units and currency are verified: the
   // vendor stamps IAAI Canada with `BRL`, and their odometer unit is our
@@ -496,8 +543,8 @@ async function getFacets(
   params: VehicleSearchParams,
   typeValues?: string[]
 ): Promise<SearchFacets> {
-  const activeSince = await activeSetCutoff();
-  const facets = await facetCounts(buildWhere(params, typeValues, activeSince), FACET_DIMENSIONS);
+  const active = await activeSet();
+  const facets = await facetCounts(buildWhere(params, typeValues, active), FACET_DIMENSIONS);
 
   const filtered = FACET_DIMENSIONS.filter(
     (d) => params[d.param] !== undefined && params[d.param] !== ""
@@ -505,7 +552,7 @@ async function getFacets(
   await Promise.all(
     filtered.map(async (d) => {
       const without: VehicleSearchParams = { ...params, [d.param]: undefined };
-      const recounted = await facetCounts(buildWhere(without, typeValues, activeSince), [d]);
+      const recounted = await facetCounts(buildWhere(without, typeValues, active), [d]);
       facets[d.key] = recounted[d.key];
     })
   );
@@ -537,24 +584,64 @@ async function runSearch(
   const offset = decodeCursor(params.cursor);
   // Resolved once per search and reused by both the page query and the count, so
   // the two can never disagree about what "active" means.
-  const activeSince = await activeSetCutoff();
+  const active = await activeSet();
 
+  /**
+   * The page, read as two segments: lots whose sale time is still ahead, soonest
+   * first, and behind them the relisted ones whose stored date has passed.
+   *
+   * WHY NOT ONE QUERY. The obvious spelling is
+   * `order by (case when sale_date >= now() then 0 else 1 end), sale_date` — and
+   * it costs, measured on the mirror: 10.8 ms becomes 288 ms on page one and
+   * 476 ms deep, because the CASE is not something `auction_lots_sale_date_idx`
+   * can be walked in. Each segment on its own IS index order, so the sort
+   * disappears and the boundary arithmetic below is what pays for it: one extra
+   * count, and only on a page that has run past the upcoming lots entirely.
+   */
   const fetchPage = async (fuzzy: boolean) => {
-    const where = buildWhere(params, typeValues, activeSince, fuzzy);
-    const pageRows = await auctionDb()
-      .select()
-      .from(t)
-      .where(where)
-      // Soonest sale first: the lots a client can still act on, in the order the
-      // deadline arrives.
-      .orderBy(asc(t.saleDate), asc(t.id))
-      .limit(perPage)
-      .offset(offset);
-    // The result counter the aggregator's API structurally cannot provide — its
-    // `meta` carries no total at all, which is why "Search Results (256,934)" was
-    // impossible before owning the rows.
-    const [{ total: n }] = await auctionDb().select({ total: count() }).from(t).where(where);
-    return { pageRows, n };
+    const where = buildWhere(params, typeValues, active, fuzzy);
+    const upcoming = and(where, gte(t.saleDate, sql`now()`))!;
+    const relisted = and(where, or(lt(t.saleDate, sql`now()`), isNull(t.saleDate)))!;
+
+    const segment = (condition: typeof upcoming, limit: number, from: number) =>
+      auctionDb()
+        .select()
+        .from(t)
+        .where(condition)
+        // Soonest sale first: the lots a client can still act on, in the order
+        // the deadline arrives. Within the relisted tail the stored date is
+        // still the right key — relisting moves a lot by exactly one week, so
+        // the order of the old dates is the order of the new ones.
+        .orderBy(asc(t.saleDate), asc(t.id))
+        .limit(limit)
+        .offset(from);
+
+    // Independent questions, so they go together rather than one after the
+    // other. The count spans BOTH segments — it is the number the page prints.
+    const [pageRows, [{ total: n }]] = await Promise.all([
+      segment(upcoming, perPage, offset),
+      // The result counter the aggregator's API structurally cannot provide —
+      // its `meta` carries no total at all, which is why "Search Results
+      // (256,934)" was impossible before owning the rows.
+      auctionDb().select({ total: count() }).from(t).where(where),
+    ]);
+
+    if (pageRows.length === perPage) return { pageRows, n };
+
+    // Short page: the upcoming segment ended inside it (or before it), so the
+    // rest comes from the relisted tail. A short-but-non-empty page tells us
+    // exactly where the segment ended and needs no count; only a page that
+    // returned nothing has to ask, and that is the deep-paging case.
+    const upcomingTotal =
+      pageRows.length > 0
+        ? offset + pageRows.length
+        : (await auctionDb().select({ total: count() }).from(t).where(upcoming))[0].total;
+    const tail = await segment(
+      relisted,
+      perPage - pageRows.length,
+      Math.max(0, offset - upcomingTotal)
+    );
+    return { pageRows: [...pageRows, ...tail], n };
   };
 
   let { pageRows: rows, n: total } = await fetchPage(false);

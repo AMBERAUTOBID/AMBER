@@ -8,14 +8,19 @@
  * UI reads comes back populated.
  *
  * Run:
- *   export DATABASE_URL_MIRROR=...
- *   npx tsx scripts/ingest/verify-search.ts
+ *   npx tsx --env-file=.env.local scripts/ingest/verify-search.ts
  */
+import { auctionDbUrl, AUCTION_DB_URL_MISSING } from "./auctionDbUrl";
+
 const PRODUCTION_ENDPOINT = "ep-gentle-meadow-astnmx3w";
-const mirror = process.env.DATABASE_URL_MIRROR ?? process.env.DATABASE_URL_MIRROR_UNPOOLED;
+// Resolved through the shared helper rather than by reading one variable name:
+// the app reads `DATABASE_URL_AUCTION` through `auctionDb()`, and a script that
+// picked the older `DATABASE_URL_MIRROR` would verify one database while the
+// source under test queried another — the checks would pass about the wrong data.
+const mirror = auctionDbUrl({ unpooled: false });
 
 if (!mirror) {
-  console.error("DATABASE_URL_MIRROR is not set.");
+  console.error(AUCTION_DB_URL_MISSING);
   process.exit(1);
 }
 if (mirror.includes(PRODUCTION_ENDPOINT)) {
@@ -25,6 +30,7 @@ if (mirror.includes(PRODUCTION_ENDPOINT)) {
 
 // Set for THIS PROCESS ONLY, before importing anything that reads them. No file
 // on disk changes, so the dev server and the deployed site are untouched.
+process.env.DATABASE_URL_AUCTION = mirror;
 process.env.DATABASE_URL = mirror;
 process.env.SEARCH_SOURCE = "postgres";
 
@@ -49,11 +55,31 @@ async function main() {
   console.log("standing rules");
   const base = await source.searchVehicles({ per_page: 50 });
   const now = Date.now();
-  const past = base.data.filter((v) => {
+  const saleTime = (v: (typeof base.data)[number]) => {
     const d = v.auction?.full_date;
-    return d ? new Date(d).getTime() < now : false;
+    return d ? new Date(d).getTime() : null;
+  };
+  // A PASSED SALE DATE IS NOT A REASON TO HIDE A LOT — an unsold car is re-run a
+  // week later and the vendor overwrites the date on the same record, so between
+  // sweeps a live lot reads as yesterday's. What page one must guarantee is
+  // ORDER: the lots a client can still act on come first, soonest deadline
+  // first. This replaced "no lot whose sale date has already passed", which was
+  // hiding 41,546 cars the vendor was still listing.
+  const outOfOrder = base.data.filter((v, i) => {
+    if (i === 0) return false;
+    const prev = saleTime(base.data[i - 1]);
+    const cur = saleTime(v);
+    if (prev === null || cur === null) return false;
+    // Upcoming before relisted; within a group, ascending.
+    const rank = (ms: number) => (ms >= now ? 0 : 1);
+    return rank(prev) > rank(cur) || (rank(prev) === rank(cur) && prev > cur);
   });
-  check("no lot whose sale date has already passed", past.length === 0, `${past.length} leaked`);
+  check("page one is soonest-first, relisted lots last", outOfOrder.length === 0, `${outOfOrder.length} out of order`);
+  check(
+    "page one is all upcoming lots",
+    base.data.every((v) => (saleTime(v) ?? 0) >= now),
+    `${base.data.filter((v) => (saleTime(v) ?? 0) < now).length} relisted on page one`
+  );
   check(
     "a total is reported (impossible on the aggregator)",
     typeof base.meta.total === "number",
@@ -64,10 +90,15 @@ async function main() {
   // ── the active-set rule ──────────────────────────────────────────────────
   //
   // Search must not offer a lot that has left the auction, and must not hide one
-  // that has not. The rule needs two completed full sweeps before it may exclude
-  // anything, so this asserts whichever behaviour the run log currently justifies
-  // rather than a fixed expectation — an assertion that passes for the wrong
-  // reason is worse than none.
+  // that has not. Two bars, because a passed sale date changes the standard of
+  // evidence rather than the verdict: an upcoming lot survives being missed by
+  // one sweep (that is usually pagination drift), a lot whose sale time has gone
+  // by has to have been seen by the most recent completed sweep.
+  //
+  // The rule needs two completed full sweeps before it may exclude anything on
+  // the first ground, so this asserts whichever behaviour the run log currently
+  // justifies rather than a fixed expectation — an assertion that passes for the
+  // wrong reason is worse than none.
   console.log("\nactive-set rule (disappearance)");
   const { neon } = await import("@neondatabase/serverless");
   const rawSql = neon(mirror!);
@@ -77,34 +108,72 @@ async function main() {
     order by started_at desc limit 2
   `) as { started_at: string }[];
 
-  if (sweeps.length < 2) {
-    const [{ n: unstamped }] = (await rawSql`
-      select count(*)::int as n from auction_lots
-      where last_seen_at < ${sweeps[0]?.started_at ?? "epoch"}
-        and sale_date >= now() and auction_name not ilike '%CANADA%'
-    `) as { n: number }[];
-    check(
-      `only ${sweeps.length} completed sweep(s): rule correctly excludes nothing yet`,
-      true,
-      `${unstamped} rows will be reconsidered once a second sweep lands`
-    );
+  if (sweeps.length === 0) {
+    check("no completed sweep yet: the rule correctly excludes nothing", true);
   } else {
-    const cutoff = sweeps[1].started_at;
-    const [{ n: shouldHide }] = (await rawSql`
-      select count(*)::int as n from auction_lots
-      where last_seen_at < ${cutoff} and sale_date >= now()
-        and auction_name not ilike '%CANADA%'
-    `) as { n: number }[];
+    const latest = sweeps[0].started_at;
+    // With only one completed sweep the two-sweep bar is not yet in force, and
+    // the query below says so by comparing against `epoch`.
+    const seenSince = sweeps[1]?.started_at ?? new Date(0).toISOString();
     const [{ n: visible }] = (await rawSql`
       select count(*)::int as n from auction_lots
-      where last_seen_at >= ${cutoff} and sale_date >= now()
+      where last_seen_at >= ${seenSince}
+        and (sale_date >= now() or last_seen_at >= ${latest})
+        and auction_name not ilike '%CANADA%'
+    `) as { n: number }[];
+    const [{ n: relisted }] = (await rawSql`
+      select count(*)::int as n from auction_lots
+      where last_seen_at >= ${latest} and sale_date < now()
+        and auction_name not ilike '%CANADA%'
+    `) as { n: number }[];
+    const [{ n: withheld }] = (await rawSql`
+      select count(*)::int as n from auction_lots
+      where sale_date < now() and last_seen_at < ${latest}
         and auction_name not ilike '%CANADA%'
     `) as { n: number }[];
     check(
-      "the reported total counts only lots still in the active set",
+      "the reported total counts every lot still in the active set",
       base.meta.total === visible,
-      `total=${base.meta.total} active=${visible} withheld=${shouldHide}`
+      `total=${base.meta.total} active=${visible} (of which relisted ${relisted}) withheld=${withheld}`
     );
+    check(
+      "relisted lots are actually being offered",
+      relisted === 0 || (base.meta.total ?? 0) > visible - relisted,
+      `${relisted} lots with a passed sale date are still on the vendor's list`
+    );
+
+    // ── the segment boundary ───────────────────────────────────────────────
+    //
+    // The page is read as two index-ordered segments stitched together, so the
+    // page that straddles the join is where a repeat or a hole would appear.
+    // The cursor is an opaque base64 offset; constructing one here is reaching
+    // into the source's private encoding on purpose — no other page can be
+    // reached without paging thousands of times.
+    if (relisted > 0) {
+      const [{ n: upcoming }] = (await rawSql`
+        select count(*)::int as n from auction_lots
+        where last_seen_at >= ${seenSince} and sale_date >= now()
+          and auction_name not ilike '%CANADA%'
+      `) as { n: number }[];
+      const at = (offset: number) => Buffer.from(String(offset), "utf8").toString("base64url");
+      const straddle = await source.searchVehicles({ per_page: 10, cursor: at(upcoming - 5) });
+      const after = await source.searchVehicles({ per_page: 10, cursor: at(upcoming + 5) });
+      const ahead = straddle.data.filter((v) => (saleTime(v) ?? 0) >= now).length;
+      // Roughly five and five, not exactly: ~30,000 lots cross into the past
+      // every day, so the boundary can move by one or two between the count
+      // above and the query below. What must hold exactly is that the page is
+      // full and that the two groups do not interleave.
+      check(
+        "the page across the boundary is upcoming then relisted, no interleaving",
+        straddle.data.length === 10 &&
+          ahead >= 3 &&
+          ahead <= 7 &&
+          straddle.data.slice(0, ahead).every((v) => (saleTime(v) ?? 0) >= now),
+        `${straddle.data.length} rows, ${ahead} upcoming`
+      );
+      const repeated = straddle.data.filter((a) => after.data.some((b) => b.lot_number === a.lot_number));
+      check("the next page repeats none of it", repeated.length === 0, `${repeated.length} repeated`);
+    }
   }
 
   // ── the free-text box ────────────────────────────────────────────────────
@@ -152,7 +221,17 @@ async function main() {
   ] as const) {
     const t = await phrase(typo);
     const c = await phrase(correct);
-    check(`'${typo}' finds what '${correct}' finds`, t > 0 && t === c, `${t} vs ${c}`);
+    // AT LEAST what the correct spelling finds, not exactly. Trigram matching on
+    // the make column also catches the auctions' own abbreviations — lot
+    // 44485133 is listed as make "PORS", model "COMP", which no `porsche`
+    // lexeme can reach — so the fallback legitimately returns a superset. The
+    // upper bound is what keeps the similarity threshold from drifting down
+    // into gibberish.
+    check(
+      `'${typo}' finds at least what '${correct}' finds`,
+      t >= c && c > 0 && t < c * 1.2,
+      `${t} vs ${c}`
+    );
   }
 
   // The fallback must not rescue gibberish — that would advertise cars we do not
