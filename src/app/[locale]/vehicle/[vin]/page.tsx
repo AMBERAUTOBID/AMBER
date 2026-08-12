@@ -11,6 +11,7 @@ import PastSalesTable from "@/modules/inventory/components/PastSalesTable";
 import LotCard from "@/modules/inventory/components/LotCard";
 import SaveLotButton from "@/modules/favorites/components/SaveLotButton";
 import { auctionDisplayName, auctionLotUrl } from "@/modules/inventory/model/auctionLotUrl";
+import { isStillUpcoming } from "@/modules/inventory/model/relatedLots";
 import { currentUser } from "@/modules/auth/model/currentUser";
 import { savedLotKeys, lotKey } from "@/modules/favorites/model/favorites";
 import {
@@ -133,9 +134,22 @@ export default async function VehicleDetailPage({
       ?.filter((i) => i.type === "image" && i.large && i.thumb)
       .map((i) => ({ thumb: i.thumb as string, large: i.large as string })) ?? [];
 
+  // Two filters, and the second is the one that matters.
+  //
   // `upcoming` occasionally contains the lot being viewed; showing a card that
   // links back to the current page would just be a dead end.
-  const upcoming = (related?.data.upcoming ?? []).filter((v) => v.vin !== detail.vin).slice(0, 6);
+  //
+  // It also contains lots that have already sold — measured 2026-08-12, ALL of
+  // them did: 36 of 36 entries across three seed lots were finished, sold, and
+  // dated February or March, under a heading that promises upcoming auctions.
+  // The owner reported it after seeing February cars there. `isStillUpcoming`
+  // checks the entry's own state, countdown and sale date, so the heading is
+  // true of every card left. When the source has nothing genuinely upcoming to
+  // say, the block does not render at all — an empty section is a smaller lie
+  // than a full one.
+  const upcoming = (related?.data.upcoming ?? [])
+    .filter((v) => v.vin !== detail.vin && isStillUpcoming(v))
+    .slice(0, 6);
 
   const saleDate = detail.auction?.full_date ?? detail.auction?.auction_at ?? null;
   // Decided from Apibara's own `diff_minutes` rather than a clock read here,

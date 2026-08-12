@@ -33,13 +33,21 @@ import {
   isNull,
   lt,
   lte,
+  ne,
   or,
   sql,
 } from "drizzle-orm";
 import { auctionDb, schema } from "@/shared/db/client";
 import { apibaraSource } from "./apibaraSource";
 import type { AuctionSource, SearchFacets } from "./source";
-import type { VehicleDetailResponse, VehicleSearchParams, VehicleSearchResponse } from "./types";
+import type {
+  RelatedVehiclesResponse,
+  VehicleDetailResponse,
+  VehicleListItem,
+  VehicleSearchParams,
+  VehicleSearchResponse,
+} from "./types";
+import { isStillUpcoming } from "../model/relatedLots";
 import {
   mirrorRowToVehicleListItem,
   BUY_NOW_MARGIN_HOURS,
@@ -933,6 +941,142 @@ async function getModelTree(make: string, vehicleClasses?: string[]): Promise<Mo
   });
 }
 
+/** What the vehicle page shows under "similar lots in upcoming auctions". */
+const RELATED_UPCOMING_LIMIT = 6;
+
+/**
+ * Similar lots that are genuinely still going to auction, from our own rows.
+ *
+ * WHY THIS EXISTS RATHER THAN A FILTER. The aggregator's `related.upcoming` is
+ * not a slightly dirty list — measured 2026-08-12 across three seed lots, **36
+ * of 36** entries were finished and sold, dated February and March. Filtering it
+ * is still done (see `isStillUpcoming`, and it stays as the backstop), but on
+ * that evidence filtering alone deletes the section rather than fixing it.
+ *
+ * We can answer the question properly because we own the rows: 7 upcoming
+ * 2018 Audi A3s, 18 Q7s, 2 e-trons at the time of writing, and the ladder below
+ * fills the rest of the row from the same marque.
+ *
+ * `sale_date > now()` decides membership here, which is deliberately STRICTER
+ * than search. Search had to stop using that test — it hid 41,546 relisted lots
+ * whose stored date had passed. But a relisted lot's date is stale by
+ * definition, and a block headed "upcoming auctions" cannot show a car whose
+ * only known sale time is in the past. Search says "this lot exists"; this block
+ * says "this lot sells on a date I can print".
+ *
+ * Ordering is the relevance ladder, in one query rather than three: the same
+ * model first, then nearest model year, then soonest sale. Scoped to the same
+ * `vehicle_class` for the reason the model tree is — without it a BMW car page
+ * offers scooters.
+ */
+async function similarUpcomingFromMirror(
+  seed: typeof schema.auctionLots.$inferSelect
+): Promise<VehicleListItem[]> {
+  const t = schema.auctionLots;
+  if (!seed.make) return [];
+
+  const rows = await auctionDb()
+    .select()
+    .from(t)
+    .where(
+      and(
+        eq(t.make, seed.make),
+        seed.vehicleClass ? eq(t.vehicleClass, seed.vehicleClass) : undefined,
+        sql`${t.saleDate} > now()`,
+        ne(t.id, seed.id),
+        // Not just a different row — a different CAR. The same vehicle relisted
+        // under a second lot number is not a "similar lot", it is this one.
+        seed.vin ? or(isNull(t.vin), ne(t.vin, seed.vin)) : undefined
+      )
+    )
+    .orderBy(
+      desc(sql`${t.model} is not distinct from ${seed.model}`),
+      asc(sql`abs(coalesce(${t.year}, 0) - ${seed.year ?? 0})`),
+      asc(t.saleDate)
+    )
+    .limit(RELATED_UPCOMING_LIMIT);
+
+  if (rows.length === 0) return [];
+
+  const images = await auctionDb()
+    .select({
+      lotId: schema.auctionLotImages.lotId,
+      sourceUrl: schema.auctionLotImages.sourceUrl,
+      kind: schema.auctionLotImages.kind,
+      position: schema.auctionLotImages.position,
+    })
+    .from(schema.auctionLotImages)
+    .where(
+      inArray(
+        schema.auctionLotImages.lotId,
+        rows.map((r) => r.id)
+      )
+    );
+
+  const imagesByLot = new Map<string, MirrorImageRow[]>();
+  for (const img of images) {
+    const list = imagesByLot.get(img.lotId) ?? [];
+    list.push({ sourceUrl: img.sourceUrl, kind: img.kind, position: img.position });
+    imagesByLot.set(img.lotId, list);
+  }
+
+  return rows.map((row) => mirrorRowToVehicleListItem(row, imagesByLot.get(row.id) ?? []));
+}
+
+/**
+ * Comparable sales from upstream; similar upcoming lots from us.
+ *
+ * The split is not tidiness, it is what each side can actually answer. Sold
+ * comparables have to stay upstream because our own sale history is
+ * overwhelmingly failed bids — 2,423 of 2,440 rows read "Not sold" — so a price
+ * band computed from it would be confident and wrong. Upcoming lots have to come
+ * from us because upstream's list of them contains no upcoming lots.
+ *
+ * Both are asked at once, and each covers for the other: if upstream is down the
+ * block still shows real upcoming cars, and if the seed lot is not in our mirror
+ * the aggregator's list is used with the finished lots filtered out.
+ */
+async function getRelatedVehicles(vinOrLot: string): Promise<RelatedVehiclesResponse> {
+  const t = schema.auctionLots;
+  const term = vinOrLot.trim();
+
+  const [upstream, seed] = await Promise.all([
+    apibaraSource.getRelatedVehicles(term).catch(() => null),
+    auctionDb()
+      .select()
+      .from(t)
+      .where(or(eq(t.vin, term.toUpperCase()), eq(t.lotNumber, term)))
+      .limit(1)
+      .then((rows) => rows[0] ?? null)
+      .catch(() => null),
+  ]);
+
+  const mine = seed ? await similarUpcomingFromMirror(seed).catch(() => []) : [];
+
+  if (!upstream) {
+    // Nothing from either side is not an empty answer, it is a failure — and
+    // the page draws the distinction: it catches this and renders no block at
+    // all, rather than a heading over nothing.
+    if (mine.length === 0) throw new Error(`No related lots for ${term}`);
+    return {
+      ok: true,
+      data: {
+        source: mirrorRowToVehicleListItem(seed!, []),
+        past: [],
+        upcoming: mine,
+      },
+    };
+  }
+
+  return {
+    ok: true,
+    data: {
+      ...upstream.data,
+      upcoming: mine.length > 0 ? mine : upstream.data.upcoming.filter((v) => isStillUpcoming(v)),
+    },
+  };
+}
+
 /**
  * Detail from upstream, falling back to the mirror only when upstream fails.
  *
@@ -998,11 +1142,10 @@ export const postgresSource: AuctionSource = {
   searchVehicles,
   searchVehiclesAcrossTypes,
   getVehicleDetail: getVehicleDetailWithFallback,
-  // No mirrored equivalent worth substituting: comparable sales in our own table
-  // are overwhelmingly failed bids (2,423 of 2,440 read "Not sold"), so a
-  // fallback here would compute a price band from almost nothing. Better to show
-  // no comparables than a confident wrong range.
-  getRelatedVehicles: apibaraSource.getRelatedVehicles,
+  // Comparable SALES stay upstream — our own history is 2,423 "Not sold" out of
+  // 2,440, so a price band from it would be confident and wrong. Upcoming lots
+  // are ours, because upstream's were 36 of 36 already sold.
+  getRelatedVehicles,
   // The one capability Apibara structurally cannot offer: its `filters` field is
   // an echo of the request and its `meta` has no total, so "Salvage (43,636)"
   // only became possible by owning the rows.
