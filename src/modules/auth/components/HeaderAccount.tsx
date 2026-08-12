@@ -90,7 +90,15 @@ export default function HeaderAccount({ variant }: { variant: "desktop" | "mobil
       title={state.me.name}
     >
       <UserCircle size={18} weight="fill" className="text-amber-500" />
-      <span className="max-w-[9rem] truncate">{firstName}</span>
+      {/* 5rem in the desktop row, 9rem in the burger menu. The cap is not
+          cosmetic: signed in, this button is the one item in the row whose
+          width a visitor chooses, and measured in Lithuanian at 1280px the row
+          has ~30px spare — a 9rem name spends 60 of them and pushes the CTA
+          off the edge. The full name is still the link's title, and the menu,
+          which has the width, still shows it whole. */}
+      <span className={variant === "desktop" ? "max-w-[5rem] truncate" : "max-w-[9rem] truncate"}>
+        {firstName}
+      </span>
     </Link>
   );
 }

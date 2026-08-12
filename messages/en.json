@@ -5,13 +5,43 @@
   },
   "Nav": {
     "home": "Home",
-    "search": "Search Inventory",
-    "shipping": "Shipping & Tracking",
+    "search": "Search",
+    "offers": "Our Offers",
+    "shipping": "Shipping",
     "about": "About",
     "contact": "Contact",
     "cta": "Get a Free Quote",
     "login": "Log in",
     "plans": "Plans"
+  },
+  "Offers": {
+    "hero": {
+      "eyebrow": "Bought and ready",
+      "title": "Cars we have already bought",
+      "subtitle": "Vehicles SmartAutoBid has already won at Copart and IAAI and now sells directly. No auction to enter, no bidding, no waiting for a sale date — the car is already ours and the price is fixed."
+    },
+    "empty": {
+      "title": "No cars in stock right now",
+      "body": "We have not yet bought any vehicles for direct sale. The moment we do, they appear here. Until then you can browse the live auctions, or tell us what you are looking for and we will bid on your behalf.",
+      "searchCta": "Browse live auctions",
+      "contactCta": "Tell us what you need"
+    },
+    "promises": {
+      "items": [
+        {
+          "title": "Already bought, already ours",
+          "desc": "Every car on this page is paid for and in our name. There is no auction to win and no chance of being outbid."
+        },
+        {
+          "title": "One fixed price",
+          "desc": "You see the price of the car itself. Delivery and paperwork are quoted on top, exactly as they are for an auction purchase."
+        },
+        {
+          "title": "Ask before you commit",
+          "desc": "Photos, condition and history on request. We bought the car ourselves, so we answer questions about it directly."
+        }
+      ]
+    }
   },
   "Footer": {
     "tagline": "From the auction lane to your driveway — we bid, buy, and ship U.S. vehicles to Europe, the Middle East, and beyond.",
@@ -233,6 +263,8 @@
       "noPhoto": "No photo",
       "damagePrefix": "Damage:",
       "priceNA": "Price N/A",
+      "currentBid": "Current bid",
+      "buyNow": "Buy now",
       "empty": "No matching vehicles right now — try widening your filters.",
       "error": "Search is temporarily unavailable ({error}). Please try again shortly.",
       "previous": "Previous",

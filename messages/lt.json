@@ -5,13 +5,43 @@
   },
   "Nav": {
     "home": "Pradžia",
-    "search": "Automobilių paieška",
-    "shipping": "Gabenimas ir sekimas",
+    "search": "Paieška",
+    "offers": "Mūsų automobiliai",
+    "shipping": "Gabenimas",
     "about": "Apie mus",
     "contact": "Kontaktai",
     "cta": "Gauti nemokamą pasiūlymą",
     "login": "Prisijungti",
     "plans": "Planai"
+  },
+  "Offers": {
+    "hero": {
+      "eyebrow": "Jau nupirkta",
+      "title": "Automobiliai, kuriuos jau nupirkome",
+      "subtitle": "Automobiliai, kuriuos SmartAutoBid jau laimėjo „Copart“ ir „IAAI“ aukcionuose ir parduoda tiesiogiai. Jokio aukciono, jokių varžytynių ir jokio laukimo iki pardavimo datos — automobilis jau mūsų, o kaina fiksuota."
+    },
+    "empty": {
+      "title": "Šiuo metu automobilių neturime",
+      "body": "Dar nenupirkome nė vieno automobilio tiesioginiam pardavimui. Vos tik nupirksime, jie atsiras čia. Kol kas galite naršyti vykstančius aukcionus arba parašyti, ko ieškote — varžysimės jūsų vardu.",
+      "searchCta": "Naršyti aukcionus",
+      "contactCta": "Parašykite, ko ieškote"
+    },
+    "promises": {
+      "items": [
+        {
+          "title": "Jau nupirkta, jau mūsų",
+          "desc": "Kiekvienas šiame puslapyje esantis automobilis yra apmokėtas ir mūsų vardu. Nėra aukciono, kurį reikia laimėti, ir nėra rizikos, kad kas nors pasiūlys daugiau."
+        },
+        {
+          "title": "Viena fiksuota kaina",
+          "desc": "Matote paties automobilio kainą. Gabenimas ir dokumentai skaičiuojami atskirai — lygiai taip pat kaip perkant aukcione."
+        },
+        {
+          "title": "Klauskite prieš apsispręsdami",
+          "desc": "Nuotraukos, būklė ir istorija — paprašius. Automobilį pirkome patys, tad į klausimus apie jį atsakome tiesiogiai."
+        }
+      ]
+    }
   },
   "Footer": {
     "tagline": "Nuo aukciono salės iki jūsų kiemo — dalyvaujame varžytynėse, perkame ir gabename automobilius iš JAV į Europą, Artimuosius Rytus ir kitas šalis.",
@@ -233,6 +263,8 @@
       "noPhoto": "Nuotraukos nėra",
       "damagePrefix": "Pažeidimas:",
       "priceNA": "Kaina nenurodyta",
+      "currentBid": "Dabartinis pasiūlymas",
+      "buyNow": "Pirkti dabar",
       "empty": "Šiuo metu atitinkančių automobilių nėra — pabandykite išplėsti filtrus.",
       "error": "Paieška laikinai nepasiekiama ({error}). Bandykite vėliau.",
       "previous": "Atgal",

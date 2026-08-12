@@ -12,6 +12,12 @@ const BASE_URL = SITE.url;
  * Deliberately absent: /login, /register, /account/*, /admin and the
  * password-reset pages (personal doorways, all noindex), and /vehicle/[vin]
  * (expiring auction lots, also disallowed in robots.ts).
+ *
+ * ⚠️ Also absent, and only temporarily: `/offers`. The page exists and is
+ * linked from the header, but we have not bought a car to put on it yet, and
+ * the first thing Google sees is the thing it caches. Its `generateMetadata`
+ * carries `robots: { index: false }` to match. ADD THE PATH HERE AND DROP THAT
+ * FLAG TOGETHER, on the day the first vehicle is listed.
  */
 const PATHS = [
   "",
