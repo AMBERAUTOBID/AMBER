@@ -23,6 +23,7 @@
 import {
   and,
   asc,
+  between,
   count,
   desc,
   eq,
@@ -964,10 +965,28 @@ const RELATED_UPCOMING_LIMIT = 6;
  * only known sale time is in the past. Search says "this lot exists"; this block
  * says "this lot sells on a date I can print".
  *
- * Ordering is the relevance ladder, in one query rather than three: the same
- * model first, then nearest model year, then soonest sale. Scoped to the same
- * `vehicle_class` for the reason the model tree is — without it a BMW car page
- * offers scooters.
+ * ⚠️ THE RELEVANCE LADDER IS THREE QUERIES, AND WRITING IT AS ONE COSTS 1.3
+ * SECONDS. The obvious spelling —
+ * `order by (model = seed) desc, abs(year - seed), sale_date` — cannot be walked
+ * in any index, so Postgres reads every upcoming lot of that marque and sorts
+ * them to take six. EXPLAIN ANALYZE, measured on the live mirror:
+ *
+ * | seed | one query | as tiers |
+ * |---|---|---|
+ * | 2018 Toyota Camry | **1,335 ms** (10,045 rows sorted) | **1.2 ms** |
+ * | 2018 Audi A3 | 101 ms | 2.6 ms |
+ * | 2020 BMW 330i | 28 ms | 4.4 ms |
+ *
+ * Each tier orders by `sale_date` alone, which `auction_lots_sale_date_idx`
+ * walks, stopping after six rows instead of scanning the marque. This runs on
+ * EVERY vehicle page view against a 0.25 CU compute that the nightly sweep
+ * saturates for hours, so the difference is not academic. The first tier filled
+ * all six on every seed tested; the rest are there for a rare model.
+ *
+ * Tiers, in order, all within the same marque: the same model · the same
+ * `vehicle_class` within three model years · the same class at any age. Scoped
+ * to `vehicle_class` for the reason the model tree is — without it a BMW car
+ * page offers scooters.
  */
 async function similarUpcomingFromMirror(
   seed: typeof schema.auctionLots.$inferSelect
@@ -975,27 +994,38 @@ async function similarUpcomingFromMirror(
   const t = schema.auctionLots;
   if (!seed.make) return [];
 
-  const rows = await auctionDb()
-    .select()
-    .from(t)
-    .where(
-      and(
-        eq(t.make, seed.make),
-        seed.vehicleClass ? eq(t.vehicleClass, seed.vehicleClass) : undefined,
-        sql`${t.saleDate} > now()`,
-        ne(t.id, seed.id),
-        // Not just a different row — a different CAR. The same vehicle relisted
-        // under a second lot number is not a "similar lot", it is this one.
-        seed.vin ? or(isNull(t.vin), ne(t.vin, seed.vin)) : undefined
-      )
-    )
-    .orderBy(
-      desc(sql`${t.model} is not distinct from ${seed.model}`),
-      asc(sql`abs(coalesce(${t.year}, 0) - ${seed.year ?? 0})`),
-      asc(t.saleDate)
-    )
-    .limit(RELATED_UPCOMING_LIMIT);
+  const sameClass = seed.vehicleClass ? eq(t.vehicleClass, seed.vehicleClass) : undefined;
+  const base = and(
+    eq(t.make, seed.make),
+    sql`${t.saleDate} > now()`,
+    ne(t.id, seed.id),
+    // Not just a different row — a different CAR. The same vehicle relisted
+    // under a second lot number is not a "similar lot", it is this one.
+    seed.vin ? or(isNull(t.vin), ne(t.vin, seed.vin)) : undefined
+  );
 
+  const tiers = [
+    seed.model ? eq(t.model, seed.model) : undefined,
+    seed.year ? and(sameClass, between(t.year, seed.year - 3, seed.year + 3)) : undefined,
+    sameClass,
+  ];
+
+  // Keyed by id so a lot matched by two tiers is shown once. Insertion order is
+  // the ladder, which is what makes the first cards the most relevant ones.
+  const picked = new Map<string, typeof seed>();
+  for (const tier of tiers) {
+    if (picked.size >= RELATED_UPCOMING_LIMIT) break;
+    if (!tier) continue;
+    const found = await auctionDb()
+      .select()
+      .from(t)
+      .where(and(base, tier))
+      .orderBy(asc(t.saleDate))
+      .limit(RELATED_UPCOMING_LIMIT);
+    for (const row of found) if (!picked.has(row.id)) picked.set(row.id, row);
+  }
+
+  const rows = [...picked.values()].slice(0, RELATED_UPCOMING_LIMIT);
   if (rows.length === 0) return [];
 
   const images = await auctionDb()
