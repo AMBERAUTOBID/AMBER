@@ -68,7 +68,27 @@ export default function LotCard({
     // save button lifts the card too rather than fighting it.
     <div className="group relative overflow-hidden rounded-2xl border border-char-200 bg-white transition-all hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-900/5">
       {saveSlot && <div className="absolute right-2.5 top-2.5 z-10">{saveSlot}</div>}
-      <Link href={`/vehicle/${vehicle.vin}`} className="block">
+      {/*
+        BY LOT NUMBER, NOT BY VIN — and that is the whole fix for a card that
+        opened somebody else's sale.
+
+        A VIN names a CAR; a lot number names one APPEARANCE of that car at
+        auction. Cars are auctioned more than once, so `/vehicle/{vin}` asks
+        upstream a question with several right answers and it picks its own.
+        Measured 2026-08-12 on VIN WAUAUGFF0J1031237: the card offered lot
+        59726116 (open, buy now $4,400, sale 13 Aug) and the page it opened was
+        lot 72702635 — the same car SOLD on 1 July for $4,750. The visitor saw
+        "PARDUOTA" on a car that was for sale the next day. Asking for the lot
+        returns the open record, verified against the live endpoint.
+
+        Known residue, measured rather than assumed: the identity upstream is
+        really (platform, lot number), and 29 of our 143,331 lot numbers exist
+        on BOTH copart and iaai. For those, upstream answers with one of the
+        two and no parameter changes its mind — `?platform=` and `?site=` were
+        both tried and ignored. 29 ambiguous is the price of fixing every car
+        that has ever been auctioned twice; the trade is deliberate.
+      */}
+      <Link href={`/vehicle/${vehicle.lot_number}`} className="block">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-char-100">
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element

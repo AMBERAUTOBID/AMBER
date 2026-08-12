@@ -103,8 +103,12 @@ export default function FavoriteCard({
 
   return (
     <div className="flex gap-4 rounded-2xl border border-char-200/70 bg-white p-4">
+      {/* Lot number, not VIN — a VIN names the car and a lot number names the
+          sale, so a car auctioned twice opens the wrong one. The reasoning and
+          the measurements are in LotCard. `lotNumber` is not-null on the
+          favourites table, which is keyed on (platform, lotNumber). */}
       <Link
-        href={`/vehicle/${favorite.vin || favorite.lotNumber}`}
+        href={`/vehicle/${favorite.lotNumber}`}
         className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl bg-char-100"
       >
         {favorite.imageUrl ? (
@@ -123,7 +127,7 @@ export default function FavoriteCard({
 
       <div className="min-w-0 flex-1">
         <Link
-          href={`/vehicle/${favorite.vin || favorite.lotNumber}`}
+          href={`/vehicle/${favorite.lotNumber}`}
           className="line-clamp-1 font-bold text-char-900 hover:text-amber-700"
         >
           {favorite.title}

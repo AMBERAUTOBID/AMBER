@@ -37,7 +37,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
   }
 
-  const snapshot = await fetchLotSnapshot(row.vin || row.lotNumber);
+  // Lot number first, VIN only as a fallback. Asking upstream by VIN returns
+  // whichever appearance of that car it prefers, so a favourite saved from an
+  // upcoming lot could be refreshed with a long-finished sale's price — the
+  // stored row would then disagree with the lot page it links to.
+  const snapshot = await fetchLotSnapshot(row.lotNumber);
   if (!snapshot) {
     // Unreachable upstream, or the lot has gone. 502 rather than 404: the
     // favourite exists, we just couldn't refresh it. The stored snapshot is

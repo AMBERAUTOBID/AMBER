@@ -281,8 +281,13 @@ export default async function VehicleDetailPage({
                   reference, and the saved card is dated — so it never implies
                   a closed lot is still available. */}
               <div className="mt-4">
+                {/* The LOT is saved, not the VIN. This reference is what a
+                    later refresh re-fetches, so saving a VIN would quietly
+                    resolve to a different appearance of the same car and
+                    overwrite the snapshot with another sale's price — the same
+                    fault as the card links, only delayed. */}
                 <SaveLotButton
-                  lot={detail.vin || detail.lot_number}
+                  lot={detail.lot_number || detail.vin}
                   initiallySaved={alreadySaved}
                   signedIn={viewer !== null}
                   variant="detail"
