@@ -191,11 +191,31 @@ export default async function SearchPage({
   if (type) basePageQuery.type = type;
   if (category) basePageQuery.category = category;
   if (platform) basePageQuery.platform = platform;
-  if (str(sp.yearFrom)) basePageQuery.yearFrom = str(sp.yearFrom)!;
-  if (str(sp.yearTo)) basePageQuery.yearTo = str(sp.yearTo)!;
-  if (str(sp.odoMin)) basePageQuery.odoMin = str(sp.odoMin)!;
-  if (str(sp.odoMax)) basePageQuery.odoMax = str(sp.odoMax)!;
+  // Every range the widget can set, carried as a list rather than a line each.
+  // Written out one by one, this drifted: yearFrom/To and odoMin/Max were here
+  // and engine, retail, price and buy-now were not, so setting an engine size
+  // and then ticking any facet silently dropped it. The page read those params
+  // into the query all along — only the links forgot them.
+  const RANGE_PARAMS = [
+    "yearFrom",
+    "yearTo",
+    "odoMin",
+    "odoMax",
+    "engineFrom",
+    "engineTo",
+    "retailMin",
+    "retailMax",
+    "priceMin",
+    "priceMax",
+    "buyNowMin",
+    "buyNowMax",
+  ] as const;
+  for (const key of RANGE_PARAMS) {
+    const value = str(sp[key]);
+    if (value) basePageQuery[key] = value;
+  }
   if (sp.buyNow === "1") basePageQuery.buyNow = "1";
+  if (sp.enhanced === "1") basePageQuery.enhanced = "1";
   // Facet selections belong in every link the page emits — paging, and each
   // option's own toggle. Leaving them out is how a visitor loses their filters
   // by clicking "next".
