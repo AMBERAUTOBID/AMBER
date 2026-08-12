@@ -34,25 +34,56 @@ function readEnvLocal() {
 }
 
 const env = readEnvLocal();
-const mirror = env.DATABASE_URL_MIRROR ?? env.DATABASE_URL_MIRROR_UNPOOLED;
 
-if (!mirror) {
+/**
+ * TWO databases now, matching what production will run.
+ *
+ * `DATABASE_URL` — accounts, sessions, deposits, favourites, orders. Still the
+ * old mirror branch, because that is the only non-production database holding
+ * customer rows to develop against; the clean catalogue branch has those tables
+ * empty by design. Point this at production and a stray click writes to real
+ * customer data.
+ *
+ * `DATABASE_URL_AUCTION` — the lot catalogue that search reads through
+ * `auctionDb()`. The clean `auction-catalogue` branch, which is both fresher
+ * and larger where it counts: 126k upcoming lots against the old branch's 108k,
+ * because that one accumulated 81k finished auctions nobody can bid on.
+ *
+ * Falls back to the mirror when the auction URL is absent, so this keeps
+ * working on a machine that has not been given the new branch yet.
+ */
+const appDb = env.DATABASE_URL_MIRROR ?? env.DATABASE_URL_MIRROR_UNPOOLED;
+const auctionDb =
+  env.DATABASE_URL_AUCTION ?? env.DATABASE_URL_AUCTION_UNPOOLED ?? appDb;
+
+if (!appDb) {
   console.error("DATABASE_URL_MIRROR is not set in .env.local.");
   process.exit(1);
 }
 // The same guard every ingest script carries. A dev server is read-mostly, but
-// "mostly" is not a safety property worth relying on.
-if (mirror.includes(PRODUCTION_ENDPOINT)) {
-  console.error(`ABORT: DATABASE_URL_MIRROR contains the production endpoint ${PRODUCTION_ENDPOINT}.`);
-  process.exit(1);
+// "mostly" is not a safety property worth relying on. Both URLs are checked:
+// one of them being safe says nothing about the other.
+for (const [name, url] of [
+  ["DATABASE_URL_MIRROR", appDb],
+  ["DATABASE_URL_AUCTION", auctionDb],
+]) {
+  if (url.includes(PRODUCTION_ENDPOINT)) {
+    console.error(`ABORT: ${name} contains the production endpoint ${PRODUCTION_ENDPOINT}.`);
+    process.exit(1);
+  }
 }
 
 const portArg = process.argv.indexOf("--port");
 const port = portArg > -1 ? process.argv[portArg + 1] : "3102";
 
+const host = (u) => /@([^/]+)/.exec(u)?.[1];
 console.log(`dev server on :${port}`);
-console.log(`  SEARCH_SOURCE = postgres`);
-console.log(`  DATABASE_URL  = ${/@([^/]+)/.exec(mirror)?.[1]}`);
+console.log(`  SEARCH_SOURCE        = postgres`);
+console.log(`  DATABASE_URL         = ${host(appDb)}`);
+console.log(`  DATABASE_URL_AUCTION = ${host(auctionDb)}`);
+if (host(appDb) === host(auctionDb)) {
+  console.log(`  (one database — no separate auction branch configured)`);
+}
 console.log(`  (.env.local is NOT modified)\n`);
 
 // The binary directly rather than through npx: npx resolves through a shell,
@@ -60,5 +91,11 @@ console.log(`  (.env.local is NOT modified)\n`);
 // server at all.
 spawn(process.execPath, ["node_modules/next/dist/bin/next", "dev", "--port", port], {
   stdio: "inherit",
-  env: { ...process.env, ...env, DATABASE_URL: mirror, SEARCH_SOURCE: "postgres" },
+  env: {
+    ...process.env,
+    ...env,
+    DATABASE_URL: appDb,
+    DATABASE_URL_AUCTION: auctionDb,
+    SEARCH_SOURCE: "postgres",
+  },
 });
