@@ -5,7 +5,7 @@ import Container from "@/shared/ui/Container";
 import Button from "@/shared/ui/Button";
 import Reveal from "@/shared/ui/Reveal";
 import InventoryGallery from "@/modules/inventory/components/InventoryGallery";
-import AuctionCountdown from "@/modules/inventory/components/AuctionCountdown";
+import AuctionDateCard from "@/modules/inventory/components/AuctionDateCard";
 import VehicleCostPanel from "@/modules/pricing/components/VehicleCostPanel";
 import PastSalesTable from "@/modules/inventory/components/PastSalesTable";
 import LotCard from "@/modules/inventory/components/LotCard";
@@ -32,7 +32,6 @@ import {
   XCircle,
   Barcode,
   Storefront,
-  CalendarBlank,
   Archive,
   ArrowSquareOut,
 } from "@phosphor-icons/react/dist/ssr";
@@ -292,24 +291,20 @@ export default async function VehicleDetailPage({
             </div>
 
             {saleDate && (
-              <div className="rounded-xl border border-char-200 bg-white px-4 py-2.5 text-right">
-                <p className="flex items-center justify-end gap-1.5 text-xs font-semibold uppercase tracking-wider text-char-400">
-                  <CalendarBlank size={13} />
-                  {isUpcoming ? t("auction.endsIn") : t("auction.saleDate")}
-                </p>
-                <div className="mt-1">
-                  {isUpcoming ? (
-                    <AuctionCountdown isoDate={saleDate} />
-                  ) : (
-                    <span className="text-sm font-semibold text-char-500">
-                      {detail.auction?.formatted ?? "—"}
-                    </span>
-                  )}
-                </div>
-                {isUpcoming && detail.auction?.formatted && (
-                  <p className="mt-0.5 text-xs text-char-400">{detail.auction.formatted}</p>
-                )}
-              </div>
+              <AuctionDateCard
+                isoDate={saleDate}
+                formatted={detail.auction?.formatted ?? null}
+                isUpcoming={isUpcoming}
+                labels={{
+                  endsIn: t("auction.endsIn"),
+                  saleDate: t("auction.saleDate"),
+                  closed: t("auction.closed"),
+                  dayShort: t("auction.dayShort"),
+                  hourShort: t("auction.hourShort"),
+                  minuteShort: t("auction.minuteShort"),
+                  secondShort: t("auction.secondShort"),
+                }}
+              />
             )}
           </Reveal>
         </Container>

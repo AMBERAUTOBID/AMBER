@@ -1,6 +1,7 @@
 import { Link } from "@/i18n/navigation";
 import type { SearchFacets } from "@/modules/inventory/api";
 import { parseSelected, toggleHref } from "@/modules/inventory/model/filterQuery";
+import { ODOMETER_BANDS, activeOdometerBand, bandOdoMax } from "@/modules/inventory/model/odometerBands";
 
 /**
  * The filter sidebar, with a live count beside every option.
@@ -53,12 +54,16 @@ export const DIMENSIONS = [
  * DIMENSIONS is the list it has to agree with, and a copy elsewhere would
  * drift the first time a dimension is added.
  *
- * Only the dimensions this panel renders. The odometer, engine and retail
- * ranges belong to the search widget above, and counting them here would
- * label a number the panel cannot explain when opened.
+ * Counts what this panel renders, which now includes the odometer band — it
+ * moved here from the search widget, so a mileage filter is one the badge has
+ * to admit to. Engine size and retail value are gone from the UI entirely; a
+ * hand-typed URL can still set them and they are deliberately not counted,
+ * because opening the panel would not show them.
  */
 export function countActiveFilters(query: Record<string, string>): number {
-  return DIMENSIONS.reduce((n, d) => n + parseSelected(query[d.param]).size, 0);
+  const facetCount = DIMENSIONS.reduce((n, d) => n + parseSelected(query[d.param]).size, 0);
+  // One, not two: min and max are a single choice to the person who made it.
+  return facetCount + (query.odoMin || query.odoMax ? 1 : 0);
 }
 
 /**
@@ -191,7 +196,8 @@ export default function FilterPanel({
   query: Record<string, string>;
   labels: FilterPanelLabels;
 }) {
-  const anyActive = DIMENSIONS.some((d) => query[d.param]);
+  const anyActive = DIMENSIONS.some((d) => query[d.param]) || Boolean(query.odoMin || query.odoMax);
+  const activeBand = activeOdometerBand(query.odoMin, query.odoMax);
 
   return (
     <aside className="rounded-2xl border border-char-200 bg-white p-4">
@@ -211,7 +217,14 @@ export default function FilterPanel({
               // button means "clear the filters", not "start again".
               query: Object.fromEntries(
                 Object.entries(query).filter(
-                  ([k]) => !DIMENSIONS.some((d) => d.param === k) && k !== "cursor"
+                  ([k]) =>
+                    !DIMENSIONS.some((d) => d.param === k) &&
+                    k !== "cursor" &&
+                    // The odometer band is one of this panel's filters now, so
+                    // "clear the filters" has to include it. Leaving it behind
+                    // was the kind of half-clear that reads as a broken button.
+                    k !== "odoMin" &&
+                    k !== "odoMax"
                 )
               ),
             }}
@@ -221,6 +234,43 @@ export default function FilterPanel({
           </Link>
         )}
       </div>
+
+      {/* Odometer is a range wearing a facet's clothes, so it is rendered here
+          rather than folded into DIMENSIONS: the options are bands, only one
+          can be active, and each link writes odoMin/odoMax rather than toggling
+          a comma-separated value. Clicking the active band clears it, which is
+          what every other option in this panel does. First, because mileage is
+          what buyers narrow on before anything else. */}
+      {(facets.odometer?.length ?? 0) > 0 && (
+        <div className="mt-3 border-t border-char-100 pt-3">
+          <h3 className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-char-500">
+            {labels.groups.odometer ?? "Odometer"}
+          </h3>
+          {facets.odometer!.map((o) => {
+            const band = ODOMETER_BANDS.find((b) => b.value === o.value);
+            const active = activeBand === o.value;
+            const next: Record<string, string> = { ...query };
+            delete next.cursor;
+            delete next.odoMin;
+            delete next.odoMax;
+            if (!active && band) {
+              if (band.min !== undefined) next.odoMin = String(band.min);
+              // One less than the band's exclusive bound — see bandOdoMax.
+              const hi = bandOdoMax(band);
+              if (hi !== undefined) next.odoMax = hi;
+            }
+            return (
+              <Option
+                key={o.value}
+                label={optionLabel(labels, "odometer", o.value)}
+                count={o.count}
+                active={active}
+                href={{ pathname: "/search", query: next }}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {DIMENSIONS.map((d) => {
         const options = facets[d.key] ?? [];

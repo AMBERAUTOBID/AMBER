@@ -255,7 +255,8 @@
         "transmission": "Transmission",
         "cylinders": "Cylinders",
         "color": "Colour",
-        "secondary_damage": "Secondary damage"
+        "secondary_damage": "Secondary damage",
+        "odometer": "Odometer"
       },
       "options": {
         "vehicle_class": {
@@ -377,6 +378,13 @@
           "vin_issue": "VIN problem",
           "repair": "Repair",
           "other": "Other"
+        },
+        "odometer": {
+          "lt_50000": "Under 50,000 mi",
+          "50000_100000": "50,000 – 100,000 mi",
+          "100000_150000": "100,000 – 150,000 mi",
+          "150000_200000": "150,000 – 200,000 mi",
+          "gte_200000": "Over 200,000 mi"
         }
       },
       "clearAll": "Clear all",

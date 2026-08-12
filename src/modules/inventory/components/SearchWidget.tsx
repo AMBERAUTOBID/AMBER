@@ -23,10 +23,15 @@ import {
 import { MORE_TYPE_TO_APIBARA_TYPE } from "@/modules/inventory/model/searchQuery";
 import ScrollingPlaceholder from "@/shared/ui/ScrollingPlaceholder";
 import ScrollableSelect from "@/shared/ui/ScrollableSelect";
-import OdometerRange, { ODO_MIN, ODO_MAX } from "./OdometerRange";
-import EngineRange, { ENGINE_MIN, ENGINE_MAX } from "./EngineRange";
-import RetailRange, { RETAIL_MIN, RETAIL_MAX } from "./RetailRange";
-import { rangeParams } from "@/modules/inventory/model/rangeQuery";
+// The odometer, engine-size and retail-value sliders used to live here. Mileage
+// moved into the filter panel as counted bands — one click instead of dragging
+// two thumbs and pressing Search — and engine size and retail value were
+// dropped entirely for now. This box is back to what it is for: pick a type,
+// a make, a model, a year span, and go.
+//
+// The URL params still work. `engineFrom`, `retailMin` and the rest are read by
+// the search page exactly as before, so shared links keep resolving; there is
+// simply no control that writes them.
 
 const CATEGORY_ICONS: Record<VehicleCategory, typeof Car> = {
   automobile: Car,
@@ -100,30 +105,11 @@ export default function SearchWidget({
   const [model, setModel] = useState("");
   const [yearFrom, setYearFrom] = useState("");
   const [yearTo, setYearTo] = useState("");
-  const [odoMin, setOdoMin] = useState(ODO_MIN);
-  const [odoMax, setOdoMax] = useState(ODO_MAX);
-  const [engineMin, setEngineMin] = useState(ENGINE_MIN);
-  const [engineMax, setEngineMax] = useState(ENGINE_MAX);
-  const [retailMin, setRetailMin] = useState(RETAIL_MIN);
-  const [retailMax, setRetailMax] = useState(RETAIL_MAX);
   const [buyNowOnly, setBuyNowOnly] = useState(false);
   const [copartOn, setCopartOn] = useState(true);
   const [iaaiOn, setIaaiOn] = useState(true);
 
   const router = useRouter();
-  /**
-   * Odometer and engine size are shown together, and only once a category is
-   * picked. Both are meaningless for "more" — the bucket holding trailers,
-   * boats and industrial equipment — where a mileage reading is often absent
-   * and an engine size says nothing a buyer of a trailer is looking for.
-   */
-  const hasRanges = category !== null && category !== "more";
-  /**
-   * Retail value is offered for "more" as well, unlike the other two: a trailer
-   * or a forklift is worth a number even when a mileage reading and an engine
-   * size say nothing about it.
-   */
-  const hasRetail = category !== null;
 
   /**
    * True for a 17-character VIN (the standard excludes I, O and Q so they
@@ -183,29 +169,6 @@ export default function SearchWidget({
     }
     if (yearFrom) query.yearFrom = yearFrom;
     if (yearTo) query.yearTo = yearTo;
-    if (hasRanges) {
-      // Each end is sent only if it was actually moved. Leaving the top thumb
-      // at its stop means "and above", so sending the ceiling would contradict
-      // the "+" the control prints right next to it — see `rangeParams`.
-      const odo = rangeParams({ min: odoMin, max: odoMax }, { min: ODO_MIN, max: ODO_MAX });
-      if (odo.from) query.odoMin = odo.from;
-      if (odo.to) query.odoMax = odo.to;
-
-      const engine = rangeParams(
-        { min: engineMin, max: engineMax },
-        { min: ENGINE_MIN, max: ENGINE_MAX }
-      );
-      if (engine.from) query.engineFrom = engine.from;
-      if (engine.to) query.engineTo = engine.to;
-    }
-    if (hasRetail) {
-      const retail = rangeParams(
-        { min: retailMin, max: retailMax },
-        { min: RETAIL_MIN, max: RETAIL_MAX }
-      );
-      if (retail.from) query.retailMin = retail.from;
-      if (retail.to) query.retailMax = retail.to;
-    }
     if (buyNowOnly) query.buyNow = "1";
 
     router.push({ pathname: "/search", query });
@@ -218,8 +181,6 @@ export default function SearchWidget({
     setModel("");
     setYearFrom("");
     setYearTo("");
-    setOdoMin(ODO_MIN);
-    setOdoMax(ODO_MAX);
   }
 
   const hasModelData = category ? Object.keys(MODELS_BY_CATEGORY[category]).length > 0 : false;
@@ -341,53 +302,6 @@ export default function SearchWidget({
                   searchPlaceholder={labels.searchFilterPlaceholder}
                 />
               </div>
-
-              {hasRanges && (
-                <>
-                  <OdometerRange
-                    min={odoMin}
-                    max={odoMax}
-                    onChange={(lo, hi) => {
-                      setOdoMin(lo);
-                      setOdoMax(hi);
-                    }}
-                    title={labels.odometer}
-                    resetLabel={labels.odometerReset}
-                  />
-                  <EngineRange
-                    min={engineMin}
-                    max={engineMax}
-                    onChange={(lo, hi) => {
-                      setEngineMin(lo);
-                      setEngineMax(hi);
-                    }}
-                    title={labels.engine}
-                    resetLabel={labels.engineReset}
-                  />
-                </>
-              )}
-
-              {hasRetail && (
-                <div>
-                  <RetailRange
-                    min={retailMin}
-                    max={retailMax}
-                    onChange={(lo, hi) => {
-                      setRetailMin(lo);
-                      setRetailMax(hi);
-                    }}
-                    title={labels.retail}
-                    resetLabel={labels.retailReset}
-                  />
-                  {/* Said out loud rather than left to be discovered. 12% of
-                      lots carry no estimated value and drop out the moment this
-                      is touched — small enough to be worth the filter, large
-                      enough that a visitor deserves to be told. */}
-                  <p className="mt-1.5 px-1 text-[11px] leading-snug text-char-500">
-                    {labels.retailNote}
-                  </p>
-                </div>
-              )}
 
               <div className="flex flex-wrap items-center gap-2.5">
                 <button

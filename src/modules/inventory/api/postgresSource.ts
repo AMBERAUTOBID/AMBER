@@ -26,6 +26,7 @@ import { apibaraSource } from "./apibaraSource";
 import type { AuctionSource, SearchFacets } from "./source";
 import type { VehicleDetailResponse, VehicleSearchParams, VehicleSearchResponse } from "./types";
 import { mirrorRowToVehicleListItem, type MirrorImageRow } from "../model/mirrorLot";
+import { ODOMETER_BAND_SQL, ODOMETER_BAND_ORDER } from "../model/odometerBands";
 
 const DEFAULT_PER_PAGE = 20;
 const MAX_PER_PAGE = 100;
@@ -442,12 +443,13 @@ async function facetCounts(
 ): Promise<SearchFacets> {
   const columns = sql.raw(dimensions.map((d) => `"${d.column}"`).join(", "));
   const sets = sql.raw(dimensions.map((d) => `("${d.column}")`).join(", "));
+  const bandExpr = sql.raw(ODOMETER_BAND_SQL);
 
   const result = await auctionDb().execute(sql`
-    select ${columns}, count(*)::int as n
+    select ${columns}, ${bandExpr} as odometer_band, count(*)::int as n
     from auction_lots
     where ${where}
-    group by grouping sets (${sets})
+    group by grouping sets (${sets}, (${bandExpr}))
   `);
   const rows = (Array.isArray(result) ? result : ((result as { rows?: unknown[] }).rows ?? [])) as Array<
     Record<string, unknown>
@@ -455,7 +457,15 @@ async function facetCounts(
 
   const out: SearchFacets = {};
   for (const d of dimensions) out[d.key] = [];
+  out.odometer = [];
   for (const row of rows) {
+    // The odometer band is checked first and separately: it is an expression,
+    // not one of the `dimensions` columns, so the loop below would never see it.
+    const band = row.odometer_band;
+    if (band !== null && band !== undefined) {
+      out.odometer.push({ value: String(band), count: Number(row.n) });
+      continue;
+    }
     for (const d of dimensions) {
       const v = row[d.column];
       if (v === null || v === undefined) continue;
@@ -464,6 +474,9 @@ async function facetCounts(
     }
   }
   for (const d of dimensions) out[d.key].sort((a, b) => b.count - a.count);
+  out.odometer.sort(
+    (a, b) => (ODOMETER_BAND_ORDER.get(a.value) ?? 0) - (ODOMETER_BAND_ORDER.get(b.value) ?? 0)
+  );
   return out;
 }
 

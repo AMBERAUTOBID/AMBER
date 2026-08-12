@@ -255,7 +255,8 @@
         "transmission": "Pavarų dėžė",
         "cylinders": "Cilindrai",
         "color": "Spalva",
-        "secondary_damage": "Antrinis pažeidimas"
+        "secondary_damage": "Antrinis pažeidimas",
+        "odometer": "Rida"
       },
       "options": {
         "vehicle_class": {
@@ -377,6 +378,13 @@
           "vin_issue": "VIN problema",
           "repair": "Remontas",
           "other": "Kita"
+        },
+        "odometer": {
+          "lt_50000": "iki 50 000 mi",
+          "50000_100000": "50 000 – 100 000 mi",
+          "100000_150000": "100 000 – 150 000 mi",
+          "150000_200000": "150 000 – 200 000 mi",
+          "gte_200000": "virš 200 000 mi"
         }
       },
       "clearAll": "Išvalyti viską",

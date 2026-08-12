@@ -205,13 +205,21 @@ describe("countActiveFilters", () => {
     ).toBe(3);
   });
 
-  it("ignores the ranges the panel does not own", () => {
-    // Odometer, engine and retail belong to the search widget above. Counting
-    // them would put a number on a button that opens a panel not containing
-    // them.
-    expect(
-      countActiveFilters({ odoMin: "1000", retailMax: "20000", engineFrom: "2" })
-    ).toBe(0);
+  it("counts an odometer band, because the panel now owns it", () => {
+    // Mileage moved out of the search widget and into the panel as bands, so
+    // the badge has to admit to it — a collapsed panel hiding a mileage filter
+    // is the exact confusion the badge exists to prevent.
+    expect(countActiveFilters({ odoMin: "50000", odoMax: "100000" })).toBe(1);
+    // One, not two: min and max are a single choice to whoever made it.
+    expect(countActiveFilters({ odoMax: "50000" })).toBe(1);
+  });
+
+  it("still ignores ranges no control can set", () => {
+    // Engine size and retail value were removed from the UI entirely. A
+    // hand-typed URL can still apply them, and they are deliberately not
+    // counted: opening the panel would not show them, so a badge promising
+    // otherwise would send the visitor looking for a control that is gone.
+    expect(countActiveFilters({ retailMax: "20000", engineFrom: "2000" })).toBe(0);
   });
 
   it("is not fooled by an empty or ragged param", () => {
