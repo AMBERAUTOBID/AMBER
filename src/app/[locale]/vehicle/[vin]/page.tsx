@@ -671,6 +671,11 @@ export default async function VehicleDetailPage({
                       noPhoto: t("similar.noPhoto"),
                       priceNA: t("pricing.notAvailable"),
                       damagePrefix: t("similar.damagePrefix"),
+                      // The page's own pricing labels, reused deliberately: a
+                      // card and the panel above it must not call the same
+                      // number two different things.
+                      currentBid: t("pricing.currentBid"),
+                      buyNow: t("pricing.buyNow"),
                     }}
                   />
                 ))}

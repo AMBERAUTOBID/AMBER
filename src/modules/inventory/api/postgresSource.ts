@@ -40,7 +40,11 @@ import { auctionDb, schema } from "@/shared/db/client";
 import { apibaraSource } from "./apibaraSource";
 import type { AuctionSource, SearchFacets } from "./source";
 import type { VehicleDetailResponse, VehicleSearchParams, VehicleSearchResponse } from "./types";
-import { mirrorRowToVehicleListItem, type MirrorImageRow } from "../model/mirrorLot";
+import {
+  mirrorRowToVehicleListItem,
+  BUY_NOW_MARGIN_HOURS,
+  type MirrorImageRow,
+} from "../model/mirrorLot";
 import { ODOMETER_BAND_SQL, ODOMETER_BAND_ORDER } from "../model/odometerBands";
 
 const DEFAULT_PER_PAGE = 20;
@@ -377,10 +381,44 @@ function buildWhere(
   // its absence means unknown, not no.
   if (params.enhanced === true) conditions.push(eq(t.isEnhanced, true));
 
-  // Buy Now means "has a buy-now price", which is what the competitor's toggle
-  // does and what a visitor expects. Backed by a partial index on exactly these
-  // rows, so it narrows ~150k to ~49k without a full scan.
-  if (params.lot_status === "Buy Now") conditions.push(isNotNull(t.buyNowCents));
+  /**
+   * Buy Now means "there is a price you can pay right now to take the car".
+   * Backed by a partial index on exactly these rows, so it narrows ~143k to
+   * ~49k without a full scan.
+   *
+   * THE PRICE IS NOT ENOUGH; THE OFFER HAS TO STILL BE OPEN. A buy-now price is
+   * a live offer with an expiry, and our row is a nightly snapshot. Measured
+   * 2026-08-12 against Apibara, on lots our mirror called Buy Now:
+   *
+   *   | stored sale time | offer still there |
+   *   |---|---|
+   *   | already passed, 0-3 h ago | 0 of 5 |
+   *   | ~6 minutes away          | 3 of 5 |
+   *   | 2 h to 3 days away       | 20 of 20 |
+   *
+   * The offer is pulled when the lot goes to the block, which is exactly when a
+   * visitor clicking a "Buy Now" result lands on a page with no buy-now price —
+   * the fault reported against lot 51211316, opened 18 minutes before its sale.
+   * Two hours is the nearest margin the measurement actually supports; 30
+   * minutes would cost only 82 lots more but sits in a window nothing was
+   * sampled in.
+   *
+   * WHAT THIS COSTS, and it is a real cost: a relisted lot gets its offer BACK
+   * at the new date (8 of 8 sampled, one at a changed price), and until the next
+   * sweep refreshes its date it looks past-dated and is withheld here — 2,160
+   * lots, 4.4% of the Buy Now set. Withholding an offer that stands is the
+   * cheaper error than advertising one that has been withdrawn. The permanent
+   * fix is refreshing the buy-now set on its own schedule (~919 pages, ~7 min,
+   * and unmetered on the current vendor plan), not a wider margin here.
+   */
+  if (params.lot_status === "Buy Now") {
+    conditions.push(isNotNull(t.buyNowCents));
+    // `sql.raw` because an interval literal cannot be parameterised; the value
+    // is a number constant from the model layer, not input. Shared with
+    // `mirrorPricing` so the filter and the card cannot disagree about which
+    // offers are still open.
+    conditions.push(gte(t.saleDate, sql.raw(`now() + interval '${BUY_NOW_MARGIN_HOURS} hours'`)));
+  }
 
   // `s` is the free-text box.
   //

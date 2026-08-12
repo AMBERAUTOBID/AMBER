@@ -26,7 +26,13 @@ export default function LotCard({
   saveSlot,
 }: {
   vehicle: VehicleListItem;
-  labels: { noPhoto: string; priceNA: string; damagePrefix: string };
+  labels: {
+    noPhoto: string;
+    priceNA: string;
+    damagePrefix: string;
+    currentBid: string;
+    buyNow: string;
+  };
   /**
    * The save-to-favourites control, injected rather than imported.
    *
@@ -38,10 +44,23 @@ export default function LotCard({
   saveSlot?: React.ReactNode;
 }) {
   const photo = vehicle.media?.thumbs?.[0];
-  const priceLabel =
-    formatPrice(vehicle.pricing?.current_bid_usd) ??
-    formatPrice(vehicle.pricing?.buy_now_usd) ??
-    labels.priceNA;
+  /**
+   * A price on a card has to say what kind of price it is.
+   *
+   * This used to print `current_bid ?? buy_now` bare, and the two are different
+   * promises: lot 51211316 showed $2,450 here and $1,850 on its own page, both
+   * correct — one the buy-now offer, the other the standing bid — and the pair
+   * reads as a contradiction. Reported by the owner, 2026-08-12.
+   *
+   * The bid leads because it is what the auction is actually doing. Buy Now
+   * follows on its own line whenever it exists, so a visitor filtering for Buy
+   * Now sees the number they are shopping for on every card rather than on the
+   * 66% that happen to have no bid yet.
+   */
+  const bid = formatPrice(vehicle.pricing?.current_bid_usd);
+  const buyNow = formatPrice(vehicle.pricing?.buy_now_usd);
+  const headline = bid ?? buyNow;
+  const headlineKind = bid ? labels.currentBid : buyNow ? labels.buyNow : null;
   const odometerLabel = formatOdometer(vehicle.odometer);
 
   return (
@@ -69,7 +88,19 @@ export default function LotCard({
       </div>
       <div className="p-4">
         <h3 className="line-clamp-1 font-bold text-char-900">{vehicle.title}</h3>
-        <p className="mt-1 text-lg font-bold text-amber-600">{priceLabel}</p>
+        <div className="mt-1 flex items-baseline gap-2">
+          <p className="text-lg font-bold text-amber-600">{headline ?? labels.priceNA}</p>
+          {headlineKind && (
+            <span className="text-xs text-char-500">{headlineKind}</span>
+          )}
+        </div>
+        {/* Only when it is not already the headline — otherwise the same number
+            would be printed twice under two different names. */}
+        {buyNow && bid && (
+          <p className="mt-0.5 text-sm font-semibold text-char-700">
+            {labels.buyNow} <span className="text-amber-600">{buyNow}</span>
+          </p>
+        )}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-char-500">
           {vehicle.location?.display && (
             <span className="inline-flex items-center gap-1">

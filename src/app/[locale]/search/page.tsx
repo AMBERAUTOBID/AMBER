@@ -370,6 +370,8 @@ export default async function SearchPage({
                     noPhoto: t("results.noPhoto"),
                     priceNA: t("results.priceNA"),
                     damagePrefix: t("results.damagePrefix"),
+                    currentBid: t("results.currentBid"),
+                    buyNow: t("results.buyNow"),
                   }}
                   saveSlot={
                     <SaveLotButton

@@ -16,6 +16,21 @@ import type { VehicleListItem } from "../api/types";
 
 const KM_PER_MILE = 1.609344;
 
+/**
+ * How close to its sale a lot may be and still be described as buyable outright.
+ *
+ * The auctions withdraw Buy Now when the lot reaches the block, and our row is a
+ * nightly snapshot. Measured 2026-08-12 against Apibara, on lots this mirror
+ * called Buy Now: 0 of 5 still had the offer once their sale time had passed,
+ * 3 of 5 six minutes out, 20 of 20 from two hours out. Two hours is the nearest
+ * margin the measurement supports.
+ *
+ * Exported because `postgresSource` filters on the same number: a "Buy Now"
+ * search that hides a lot and a card that prints its price anyway would be the
+ * same claim made twice, differently.
+ */
+export const BUY_NOW_MARGIN_HOURS = 2;
+
 /** The columns this mapper needs. A structural type rather than an import from
  * the schema, so the pure model layer stays independent of Drizzle. */
 export interface MirrorLotRow {
@@ -93,24 +108,39 @@ export function mirrorOdometer(row: MirrorLotRow): { mi: number | null; km: numb
  * landed in Klaipėda for €1,656 — a confident number that was never true.
  * Suppressing the price loses a cell; asserting it loses trust.
  */
-export function mirrorPricing(row: MirrorLotRow): {
+export function mirrorPricing(
+  row: MirrorLotRow,
+  /** Injected so the rule is testable at a fixed instant rather than only on
+   *  the day someone runs the suite. */
+  now: Date = new Date()
+): {
   current_bid_usd: number | null;
   buy_now_usd: number | null;
 } {
   const trustworthy = row.currencyCode === null || row.currencyCode === "USD";
   if (!trustworthy) return { current_bid_usd: null, buy_now_usd: null };
+
+  // A buy-now price we can no longer promise is not a price. See
+  // BUY_NOW_MARGIN_HOURS: the offer is pulled as the lot reaches the block, and
+  // a mirrored row cannot know it has happened. The bid stays — it is a fact
+  // about the auction, not an offer being made to the visitor.
+  const offerStillOpen =
+    row.saleDate !== null &&
+    row.saleDate.getTime() >= now.getTime() + BUY_NOW_MARGIN_HOURS * 3_600_000;
+
   return {
     current_bid_usd: row.currentBidCents === null ? null : row.currentBidCents / 100,
-    buy_now_usd: row.buyNowCents === null ? null : row.buyNowCents / 100,
+    buy_now_usd: row.buyNowCents === null || !offerStillOpen ? null : row.buyNowCents / 100,
   };
 }
 
 export function mirrorRowToVehicleListItem(
   row: MirrorLotRow,
-  images: MirrorImageRow[] = []
+  images: MirrorImageRow[] = [],
+  now: Date = new Date()
 ): VehicleListItem {
   const odometer = mirrorOdometer(row);
-  const pricing = mirrorPricing(row);
+  const pricing = mirrorPricing(row, now);
   const thumbs = images
     .slice()
     .sort((a, b) => a.position - b.position)

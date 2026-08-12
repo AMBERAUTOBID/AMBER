@@ -340,6 +340,21 @@ async function main() {
     missingPrice.length === 0,
     `${missingPrice.length} without one`
   );
+  // A price is not an open offer. The auctions withdraw Buy Now when the lot
+  // reaches the block — measured: 0 of 5 lots kept it once their sale time had
+  // passed, 20 of 20 kept it two hours out — so a result whose sale is imminent
+  // sends the visitor to a page with no buy-now price, which is the fault this
+  // check exists to catch.
+  const twoHoursOut = Date.now() + 2 * 60 * 60 * 1000;
+  const tooLate = buyNow.data.filter((v) => {
+    const d = v.auction?.full_date;
+    return d ? new Date(d).getTime() < twoHoursOut : true;
+  });
+  check(
+    "no result whose sale starts within two hours",
+    tooLate.length === 0,
+    `${tooLate.length} of ${buyNow.data.length} too close to the sale`
+  );
   check(
     "the toggle narrows the result set",
     (buyNow.meta.total ?? 0) < (base.meta.total ?? 0),
