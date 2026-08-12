@@ -244,6 +244,7 @@
       "makePlaceholder": "Выберите марку",
       "typePlaceholder": "Выберите тип",
       "modelPlaceholder": "Выберите модель",
+      "showAllMakes": "Показать все марки (+{count})",
       "searchFilterPlaceholder": "Поиск...",
       "odometer": "Пробег",
       "odometerReset": "Сбросить",

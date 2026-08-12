@@ -252,6 +252,7 @@ export default async function SearchPage({
                 buyNow: t("widget.buyNow"),
                 browsePrompt: t("widget.browsePrompt"),
                 makePlaceholder: t("widget.makePlaceholder"),
+                showAllMakes: t.raw("widget.showAllMakes") as string,
                 typePlaceholder: t("widget.typePlaceholder"),
                 modelPlaceholder: t("widget.modelPlaceholder"),
                 searchFilterPlaceholder: t("widget.searchFilterPlaceholder"),

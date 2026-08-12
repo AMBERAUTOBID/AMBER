@@ -45,6 +45,13 @@ import {
   BUY_NOW_MARGIN_HOURS,
   type MirrorImageRow,
 } from "../model/mirrorLot";
+import {
+  buildModelTree,
+  canonicalKey,
+  mergeMakeSpellings,
+  modelsForLabel,
+  type ModelGroup,
+} from "../model/modelTree";
 import { ODOMETER_BAND_SQL, ODOMETER_BAND_ORDER } from "../model/odometerBands";
 
 const DEFAULT_PER_PAGE = 20;
@@ -243,7 +250,20 @@ function buildWhere(
   params: VehicleSearchParams,
   typeValues?: string[],
   active?: ActiveSet,
-  fuzzy = false
+  fuzzy = false,
+  /**
+   * The exact model strings a picked label stands for, resolved upstream by
+   * `resolveModels` because it needs a query and this function is pure.
+   *
+   * Two things it fixes that a substring match cannot. The auctions spell one
+   * car two ways — `F-150` 1,543 lots and `F150` 1,342 — so `ilike '%F-150%'`
+   * finds barely half of them. And picking a family is meant to include its
+   * trims: "3 Series" should return the 328i and the 330i, which share no
+   * substring with it at all.
+   */
+  modelValues?: string[],
+  /** Every spelling of the picked make, resolved by `resolveMakes`. */
+  makeValues?: string[]
 ) {
   const t = schema.auctionLots;
   const conditions = [];
@@ -300,8 +320,13 @@ function buildWhere(
 
   // ILIKE because Copart shouts and IAAI does not: "FORD" and "Ford" are the same
   // make and a visitor should not have to know which auction listed the car.
-  if (params.make) conditions.push(ilike(t.make, params.make));
-  if (params.model) conditions.push(ilike(t.model, `%${params.model}%`));
+  if (makeValues && makeValues.length > 0) conditions.push(inArray(t.make, makeValues));
+  else if (params.make) conditions.push(ilike(t.make, params.make));
+  if (modelValues && modelValues.length > 0) conditions.push(inArray(t.model, modelValues));
+  // The old behaviour, kept for a model that is not in the tree: a link shared
+  // before this existed, or a make the visitor never picked. Narrowing it to
+  // nothing instead would break URLs that used to work.
+  else if (params.model) conditions.push(ilike(t.model, `%${params.model}%`));
 
   if (typeValues && typeValues.length > 0) {
     const cond = typeGroupCondition(typeValues);
@@ -577,12 +602,30 @@ async function facetCounts(
  * more than a few, so this is typically two or three round trips rather than the
  * thirteen a naive exclude-everything implementation would need.
  */
+/**
+ * Turns the label a visitor picked into the raw strings it covers.
+ *
+ * The URL carries the readable label — `model=3+Series` — and this is where it
+ * becomes `('3 SERIES','328I','330I',…)`. Needs the make: the same label means
+ * different cars under different marques, and the tree is built per make.
+ */
+async function resolveModels(params: VehicleSearchParams): Promise<string[] | undefined> {
+  if (!params.model || !params.make) return undefined;
+  const tree = await getModelTree(params.make);
+  const models = modelsForLabel(tree, params.model);
+  return models.length > 0 ? models : undefined;
+}
+
 async function getFacets(
   params: VehicleSearchParams,
   typeValues?: string[]
 ): Promise<SearchFacets> {
   const active = await activeSet();
-  const facets = await facetCounts(buildWhere(params, typeValues, active), FACET_DIMENSIONS);
+  const [models, makes] = await Promise.all([resolveModels(params), resolveMakes(params.make)]);
+  const facets = await facetCounts(
+    buildWhere(params, typeValues, active, false, models, makes),
+    FACET_DIMENSIONS
+  );
 
   const filtered = FACET_DIMENSIONS.filter(
     (d) => params[d.param] !== undefined && params[d.param] !== ""
@@ -590,7 +633,10 @@ async function getFacets(
   await Promise.all(
     filtered.map(async (d) => {
       const without: VehicleSearchParams = { ...params, [d.param]: undefined };
-      const recounted = await facetCounts(buildWhere(without, typeValues, active), [d]);
+      const recounted = await facetCounts(
+        buildWhere(without, typeValues, active, false, models, makes),
+        [d]
+      );
       facets[d.key] = recounted[d.key];
     })
   );
@@ -623,6 +669,10 @@ async function runSearch(
   // Resolved once per search and reused by both the page query and the count, so
   // the two can never disagree about what "active" means.
   const active = await activeSet();
+  const [modelValues, makeValues] = await Promise.all([
+    resolveModels(params),
+    resolveMakes(params.make),
+  ]);
 
   /**
    * The page, read as two segments: lots whose sale time is still ahead, soonest
@@ -637,7 +687,7 @@ async function runSearch(
    * count, and only on a page that has run past the upcoming lots entirely.
    */
   const fetchPage = async (fuzzy: boolean) => {
-    const where = buildWhere(params, typeValues, active, fuzzy);
+    const where = buildWhere(params, typeValues, active, fuzzy, modelValues, makeValues);
     const upcoming = and(where, gte(t.saleDate, sql`now()`))!;
     const relisted = and(where, or(lt(t.saleDate, sql`now()`), isNull(t.saleDate)))!;
 
@@ -731,6 +781,159 @@ async function runSearch(
 }
 
 /**
+ * The make and model lists the search box offers — READ OFF THE CATALOGUE, not
+ * typed by hand.
+ *
+ * The hand-typed list this replaces offered 14 BMW models where our own rows
+ * hold 171, and ~60 makes against 1,316. It could also offer a model no lot
+ * has, which returns an empty page and reads as a broken search.
+ *
+ * COUNTED THROUGH `buildWhere`, deliberately. A number beside an option is a
+ * promise about what clicking it returns, so it has to be counted under exactly
+ * the rules search itself applies — the two-sweep active set, the extra bar for
+ * a passed sale date, and the Canadian exclusion. Counting the raw table would
+ * overstate every option by whatever those rules withhold.
+ *
+ * Cached for an hour: the underlying numbers move once a night.
+ */
+const CATALOGUE_TTL_MS = 60 * 60 * 1000;
+const catalogueCache = new Map<string, { value: unknown; at: number }>();
+
+async function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+  const hit = catalogueCache.get(key);
+  const now = Date.now();
+  if (hit && now - hit.at < CATALOGUE_TTL_MS) return hit.value as T;
+  const value = await load();
+  catalogueCache.set(key, { value, at: now });
+  return value;
+}
+
+/** Exposed so a test or the ingest tooling can force the next read to re-query. */
+export function resetCatalogueCache(): void {
+  catalogueCache.clear();
+}
+
+export interface MakeCount {
+  make: string;
+  count: number;
+}
+
+/**
+ * Every make with at least one lot a visitor could reach, ALPHABETICALLY.
+ *
+ * The owner's call, and the right one: a make is something you already know the
+ * name of before you open the list, so the only question the order has to
+ * answer is "where would I look for it". Inventory order answers a question
+ * nobody asked and moves the entries around every night. The counts are still
+ * returned — the widget uses them for the five-lot floor, and the list shows
+ * them in brackets.
+ *
+ * The tail is genuine vendor debris — `8LBE`, `2005`, `17 1/2`, `ACUR` — one
+ * lot each. It is returned rather than filtered because the picker, not the
+ * database, is where the decision belongs: the widget shows makes from five
+ * lots up and keeps a "show all" for the rest, so no car is unreachable.
+ */
+async function listMakes(vehicleClasses?: string[]): Promise<MakeCount[]> {
+  const key = `makes:${vehicleClasses?.slice().sort().join(",") ?? "all"}`;
+  return cached(key, async () => {
+    const t = schema.auctionLots;
+    const active = await activeSet();
+    const where = and(
+      buildWhere({}, undefined, active),
+      isNotNull(t.make),
+      vehicleClasses && vehicleClasses.length > 0
+        ? inArray(t.vehicleClass, vehicleClasses)
+        : undefined
+    );
+    const rows = await auctionDb()
+      .select({ make: t.make, count: count() })
+      .from(t)
+      .where(where)
+      .groupBy(t.make)
+      .orderBy(desc(count()));
+    // Merged, so "MERCEDES BENZ" and "MERCEDES-BENZ" are one row that finds
+    // both — see `mergeMakeSpellings`.
+    return mergeMakeSpellings(
+      rows
+        .filter((r): r is { make: string; count: number } => r.make !== null)
+        .map((r) => ({ make: r.make, count: Number(r.count) }))
+    ).map((m) => ({ make: m.label, count: m.count }));
+  });
+}
+
+/**
+ * The raw spellings behind a picked make label.
+ *
+ * Resolved against the WHOLE catalogue rather than the category the visitor was
+ * browsing: a shared link carries the make and nothing about which tab produced
+ * it, and a make means the same thing under any of them.
+ */
+async function resolveMakes(make: string | undefined): Promise<string[] | undefined> {
+  if (!make) return undefined;
+  const wanted = canonicalKey(make);
+  if (wanted.length === 0) return undefined;
+  const spellings = await cached("makeSpellings", async () => {
+    const t = schema.auctionLots;
+    const active = await activeSet();
+    const rows = await auctionDb()
+      .select({ make: t.make, count: count() })
+      .from(t)
+      .where(and(buildWhere({}, undefined, active), isNotNull(t.make)))
+      .groupBy(t.make);
+    return mergeMakeSpellings(
+      rows
+        .filter((r): r is { make: string; count: number } => r.make !== null)
+        .map((r) => ({ make: r.make, count: Number(r.count) }))
+    );
+  });
+  const hit = spellings.find((s) => canonicalKey(s.label) === wanted);
+  return hit ? hit.makes : undefined;
+}
+
+/**
+ * One make's models, grouped into families by `modelTree`.
+ *
+ * Matched case-insensitively because Copart shouts and IAAI does not, and the
+ * make arrives from a URL a person may have typed.
+ */
+async function getModelTree(make: string, vehicleClasses?: string[]): Promise<ModelGroup[]> {
+  const trimmed = make.trim();
+  if (trimmed.length === 0) return [];
+  const scope = vehicleClasses?.slice().sort().join(",") ?? "all";
+  return cached(`models:${canonicalKey(trimmed)}:${scope}`, async () => {
+    const t = schema.auctionLots;
+    const active = await activeSet();
+    // Every spelling of the marque, so a Mercedes tree is not missing the 43
+    // lots filed under "MERCEDES BENZ". Falls back to a case-insensitive match
+    // on what was asked for when the label is not one we know.
+    const spellings = await resolveMakes(trimmed);
+    const rows = await auctionDb()
+      .select({ model: t.model, count: count() })
+      .from(t)
+      .where(
+        and(
+          buildWhere({}, undefined, active),
+          spellings ? inArray(t.make, spellings) : ilike(t.make, trimmed),
+          isNotNull(t.model),
+          // SCOPED TO THE TAB THE VISITOR IS ON. Several marques build more
+          // than one kind of vehicle, and BMW is the worst of them: without
+          // this, choosing BMW under "Automobile" offered C650, F 900, G310 and
+          // S 1000 — scooters and motorcycles — in among the 3 Series.
+          vehicleClasses && vehicleClasses.length > 0
+            ? inArray(t.vehicleClass, vehicleClasses)
+            : undefined
+        )
+      )
+      .groupBy(t.model);
+    return buildModelTree(
+      rows
+        .filter((r): r is { model: string; count: number } => r.model !== null)
+        .map((r) => ({ model: r.model, count: Number(r.count) }))
+    );
+  });
+}
+
+/**
  * Detail from upstream, falling back to the mirror only when upstream fails.
  *
  * Upstream is tried FIRST and always: it holds the live bid and the export /
@@ -805,3 +1008,15 @@ export const postgresSource: AuctionSource = {
   // only became possible by owning the rows.
   getFacets,
 };
+
+/**
+ * The catalogue vocabulary, for the search box.
+ *
+ * Exported directly rather than through `AuctionSource`: Apibara has no
+ * equivalent — `/vehicles/filters` came back empty for BMW and JEEP — so
+ * putting it on the interface would be describing a capability one source
+ * cannot have. The route that serves these degrades to the hand-written list
+ * when the tables are empty, which is what keeps the Apibara-only build
+ * shippable.
+ */
+export { listMakes, getModelTree };

@@ -96,6 +96,7 @@ export default async function HomePage({
               buyNow: tSearch("widget.buyNow"),
               browsePrompt: tSearch("widget.browsePrompt"),
               makePlaceholder: tSearch("widget.makePlaceholder"),
+              showAllMakes: tSearch.raw("widget.showAllMakes") as string,
               typePlaceholder: tSearch("widget.typePlaceholder"),
               modelPlaceholder: tSearch("widget.modelPlaceholder"),
               searchFilterPlaceholder: tSearch("widget.searchFilterPlaceholder"),

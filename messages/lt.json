@@ -244,6 +244,7 @@
       "makePlaceholder": "Pasirinkite markę",
       "typePlaceholder": "Pasirinkite tipą",
       "modelPlaceholder": "Pasirinkite modelį",
+      "showAllMakes": "Rodyti visas markes (+{count})",
       "searchFilterPlaceholder": "Ieškoti...",
       "odometer": "Rida",
       "odometerReset": "Atstatyti",

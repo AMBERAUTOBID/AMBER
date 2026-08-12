@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   MagnifyingGlass,
@@ -23,6 +23,8 @@ import {
 import { MORE_TYPE_TO_APIBARA_TYPE } from "@/modules/inventory/model/searchQuery";
 import ScrollingPlaceholder from "@/shared/ui/ScrollingPlaceholder";
 import ScrollableSelect from "@/shared/ui/ScrollableSelect";
+import ModelSelect from "@/modules/inventory/components/ModelSelect";
+import type { ModelGroup } from "@/modules/inventory/model/modelTree";
 // The odometer, engine-size and retail-value sliders used to live here. Mileage
 // moved into the filter panel as counted bands — one click instead of dragging
 // two thumbs and pressing Search — and engine size and retail value were
@@ -86,6 +88,7 @@ export default function SearchWidget({
     buyNow: string;
     browsePrompt: string;
     makePlaceholder: string;
+    showAllMakes: string;
     typePlaceholder: string;
     modelPlaceholder: string;
     searchFilterPlaceholder: string;
@@ -177,14 +180,110 @@ export default function SearchWidget({
   function selectCategory(cat: VehicleCategory) {
     const next = category === cat ? null : cat;
     setCategory(next);
+    // Yesterday's makes belong to yesterday's tab: without this, switching from
+    // Automobile to Motorcycle shows car marques until the new list lands.
+    setCatalogMakes([]);
+    setShowAllMakes(false);
     setMake("");
     setModel("");
     setYearFrom("");
     setYearTo("");
   }
 
-  const hasModelData = category ? Object.keys(MODELS_BY_CATEGORY[category]).length > 0 : false;
-  const modelOptions =
+  /**
+   * THE LISTS COME FROM OUR OWN CATALOGUE NOW, not from a typed constant.
+   *
+   * `vehicleData.ts` held 14 BMW models where the rows hold 171, and ~60 makes
+   * against 1,316 — X6, X2, X4, 328i and 535i simply could not be picked. It
+   * stays as the fallback, because when Apibara serves search the `auction_*`
+   * tables are empty and `/api/catalog` answers with nothing; the widget must
+   * still work then.
+   */
+  const [catalogMakes, setCatalogMakes] = useState<{ make: string; count: number }[]>([]);
+  /**
+   * The tree is stored WITH the make it belongs to, and "loading" is derived
+   * from the two disagreeing rather than kept as its own flag.
+   *
+   * Two things fall out of that. Switching make can never show the previous
+   * make's models for a frame while the new ones arrive — the tree simply does
+   * not apply until its label matches. And there is no `setLoading(true)` to
+   * run synchronously inside the effect, which is a cascading render the lint
+   * rule is right to refuse.
+   */
+  const [loadedTree, setLoadedTree] = useState<{ make: string; groups: ModelGroup[] }>({
+    make: "",
+    groups: [],
+  });
+  const [showAllMakes, setShowAllMakes] = useState(false);
+  const modelsReady = loadedTree.make === make;
+  const modelTree = modelsReady ? loadedTree.groups : [];
+  const loadingModels = make !== "" && !modelsReady;
+
+  useEffect(() => {
+    // "More" is deliberately left on the built-in list. Its picker does not
+    // choose a make at all — it chooses a vehicle TYPE, which the search page
+    // receives as `type=` — so filling it with boat manufacturers would send
+    // the wrong parameter and return nothing.
+    if (!category || category === "more") return;
+    let live = true;
+    fetch(`/api/catalog?category=${category}`)
+      .then((r) => (r.ok ? r.json() : { makes: [] }))
+      .then((d: { makes?: { make: string; count: number }[] }) => {
+        if (live) setCatalogMakes(d.makes ?? []);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [category]);
+
+  useEffect(() => {
+    // No make, nothing to fetch — and nothing to clear either: the render below
+    // reads an empty tree straight from `make`, so there is no state to reset
+    // and no cascading render to trigger.
+    if (!make) return;
+    let live = true;
+    fetch(`/api/catalog?make=${encodeURIComponent(make)}&category=${category ?? ""}`)
+      .then((r) => (r.ok ? r.json() : { tree: [] }))
+      .then((d: { tree?: ModelGroup[] }) => {
+        if (live) setLoadedTree({ make, groups: d.tree ?? [] });
+      })
+      .catch(() => {
+        // An empty tree for this make, not a stuck spinner: the picker says
+        // "—" and the visitor can still search on the make alone.
+        if (live) setLoadedTree({ make, groups: [] });
+      });
+    return () => {
+      live = false;
+    };
+    // `category` scopes the query — the same marque offers different models
+    // under Automobile and Motorcycle.
+  }, [make, category]);
+
+  /**
+   * From five lots up, with the rest behind "show all" — the owner's call.
+   *
+   * The tail is real vendor debris: `8LBE`, `2005`, `17 1/2`, `ACUR` (a
+   * truncated ACURA), one lot each. Hiding it outright would make ~90 cars
+   * unreachable through this box; showing it by default puts junk in front of
+   * everyone. So it is one click away and nothing is lost.
+   */
+  const MAKE_FLOOR = 5;
+  const commonMakes = catalogMakes.filter((m) => m.count >= MAKE_FLOOR);
+  const hiddenMakes = catalogMakes.length - commonMakes.length;
+  const makeCounts = new Map(catalogMakes.map((m) => [m.make, m.count]));
+  const makeOptions =
+    catalogMakes.length > 0
+      ? (showAllMakes ? catalogMakes : commonMakes).map((m) => m.make)
+      : MAKES_BY_CATEGORY[category ?? "automobile"];
+
+  const usingCatalog = catalogMakes.length > 0;
+  const hasModelData = usingCatalog
+    ? true
+    : category
+      ? Object.keys(MODELS_BY_CATEGORY[category]).length > 0
+      : false;
+  const fallbackModels =
     category && make ? (MODELS_BY_CATEGORY[category][make] ?? []) : [];
 
   return (
@@ -270,20 +369,48 @@ export default function SearchWidget({
                     setMake(v);
                     setModel("");
                   }}
-                  options={MAKES_BY_CATEGORY[category]}
+                  options={makeOptions}
                   placeholder={category === "more" ? labels.typePlaceholder : labels.makePlaceholder}
                   searchPlaceholder={labels.searchFilterPlaceholder}
+                  // The count is what tells a visitor which of two similar
+                  // names is the one with cars behind it.
+                  getLabel={(opt) => {
+                    const n = makeCounts.get(opt);
+                    return n === undefined ? opt : `${opt} (${n.toLocaleString()})`;
+                  }}
+                  footer={
+                    !showAllMakes && hiddenMakes > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllMakes(true)}
+                        className="w-full px-3 py-2 text-left text-xs font-semibold text-amber-700 hover:bg-amber-50"
+                      >
+                        {labels.showAllMakes.replace("{count}", hiddenMakes.toLocaleString())}
+                      </button>
+                    ) : null
+                  }
                 />
-                {hasModelData && (
-                  <ScrollableSelect
-                    value={model}
-                    onChange={setModel}
-                    options={modelOptions}
-                    placeholder={labels.modelPlaceholder}
-                    searchPlaceholder={labels.searchFilterPlaceholder}
-                    disabled={!make || modelOptions.length === 0}
-                  />
-                )}
+                {hasModelData &&
+                  (usingCatalog ? (
+                    <ModelSelect
+                      value={model}
+                      onChange={setModel}
+                      tree={make ? modelTree : []}
+                      placeholder={labels.modelPlaceholder}
+                      searchPlaceholder={labels.searchFilterPlaceholder}
+                      loading={loadingModels}
+                      disabled={!make}
+                    />
+                  ) : (
+                    <ScrollableSelect
+                      value={model}
+                      onChange={setModel}
+                      options={fallbackModels}
+                      placeholder={labels.modelPlaceholder}
+                      searchPlaceholder={labels.searchFilterPlaceholder}
+                      disabled={!make || fallbackModels.length === 0}
+                    />
+                  ))}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

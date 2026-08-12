@@ -244,6 +244,7 @@
       "makePlaceholder": "Choose make",
       "typePlaceholder": "Choose type",
       "modelPlaceholder": "Choose model",
+      "showAllMakes": "Show all makes (+{count})",
       "searchFilterPlaceholder": "Search...",
       "odometer": "Odometer",
       "odometerReset": "Reset",

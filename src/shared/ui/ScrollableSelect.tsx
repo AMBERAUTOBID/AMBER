@@ -12,6 +12,7 @@ export default function ScrollableSelect({
   searchPlaceholder,
   disabled = false,
   getLabel,
+  footer,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -20,6 +21,9 @@ export default function ScrollableSelect({
   searchPlaceholder: string;
   disabled?: boolean;
   getLabel?: (opt: string) => string;
+  /** Pinned under the list — used by the make picker for "show all makes",
+   *  which has to sit where the list runs out rather than above it. */
+  footer?: React.ReactNode;
 }) {
   const label = (opt: string) => (getLabel ? getLabel(opt) : opt);
   const [open, setOpen] = useState(false);
@@ -110,6 +114,7 @@ export default function ScrollableSelect({
               </li>
             ))}
           </ul>
+          {footer && <div className="border-t border-char-100">{footer}</div>}
         </div>
       )}
     </div>
