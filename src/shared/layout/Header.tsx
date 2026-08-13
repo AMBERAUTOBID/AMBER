@@ -4,41 +4,16 @@ import { useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
-import {
-  List,
-  X,
-  ArrowRight,
-  InstagramLogo,
-  YoutubeLogo,
-  WhatsappLogo,
-  FacebookLogo,
-} from "@phosphor-icons/react/dist/ssr";
+import { List, X, ArrowRight, Envelope, TelegramLogo } from "@phosphor-icons/react/dist/ssr";
 import { clsx } from "clsx";
 import LanguageSwitcher from "./LanguageSwitcher";
+import ContactMenu from "./ContactMenu";
 import { TextRoll } from "../ui/text-roll";
-import { socialLinks, type SocialNetwork } from "@/shared/config/site";
+import { socialLinks, CONTACT_HREF, SITE } from "@/shared/config/site";
+import { SOCIAL_ICON, SOCIAL_LABEL } from "./socialIcons";
 
 const BRAND_PART_1 = "Smart";
 const BRAND_PART_2 = "AutoBid";
-
-/**
- * Which glyph draws which network. Lives here rather than in `site.ts` because
- * that file is imported by the Telegram bot outside React and must stay plain
- * data — it hands over a key, and this decides what a key looks like.
- */
-const SOCIAL_ICON: Record<SocialNetwork, typeof InstagramLogo> = {
-  instagram: InstagramLogo,
-  youtube: YoutubeLogo,
-  whatsapp: WhatsappLogo,
-  facebook: FacebookLogo,
-};
-
-const SOCIAL_LABEL: Record<SocialNetwork, string> = {
-  instagram: "Instagram",
-  youtube: "YouTube",
-  whatsapp: "WhatsApp",
-  facebook: "Facebook",
-};
 
 interface HeaderProps {
   /**
@@ -170,46 +145,28 @@ export default function Header({ account, accountMobile }: HeaderProps) {
               </Link>
             );
           })}
-          {/* Replaced the phone number, at the owner's request. The number cost
-              162px of a row that had none; four icons cost ~120px and say more
-              — the audience reaches us on WhatsApp far more than by dialling a
-              US number from Europe. The number itself did not disappear from
-              the site: it is in the footer on every page, on /contact, and in
-              the burger menu below. */}
-          <div className="flex items-center">
-            {socials.map(({ network, href }) => {
-              const Icon = SOCIAL_ICON[network];
-              return (
-                <a
-                  key={network}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={SOCIAL_LABEL[network]}
-                  title={SOCIAL_LABEL[network]}
-                  className="flex h-6 w-6 items-center justify-center rounded-full text-char-500 transition-colors hover:bg-char-100 hover:text-amber-600"
-                >
-                  <Icon size={18} weight="fill" />
-                </a>
-              );
-            })}
-          </div>
+          {/* ONE BUTTON WHERE THERE WERE FOUR ICONS AND AN AMBER CTA — 2026-08-13,
+              measured, not estimated. At 1280px in Lithuanian the two removed
+              items cost 328px between them (232 for "Gauti nemokamą pasiūlymą",
+              96 for the icon strip) against 50px of slack in the whole row.
+              ContactMenu costs ~110px and carries more: the email address and
+              the Telegram handle, which four glyphs could not show at all.
+
+              The CTA is not gone, it is the last item in that menu with the
+              same label and the same destination. It had to go somewhere —
+              dropping it outright would leave /search, /plans, /shipping and
+              /about with no call to action, since the hero that carries one
+              exists only on the home page.
+
+              WHAT THE ROOM IS FOR: the videos section, already agreed. Do not
+              spend it on anything else without re-measuring in Lithuanian while
+              signed in — that is the case with the least slack. */}
+          <ContactMenu />
           <LanguageSwitcher compact />
           {/* This header is still static: the slot resolves the session on
               the client after hydration, so every marketing page keeps its
               pre-rendered HTML. See HeaderAccount. */}
           {account}
-          <Link
-            href="/contact"
-            className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-amber-500 px-3 py-2.5 text-sm font-semibold text-white shadow-sm shadow-amber-900/20 transition-all hover:bg-amber-600 hover:shadow-md"
-          >
-            {t("cta")}
-            <ArrowRight
-              size={15}
-              weight="bold"
-              className="transition-transform group-hover:translate-x-0.5"
-            />
-          </Link>
         </div>
 
         <button
@@ -245,8 +202,29 @@ export default function Header({ account, accountMobile }: HeaderProps) {
             })}
           </nav>
           {/* Bigger targets than the desktop row's: this is the width where
-              people are using a thumb. */}
+              people are using a thumb.
+
+              Email and Telegram lead, so this row carries the same channels the
+              desktop ContactMenu does rather than a subset — those two are the
+              ones people actually write to. Six 44px targets plus gaps come to
+              284px against 335px of content width on a 375px screen. */}
           <div className="mt-3 flex items-center gap-1 px-1">
+            <a
+              href={CONTACT_HREF.email}
+              aria-label={SITE.email}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-char-600 hover:bg-char-100 hover:text-amber-600"
+            >
+              <Envelope size={22} />
+            </a>
+            <a
+              href={CONTACT_HREF.telegram}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={SITE.telegram.display}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-char-600 hover:bg-char-100 hover:text-amber-600"
+            >
+              <TelegramLogo size={22} />
+            </a>
             {socials.map(({ network, href }) => {
               const Icon = SOCIAL_ICON[network];
               return (
