@@ -68,4 +68,24 @@ describe("isStillUpcoming", () => {
   it("treats the sale instant itself as past — a lot on the block is not upcoming", () => {
     expect(isStillUpcoming(lot({ full_date: NOW.toISOString(), state: "open" }), NOW)).toBe(false);
   });
+
+  // The vendor's live state is not always spelled "open". All 8 lots probed on
+  // 2026-08-14 came back `state: "live"`, and the vehicle page used to decide
+  // this with `state === "open"` — an allowlist of one, which read every such
+  // lot as closed and hid the "Bid for me" button on cars still selling. Only
+  // "finished" may close a lot; no other spelling is evidence either way.
+  it("keeps a lot the vendor calls 'live' rather than 'open'", () => {
+    expect(
+      isStillUpcoming(
+        lot({ full_date: "2026-08-14T16:30:00+00:00", state: "live", diff_minutes: 6 }),
+        NOW
+      )
+    ).toBe(true);
+  });
+
+  it("keeps a 'live' lot that arrives without a countdown at all", () => {
+    expect(isStillUpcoming(lot({ full_date: "2026-08-13T17:00:00+00:00", state: "live" }), NOW)).toBe(
+      true
+    );
+  });
 });

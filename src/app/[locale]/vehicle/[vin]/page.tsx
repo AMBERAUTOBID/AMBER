@@ -187,13 +187,19 @@ export default async function VehicleDetailPage({
   ) : (
     (detail.auction?.formatted ?? null)
   );
-  // Decided from Apibara's own `diff_minutes` rather than a clock read here,
-  // so the render stays pure and the answer matches the cached payload it came
-  // with. If the sale tips over while a cached page is being served, the
-  // countdown component itself falls through to "auction closed".
-  const diffMinutes = detail.auction?.diff_minutes ?? null;
-  const isUpcoming =
-    diffMinutes !== null ? diffMinutes > 0 : detail.auction?.state === "open";
+  // The SAME function the "similar upcoming lots" block filters with, rather
+  // than a second hand-rolled answer to one question. It weighs `state`,
+  // `diff_minutes` and the sale instant together, because they are computed
+  // independently and any one of them can be absent — our own mirrored rows,
+  // for instance, carry a real sale instant and deliberately no `state`.
+  //
+  // ⚠️ It replaces a fallback of `state === "open"`, which was an ALLOWLIST OF
+  // ONE and wrong: the vendor also returns `state: "live"`, observed on all 8
+  // lots probed 2026-08-14. Any live lot arriving without `diff_minutes` was
+  // therefore read as closed, which hid the "Bid for me" button on a car that
+  // was still selling. Known vendor values are `open` / `live` / `finished`,
+  // so only `finished` may close a lot — never the absence of one spelling.
+  const isUpcoming = isStillUpcoming(detail);
 
   // A lot whose sale has already run can't be bid on, so the page must not
   // offer to bid on it - it becomes a price-reference record instead. Treated

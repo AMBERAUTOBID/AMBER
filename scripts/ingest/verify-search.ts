@@ -43,6 +43,9 @@ function check(label: string, ok: boolean, detail = "") {
 async function main() {
   const { getAuctionSource } = await import("../../src/modules/inventory/api/source");
   const { CATEGORY_TYPE_GROUPS } = await import("../../src/modules/inventory/model/searchQuery");
+  // The same constant the search order and the button both read, so this script
+  // cannot assert a boundary that has quietly moved underneath it.
+  const { TOO_LATE_WITHIN_HOURS } = await import("../../src/modules/bids/model/bidWindow");
 
   const source = getAuctionSource();
   console.log(`resolved source: ${source.name}\n`);
@@ -65,20 +68,29 @@ async function main() {
   // ORDER: the lots a client can still act on come first, soonest deadline
   // first. This replaced "no lot whose sale date has already passed", which was
   // hiding 41,546 cars the vendor was still listing.
+  //
+  // THREE RANKS SINCE 2026-08-14, NOT TWO. Sorting by deadline alone put the
+  // 7,691 lots selling inside the bid cutoff ahead of everything else — and
+  // because a daily auction block shares one sale instant, their order among
+  // themselves was arbitrary anyway. They filled the first 153 pages and
+  // `bidWindow` refuses every one, so "Bid for me" was unreachable by browsing.
+  // See the segment comment in postgresSource.
+  const cutoff = now + TOO_LATE_WITHIN_HOURS * 3_600_000;
+  const rank = (ms: number) => (ms >= cutoff ? 0 : ms >= now ? 1 : 2);
   const outOfOrder = base.data.filter((v, i) => {
     if (i === 0) return false;
     const prev = saleTime(base.data[i - 1]);
     const cur = saleTime(v);
     if (prev === null || cur === null) return false;
-    // Upcoming before relisted; within a group, ascending.
-    const rank = (ms: number) => (ms >= now ? 0 : 1);
     return rank(prev) > rank(cur) || (rank(prev) === rank(cur) && prev > cur);
   });
-  check("page one is soonest-first, relisted lots last", outOfOrder.length === 0, `${outOfOrder.length} out of order`);
+  check("page one is soonest-first, imminent then relisted last", outOfOrder.length === 0, `${outOfOrder.length} out of order`);
+  // The assertion that actually protects the product: the lots a visitor is
+  // shown first are ones they can still instruct us to bid on.
   check(
-    "page one is all upcoming lots",
-    base.data.every((v) => (saleTime(v) ?? 0) >= now),
-    `${base.data.filter((v) => (saleTime(v) ?? 0) < now).length} relisted on page one`
+    "page one is all biddable lots (outside the bid cutoff)",
+    base.data.every((v) => (saleTime(v) ?? 0) >= cutoff),
+    `${base.data.filter((v) => (saleTime(v) ?? 0) < cutoff).length} inside the cutoff on page one`
   );
   check(
     "a total is reported (impossible on the aggregator)",

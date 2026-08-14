@@ -54,6 +54,10 @@ import {
   BUY_NOW_MARGIN_HOURS,
   type MirrorImageRow,
 } from "../model/mirrorLot";
+// The one number deciding whether a lot can still be bid on. Imported so the
+// order of the search and the behaviour of the button can never drift apart;
+// `bidWindow` has no imports of its own, so this stays safe for `scripts/`.
+import { TOO_LATE_WITHIN_HOURS } from "@/modules/bids/model/bidWindow";
 import {
   buildModelTree,
   canonicalKey,
@@ -684,8 +688,31 @@ async function runSearch(
   ]);
 
   /**
-   * The page, read as two segments: lots whose sale time is still ahead, soonest
-   * first, and behind them the relisted ones whose stored date has passed.
+   * The page, read as three segments in order, each of them index-ordered:
+   *
+   *   1. biddable — selling far enough ahead that a client can still instruct
+   *                 us to bid. Soonest first.
+   *   2. imminent — a genuine live auction, but already inside the bid cutoff.
+   *   3. relisted — stored sale date has passed; the vendor re-runs these.
+   *
+   * ── WHY THE FIRST SEGMENT EXISTS — measured 2026-08-14 ──────────────────
+   * US auctions run in daily blocks, so at any moment thousands of lots share
+   * a single sale instant: 7,691 lots were selling within four hours and every
+   * one of them at exactly 16:30Z. Ordered by deadline alone they filled the
+   * first 153 pages, and `bidWindow` refuses all of them — so "Bid for me" was
+   * unreachable by browsing, on the default search and on `make=BMW` and
+   * `make=TOYOTA` alike (0 of 50 eligible on page one of each).
+   *
+   * **Splitting them out costs nothing in ordering quality**, which is the
+   * point: a sort by deadline cannot discriminate inside a block that shares
+   * one deadline, so those 153 pages were already arbitrary. Segment 2 stays
+   * ahead of segment 3 because an imminent lot is still a real auction a
+   * visitor can act on by phone, where a relisted lot's date is merely stale.
+   *
+   * ⚠️ The cutoff is IMPORTED, never restated. If search used its own `4` the
+   * two could be moved apart, and the page would then order lots by a rule the
+   * button no longer applies — the failure that has already cost this project
+   * once, with `$350` written in two unlinked places.
    *
    * WHY NOT ONE QUERY. The obvious spelling is
    * `order by (case when sale_date >= now() then 0 else 1 end), sale_date` — and
@@ -693,52 +720,69 @@ async function runSearch(
    * 476 ms deep, because the CASE is not something `auction_lots_sale_date_idx`
    * can be walked in. Each segment on its own IS index order, so the sort
    * disappears and the boundary arithmetic below is what pays for it: one extra
-   * count, and only on a page that has run past the upcoming lots entirely.
+   * count per segment a page runs entirely past, and nothing otherwise.
    */
+  // Minutes rather than hours so a fractional threshold survives, and written
+  // raw because it is our own compile-time constant — never visitor input.
+  const cutoff = sql`now() + make_interval(mins => ${sql.raw(String(Math.round(TOO_LATE_WITHIN_HOURS * 60)))})`;
+
   const fetchPage = async (fuzzy: boolean) => {
     const where = buildWhere(params, typeValues, active, fuzzy, modelValues, makeValues);
-    const upcoming = and(where, gte(t.saleDate, sql`now()`))!;
+    const biddable = and(where, gte(t.saleDate, cutoff))!;
+    const imminent = and(where, gte(t.saleDate, sql`now()`), lt(t.saleDate, cutoff))!;
     const relisted = and(where, or(lt(t.saleDate, sql`now()`), isNull(t.saleDate)))!;
 
-    const segment = (condition: typeof upcoming, limit: number, from: number) =>
+    const segment = (condition: typeof biddable, limit: number, from: number) =>
       auctionDb()
         .select()
         .from(t)
         .where(condition)
-        // Soonest sale first: the lots a client can still act on, in the order
-        // the deadline arrives. Within the relisted tail the stored date is
-        // still the right key — relisting moves a lot by exactly one week, so
-        // the order of the old dates is the order of the new ones.
+        // Soonest sale first, within every segment. Even in the relisted tail
+        // the stored date is the right key — relisting moves a lot by exactly
+        // one week, so the order of the old dates is the order of the new ones.
         .orderBy(asc(t.saleDate), asc(t.id))
         .limit(limit)
         .offset(from);
 
+    const sizeOf = async (condition: typeof biddable) =>
+      (await auctionDb().select({ total: count() }).from(t).where(condition))[0].total;
+
+    /**
+     * The slice `[offset, offset + perPage)` of the three segments concatenated.
+     *
+     * A segment's size is asked for only when it cannot be deduced: a page that
+     * fills inside one segment asks nothing at all, and a short-but-non-empty
+     * page reveals where that segment ended for free. Only a page landing
+     * wholly beyond a segment pays for a count — the deep-paging case.
+     */
+    const collect = async (conditions: (typeof biddable)[]) => {
+      // The DB row, not the display shape: `mirrorRowToVehicleListItem` and the
+      // image lookup both need `id`, which MirrorLotRow deliberately lacks.
+      const rows: (typeof t.$inferSelect)[] = [];
+      let consumed = 0; // combined size of the segments already walked past
+      for (const condition of conditions) {
+        const want = perPage - rows.length;
+        if (want <= 0) break;
+        const from = Math.max(0, offset + rows.length - consumed);
+        const got = await segment(condition, want, from);
+        rows.push(...got);
+        if (got.length === want) break;
+        consumed += got.length > 0 || from === 0 ? from + got.length : await sizeOf(condition);
+      }
+      return rows;
+    };
+
     // Independent questions, so they go together rather than one after the
-    // other. The count spans BOTH segments — it is the number the page prints.
+    // other. The count spans ALL THREE segments — it is the number the page
+    // prints, and the aggregator's API structurally cannot provide it: its
+    // `meta` carries no total, which is why "Search Results (256,934)" was
+    // impossible before owning the rows.
     const [pageRows, [{ total: n }]] = await Promise.all([
-      segment(upcoming, perPage, offset),
-      // The result counter the aggregator's API structurally cannot provide —
-      // its `meta` carries no total at all, which is why "Search Results
-      // (256,934)" was impossible before owning the rows.
+      collect([biddable, imminent, relisted]),
       auctionDb().select({ total: count() }).from(t).where(where),
     ]);
 
-    if (pageRows.length === perPage) return { pageRows, n };
-
-    // Short page: the upcoming segment ended inside it (or before it), so the
-    // rest comes from the relisted tail. A short-but-non-empty page tells us
-    // exactly where the segment ended and needs no count; only a page that
-    // returned nothing has to ask, and that is the deep-paging case.
-    const upcomingTotal =
-      pageRows.length > 0
-        ? offset + pageRows.length
-        : (await auctionDb().select({ total: count() }).from(t).where(upcoming))[0].total;
-    const tail = await segment(
-      relisted,
-      perPage - pageRows.length,
-      Math.max(0, offset - upcomingTotal)
-    );
-    return { pageRows: [...pageRows, ...tail], n };
+    return { pageRows, n };
   };
 
   let { pageRows: rows, n: total } = await fetchPage(false);
