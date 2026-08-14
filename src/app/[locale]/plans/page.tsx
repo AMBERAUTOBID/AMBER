@@ -4,6 +4,7 @@ import { currentUser } from "@/modules/auth/model/currentUser";
 import { PLANS_IN_ORDER, isPlanKey } from "@/modules/plans/model/plans";
 import { ledgerFor } from "@/modules/plans/model/deposits";
 import { cardStateFor } from "@/modules/plans/model/cardState";
+import { recordVisit } from "@/modules/activity/api/recordVisit";
 import PlanCard from "@/modules/plans/components/PlanCard";
 import Container from "@/shared/ui/Container";
 import SectionHeading from "@/shared/ui/SectionHeading";
@@ -49,6 +50,20 @@ export default async function PlansPage({ params }: { params: Promise<{ locale: 
   const ledger = user ? await ledgerFor(user.id) : null;
   const activePlanKey =
     user?.activePlanKey && isPlanKey(user.activePlanKey) ? user.activePlanKey : null;
+
+  // Someone on this page is thinking about paying us, which is worth a line in
+  // their history even though no button was pressed. One subject key for the
+  // whole page: it is a single interest, and the collapse window turns a
+  // client who keeps coming back to compare tiers into "8×" rather than eight
+  // indistinguishable rows.
+  if (user) {
+    await recordVisit({
+      userId: user.id,
+      kind: "plans.viewed",
+      subjectKey: "plans",
+      label: activePlanKey ? `On ${activePlanKey}` : "No plan yet",
+    });
+  }
 
   return (
     <Container className="py-16 sm:py-24">

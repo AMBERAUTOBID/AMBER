@@ -6,6 +6,7 @@
  */
 import { eq } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
+import { recordAudit as writeAudit } from "@/shared/db/audit";
 import { generateToken, hashToken } from "@/modules/auth/model/token";
 
 export interface MaintenanceState {
@@ -97,13 +98,10 @@ export async function issueBypassForAdminLogin(adminId: string): Promise<string 
   return bypassToken;
 }
 
-/** Same never-fatal audit pattern as deposits.ts. */
-async function recordAudit(actorId: string, action: string): Promise<void> {
-  try {
-    await db()
-      .insert(schema.auditLog)
-      .values({ actorId, action, targetType: "site", targetId: "1" });
-  } catch (e) {
-    console.error("[audit] failed to record", action, e);
-  }
+/**
+ * Every maintenance action targets the one settings row, so the target is
+ * fixed here rather than repeated at each call site.
+ */
+function recordAudit(actorId: string, action: string): Promise<void> {
+  return writeAudit(actorId, action, "site", "1");
 }

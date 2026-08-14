@@ -3,6 +3,8 @@ import { fetchLotSnapshot } from "@/modules/favorites/api/fetchSnapshot";
 import { saveFavorite, removeFavorite } from "@/modules/favorites/model/favorites";
 import { requireOwner, requireSaver, UUID } from "@/modules/favorites/api/guard";
 import { consumeLimit } from "@/modules/auth/model/rateLimit";
+import { recordActivity } from "@/modules/activity/model/events";
+import { lotLabel, lotSubjectKey } from "@/modules/activity/model/subjects";
 
 /**
  * Save a car.
@@ -45,6 +47,17 @@ export async function POST(request: Request) {
   }
 
   const result = await saveFavorite(user.id, snapshot);
+  // Only on a genuinely new save. `already_saved` is a double-clicked button,
+  // and logging it would turn one decision into two lines of history.
+  if (result === "saved") {
+    await recordActivity({
+      userId: user.id,
+      kind: "lot.saved",
+      subjectKey: lotSubjectKey(snapshot.platform, snapshot.lotNumber),
+      label: lotLabel(snapshot.title, snapshot.priceUsdCents),
+      detail: { vin: snapshot.vin, lot: snapshot.lotNumber, platform: snapshot.platform },
+    });
+  }
   return NextResponse.json({ ok: true, status: result });
 }
 
@@ -70,10 +83,22 @@ export async function DELETE(request: Request) {
   }
 
   const result = await removeFavorite(id, user.id);
-  if (result === "not_found") {
+  if (result.status === "not_found") {
     // Covers "already gone" and "not yours" with one answer, so the endpoint
     // can't be used to test whether an id exists.
     return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
   }
+
+  // Worth recording as much as the save: a car that goes on the list and comes
+  // off it a day later is a decision, and a history showing only the saves
+  // would describe a client still interested in forty cars they have since
+  // ruled out.
+  await recordActivity({
+    userId: user.id,
+    kind: "lot.unsaved",
+    subjectKey: lotSubjectKey(result.platform, result.lotNumber),
+    label: lotLabel(result.title, result.priceUsdCents),
+    detail: { lot: result.lotNumber, platform: result.platform },
+  });
   return NextResponse.json({ ok: true });
 }

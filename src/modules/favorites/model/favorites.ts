@@ -94,15 +94,37 @@ export async function saveFavorite(
   return inserted[0] ? "saved" : "already_saved";
 }
 
-export type RemoveResult = "removed" | "not_found";
+export type RemoveResult =
+  /**
+   * Carries WHAT was removed, not merely that something was.
+   *
+   * The row is gone by the time the caller can react, so anything needing to
+   * describe it — the activity history saying which car was unsaved — has to
+   * be handed the details out of the DELETE itself. Reading them afterwards is
+   * impossible, and reading them first would be a second round trip and a race.
+   */
+  | {
+      status: "removed";
+      platform: string;
+      lotNumber: string;
+      title: string;
+      priceUsdCents: number | null;
+    }
+  | { status: "not_found" };
 
 /** Scoped to the owner in the WHERE clause — see rule 1 in the file header. */
 export async function removeFavorite(id: string, userId: string): Promise<RemoveResult> {
   const deleted = await db()
     .delete(schema.favorites)
     .where(and(eq(schema.favorites.id, id), eq(schema.favorites.userId, userId)))
-    .returning({ id: schema.favorites.id });
-  return deleted[0] ? "removed" : "not_found";
+    .returning({
+      platform: schema.favorites.platform,
+      lotNumber: schema.favorites.lotNumber,
+      title: schema.favorites.title,
+      priceUsdCents: schema.favorites.priceUsdCents,
+    });
+  const row = deleted[0];
+  return row ? { status: "removed", ...row } : { status: "not_found" };
 }
 
 /** The identity needed to re-fetch a row from Apibara. */

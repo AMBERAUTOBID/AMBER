@@ -53,6 +53,12 @@ export const LIMITS = {
    * every cycle, unmetered (2026-08-06 audit). Five an hour is generous for
    * a person deciding on a plan and useless for spamming an inbox. */
   planRequestPerUser: { max: 5, windowSeconds: 60 * 60 },
+  /** Keyed by user id. The browser-reported half of the activity history —
+   * the cost calculator and auction click-throughs. The collapse window keeps
+   * the *rows* down; this keeps the *writes* down, because a calculator that
+   * fires per keystroke and a script look identical from here. Two hundred an
+   * hour is far more than a person costing cars can produce. */
+  activityPerUser: { max: 200, windowSeconds: 60 * 60 },
 } as const satisfies Record<string, LimitRule>;
 
 export type LimitName = keyof typeof LIMITS;

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { parseInquiry } from "@/modules/leads/model/inquiry";
+import { currentUser } from "@/modules/auth/model/currentUser";
+import { recordActivity } from "@/modules/activity/model/events";
 import { verifyRecaptcha } from "@/modules/leads/api/recaptcha";
 import { sendInquiry } from "@/modules/leads/api/sendInquiry";
 import { consumeLimit } from "@/modules/auth/model/rateLimit";
@@ -57,6 +59,31 @@ export async function POST(request: Request) {
       { ok: false, error: "Failed to send message." },
       { status: 502 }
     );
+  }
+
+  // If a signed-in client sent this, it belongs on their history — otherwise
+  // an admin looking at their file sees browsing and no contact, while the
+  // enquiry sits unconnected in an inbox.
+  //
+  // The message itself is deliberately NOT copied here. It is already in the
+  // email, and duplicating free text a visitor typed — which may name anyone —
+  // into a table that outlives the conversation is how a support inbox turns
+  // into an uncatalogued store of other people's data. Only the fact and the
+  // subject line.
+  const sender = await currentUser();
+  if (sender) {
+    // Keyed on the vehicle they named, so two enquiries about the same car
+    // collapse and two about different cars do not. `vehicle` is the one field
+    // worth carrying: it is what the enquiry is *about*, and it is a short
+    // description the visitor chose to give us rather than prose about
+    // themselves.
+    const vehicle = parsed.inquiry.vehicle.trim();
+    await recordActivity({
+      userId: sender.id,
+      kind: "contact.submitted",
+      subjectKey: vehicle ? `vehicle:${vehicle.toLowerCase()}` : "general",
+      label: vehicle || "General enquiry",
+    });
   }
 
   // "logged" counts as success: the lead is captured in the server log even

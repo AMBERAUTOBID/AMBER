@@ -23,6 +23,8 @@ import { hashPassword, verifyPassword, passwordMeetsPolicy } from "./password";
 import { generateToken, hashToken } from "./token";
 import { createSession, pruneExpiredSessions, destroyAllSessionsForUser } from "./session";
 import { pruneStaleRateLimits } from "./rateLimit";
+import { recordAudit } from "@/shared/db/audit";
+import { purgeStaleActivity } from "@/modules/activity/model/events";
 
 /** Hash of a random password nobody knows — verified against for unknown
  * emails so login timing doesn't depend on whether the account exists. */
@@ -72,6 +74,11 @@ export async function registerAccount(input: NewAccount): Promise<RegisterResult
   const row = inserted[0];
   if (!row) return { status: "exists", existingEmail: email };
 
+  // Deliberately records no email or name: the row those live on is right
+  // there, and an audit log that duplicated them would survive the
+  // anonymisation that erasure performs on `users` — defeating it.
+  await recordAudit(row.id, "account.registered", "user", row.id, { locale: input.locale });
+
   const verifyToken = await issueActionToken(row.id, "verify_email", VERIFY_TTL_MS);
   return { status: "created", userId: row.id, verifyToken };
 }
@@ -105,7 +112,21 @@ export async function loginAccount(
   // Unknown email still burns a full hash verification — see file header.
   const hashToCheck = user?.passwordHash ?? (await DECOY_HASH_PROMISE);
   const passwordOk = await verifyPassword(password, hashToCheck);
-  if (!user || !passwordOk) return { status: "invalid_credentials" };
+  if (!user || !passwordOk) {
+    // A failed attempt is worth more than a successful one when something is
+    // wrong, and it is the entry a client's history needs when they ring up
+    // saying they cannot get in. The actor is null for an unknown email —
+    // there is nobody to attribute it to — and **the address is not recorded
+    // in that case**: writing every string somebody typed into the login box
+    // would turn this table into a collection of other people's email
+    // addresses, harvested from typos and probes.
+    await recordAudit(user?.id ?? null, "auth.login_failed", "user", user?.id, {
+      reason: "invalid_credentials",
+      knownAccount: Boolean(user),
+      ip: context.ip,
+    });
+    return { status: "invalid_credentials" };
+  }
 
   // Belt and braces. An erased account's password hash is already a value no
   // password can match, and its email was rewritten so this lookup shouldn't
@@ -119,11 +140,22 @@ export async function loginAccount(
   // blocking here keeps half-real accounts out of the session table.
   if (!user.emailVerifiedAt) return { status: "email_not_verified" };
 
-  // Two opportunistic cleanups on the same write moment: expired sessions,
-  // and rate-limit counters whose window lapsed over a day ago.
+  // Three opportunistic cleanups on the same write moment: expired sessions,
+  // rate-limit counters whose window lapsed over a day ago, and browsing
+  // history past its retention window.
+  //
+  // Retention enforced from a login rather than a cron the project does not
+  // have. That is sound here in a way it would not be for, say, financial
+  // records: a site nobody logs into is also a site collecting nothing new,
+  // so the backlog cannot grow while the purge is idle.
   await pruneExpiredSessions();
   await pruneStaleRateLimits();
+  await purgeStaleActivity();
   const session = await createSession(user.id, context);
+  await recordAudit(user.id, "auth.login", "user", user.id, {
+    ip: context.ip,
+    userAgent: context.userAgent?.slice(0, 200),
+  });
   return {
     status: "ok",
     sessionToken: session.token,
@@ -142,6 +174,7 @@ export async function verifyEmail(token: string): Promise<VerifyEmailResult> {
     .update(schema.users)
     .set({ emailVerifiedAt: new Date() })
     .where(eq(schema.users.id, row.userId));
+  await recordAudit(row.userId, "auth.email_verified", "user", row.userId);
   return "verified";
 }
 
@@ -158,6 +191,10 @@ export async function requestPasswordReset(
   const user = rows[0];
   if (!user) return null;
   const resetToken = await issueActionToken(user.id, "reset_password", RESET_TTL_MS);
+  // The *request*, recorded separately from the reset itself, because they are
+  // different facts: a run of requests with no reset following them is
+  // somebody else trying to get in, and only the pair tells that story.
+  await recordAudit(user.id, "auth.reset_requested", "user", user.id);
   return { resetToken, userId: user.id, email: user.email };
 }
 
@@ -175,6 +212,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
   // A reset proves the old credentials may be compromised — every existing
   // session dies with them.
   await destroyAllSessionsForUser(row.userId);
+  await recordAudit(row.userId, "auth.password_reset", "user", row.userId);
   return "reset";
 }
 
@@ -224,6 +262,13 @@ export async function updateProfile(
     })
     .where(eq(schema.users.id, userId));
 
+  // Which fields changed, never their values. The new name and phone live on
+  // the user row; copying them here would leave a shadow of exactly the
+  // personal data erasure scrubs from that row, in a table erasure must not
+  // touch.
+  await recordAudit(userId, "account.profile_updated", "user", userId, {
+    fields: ["name", "phone", "locale"],
+  });
   return { status: "updated" };
 }
 
@@ -269,6 +314,7 @@ export async function changePassword(
 
   await destroyAllSessionsForUser(userId);
   const session = await createSession(userId, context);
+  await recordAudit(userId, "auth.password_changed", "user", userId, { ip: context.ip });
   return { status: "changed", sessionToken: session.token, expiresAt: session.expiresAt };
 }
 

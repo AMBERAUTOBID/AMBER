@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { clsx } from "clsx";
 import { Minus, Plus, WhatsappLogo, Info } from "@phosphor-icons/react/dist/ssr";
@@ -17,6 +17,7 @@ import {
   type CoreVehicleKind,
 } from "@/modules/pricing/model/costEstimate";
 import { formatUsd, formatEur } from "@/modules/pricing/model/format";
+import { reportActivity } from "@/modules/activity/components/reportActivity";
 import { portLabel as localisedPortLabel, portCityNominative } from "@/modules/pricing/model/ports";
 
 // Only the three destinations with a real customs model are offered here.
@@ -121,6 +122,29 @@ export default function VehicleCostPanel({
 
   const [bid, setBid] = useState(String(startingBid));
   const [port, setPort] = useState(PORT_OPTIONS[0]);
+
+  /**
+   * Picking a destination is the strongest buying signal on the site —
+   * someone costing this car to Klaipėda is further along than someone who
+   * saved forty of them — so it is reported for the client's history.
+   *
+   * Reported on the *choice*, not on the recalculation. The panel recomputes
+   * on every keystroke in the bid field, and reporting that would send a
+   * request per character. Each (lot, port) pair is reported once per page
+   * visit; the server's 30-minute collapse handles repeats across visits, and
+   * this handles the burst within one.
+   */
+  const reported = useRef<Set<string>>(new Set());
+  function choosePort(next: string) {
+    setPort(next);
+    if (reported.current.has(next)) return;
+    reported.current.add(next);
+    reportActivity("lot.cost_calculated", {
+      platform: auctionNetwork,
+      lot: lotNumber,
+      port: next,
+    });
+  }
   const [hazmat, setHazmat] = useState(false);
   const [oversize, setOversize] = useState(false);
   // Defaults to the detected value; when nothing was detected it starts off,
@@ -209,7 +233,7 @@ export default function VehicleCostPanel({
       <div className="mt-2">
         <ScrollableSelect
           value={port}
-          onChange={(v) => setPort(v || PORT_OPTIONS[0])}
+          onChange={(v) => choosePort(v || PORT_OPTIONS[0])}
           options={PORT_OPTIONS}
           placeholder={t("terminalPlaceholder")}
           searchPlaceholder={t("searchPlaceholder")}

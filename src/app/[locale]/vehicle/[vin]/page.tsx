@@ -17,6 +17,9 @@ import { ownSaleInstant } from "@/modules/inventory/model/saleInstant";
 import LotCountdown from "@/modules/inventory/components/LotCountdown";
 import { currentUser } from "@/modules/auth/model/currentUser";
 import { savedLotKeys, lotKey } from "@/modules/favorites/model/favorites";
+import { recordVisit } from "@/modules/activity/api/recordVisit";
+import { lotLabel, lotSubjectKey } from "@/modules/activity/model/subjects";
+import AuctionLinkTracker from "@/modules/activity/components/AuctionLinkTracker";
 import {
   getAuctionSource,
   type VehicleDetailResponse,
@@ -203,6 +206,31 @@ export default async function VehicleDetailPage({
     ? (await savedLotKeys(viewer.id)).has(lotKey(detail.platform, detail.lot_number))
     : false;
 
+  // Which cars a signed-in client actually opens — the baseline signal behind
+  // the history on /admin/users/[id]. Recorded here rather than from the
+  // browser because this page is already dynamic (it reads the session above),
+  // so the write costs no caching and needs no client JavaScript under the
+  // strict CSP.
+  //
+  // `recordVisit`, not `recordActivity`: Next prefetches linked pages on hover
+  // and executes this component to do it. See the header check there — without
+  // it, every lot card that scrolled past would be logged as a car they looked
+  // at.
+  if (viewer) {
+    await recordVisit({
+      userId: viewer.id,
+      kind: "lot.viewed",
+      subjectKey: lotSubjectKey(detail.platform, detail.lot_number),
+      // Absent, not zero: Copart lots routinely carry no bid before bidding
+      // opens, and "$0" in a history is a price nobody offered.
+      label: lotLabel(
+        detail.title,
+        detail.pricing?.current_bid_usd ? Math.round(detail.pricing.current_bid_usd * 100) : null
+      ),
+      detail: { vin: detail.vin, lot: detail.lot_number, platform: detail.platform },
+    });
+  }
+
   const soldPriceUsd = detail.pricing?.last_sold_price_usd ?? null;
   const soldDay = detail.auction?.last_sold_day ?? null;
   const wasSold =
@@ -258,16 +286,29 @@ export default async function VehicleDetailPage({
                 number or platform is not something we can build a URL from —
                 see auctionLotUrl, which refuses to guess. */}
             {auctionUrl ? (
-              <a
-                href={auctionUrl}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                className="inline-flex items-center gap-1.5 rounded-full bg-char-900 px-2.5 py-1 text-white transition-colors hover:bg-amber-600"
-                title={t("viewOnAuction", { auction: auctionName ?? detail.platform })}
-              >
-                {detail.platform}
-                <ArrowSquareOut size={12} weight="bold" />
-              </a>
+              <>
+                <a
+                  id="auction-source-link"
+                  href={auctionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-char-900 px-2.5 py-1 text-white transition-colors hover:bg-amber-600"
+                  title={t("viewOnAuction", { auction: auctionName ?? detail.platform })}
+                >
+                  {detail.platform}
+                  <ArrowSquareOut size={12} weight="bold" />
+                </a>
+                {/* Renders nothing; only listens. Mounted only for signed-in
+                    clients, since there is no history to write for anyone
+                    else. */}
+                {viewer && (
+                  <AuctionLinkTracker
+                    anchorId="auction-source-link"
+                    platform={detail.platform}
+                    lotNumber={detail.lot_number}
+                  />
+                )}
+              </>
             ) : (
               <span className="rounded-full bg-char-900 px-2.5 py-1 text-white">
                 {detail.platform}

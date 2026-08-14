@@ -799,7 +799,7 @@
       "title": "Privacy Policy",
       "subtitle": "How we collect, use, and protect your information when you use SmartAutoBid."
     },
-    "updated": "Last updated: July 23, 2026",
+    "updated": "Last updated: August 14, 2026",
     "sections": [
       {
         "title": "Who we are",
@@ -824,6 +824,16 @@
           "To communicate with you about your inquiry or order, in your selected language where possible.",
           "To maintain and improve the security and functionality of our website.",
           "We do not use your information for automated advertising profiling, and we do not sell your personal information to third parties."
+        ]
+      },
+      {
+        "title": "Client account activity",
+        "body": [
+          "If you hold an account with us, we keep a record of how you use it: which vehicles you open, save or remove, the searches you run, the shipping-cost estimates you request and the destination you choose, whether you open a lot on Copart's or IAAI's own site, enquiries you send while signed in, and account events such as signing in, verifying your email, changing your password and requesting or ending a deposit.",
+          "We do this so that the consultant handling your purchase knows which vehicles you are actually interested in, and can advise you without asking you to repeat yourself. It is visible to our staff and to nobody else. We do not use it for advertising, we do not build profiles for third parties, and we do not sell it.",
+          "Browsing activity is deleted automatically 90 days after it happens. Account events are kept while your account exists, because they are the record of decisions about your money and access. If you erase your account, your browsing activity is deleted outright.",
+          "We do not track visitors who are not signed in for this purpose, and we do not record the contents of messages here — only that an enquiry was sent and which vehicle it concerned.",
+          "You can ask us at any time for a copy of what this record holds about you, or ask us to delete it, using the contact details below."
         ]
       },
       {
@@ -1722,7 +1732,72 @@
     "refundStillActive": "Their plan is still active. Nothing has moved yet.",
     "refundApprove": "Refund and end the plan",
     "refundDecline": "Decline",
-    "topUpFrom": "Moving up from {plan} — the amount above is the difference"
+    "topUpFrom": "Moving up from {plan} — the amount above is the difference",
+    "activity": {
+      "heading": "Activity",
+      "viewActivity": "View activity",
+      "backToUsers": "All users",
+      "empty": "Nothing recorded yet.",
+      "retentionNote": "Browsing activity is kept for {days} days and deleted automatically after that. Account events are kept for as long as the account exists.",
+      "times": "{count}×",
+      "byStaff": "by staff",
+      "firstSeen": "first seen {date}",
+      "erased": "This account was erased on {date}. Browsing history was deleted with it.",
+      "plan": "Plan",
+      "noPlan": "No plan",
+      "joined": "Joined",
+      "savedCars": "Saved cars",
+      "emailVerified": "Email verified",
+      "yes": "Yes",
+      "no": "No",
+      "kind": {
+        "lot": {
+          "viewed": "Viewed a car",
+          "saved": "Saved a car",
+          "unsaved": "Removed a saved car",
+          "cost_calculated": "Calculated landed cost",
+          "external_opened": "Opened the auction listing"
+        },
+        "search": {
+          "performed": "Searched"
+        },
+        "contact": {
+          "submitted": "Sent an enquiry"
+        },
+        "plans": {
+          "viewed": "Looked at plans"
+        },
+        "auth": {
+          "login": "Signed in",
+          "login_failed": "Failed sign-in",
+          "email_verified": "Verified their email",
+          "reset_requested": "Requested a password reset",
+          "password_reset": "Reset their password",
+          "password_changed": "Changed their password"
+        },
+        "account": {
+          "registered": "Registered",
+          "profile_updated": "Updated their profile",
+          "deleted": "Account erased"
+        },
+        "deposit": {
+          "requested": "Requested a plan",
+          "cancelled": "Withdrew a plan request",
+          "confirmed": "Deposit confirmed",
+          "refund_requested": "Asked for the deposit back",
+          "refund_declined": "Refund request declined",
+          "refunded": "Deposit refunded"
+        },
+        "plan": {
+          "overridden": "Plan changed by an admin"
+        },
+        "maintenance": {
+          "enabled": "Maintenance mode on",
+          "disabled": "Maintenance mode off",
+          "bypass_reissued": "Maintenance bypass reissued"
+        }
+      }
+    }
   },
   "Orders": {
     "title": "My vehicles",

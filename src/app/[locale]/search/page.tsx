@@ -21,6 +21,8 @@ import {
 import { parseFreeTextQuery, CATEGORY_TYPE_GROUPS } from "@/modules/inventory/model/searchQuery";
 import { currentUser } from "@/modules/auth/model/currentUser";
 import { savedLotKeys, lotKey } from "@/modules/favorites/model/favorites";
+import { recordVisit } from "@/modules/activity/api/recordVisit";
+import { searchLabel, searchSubjectKey } from "@/modules/activity/model/subjects";
 import SaveLotButton from "@/modules/favorites/components/SaveLotButton";
 import {
   Info,
@@ -200,6 +202,20 @@ export default async function SearchPage({
   // no lookup.
   const viewer = await currentUser();
   const savedKeys = viewer ? await savedLotKeys(viewer.id) : new Set<string>();
+
+  // What they are hunting for. Normalised and paging stripped by
+  // `searchSubjectKey`, so walking to page 3 of one search is one line in the
+  // history rather than three — and so two URLs that mean the same search
+  // collapse instead of reading as two different interests.
+  if (viewer) {
+    await recordVisit({
+      userId: viewer.id,
+      kind: "search.performed",
+      subjectKey: searchSubjectKey(sp),
+      label: searchLabel(sp),
+      detail: { results: results?.meta.total ?? null },
+    });
+  }
 
   const basePageQuery: Record<string, string> = {};
   if (q) basePageQuery.q = q;

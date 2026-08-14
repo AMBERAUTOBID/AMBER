@@ -36,6 +36,10 @@
  */
 import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
+// The never-fatal audit writer, shared since 2026-08-14 — it lived here in
+// full, and identically in maintenance.ts, until authentication needed a third
+// copy.
+import { recordAudit } from "@/shared/db/audit";
 import { PLANS, type PlanKey } from "./plans";
 
 /**
@@ -587,18 +591,3 @@ export async function setPlanByAdmin(
   return { status: "applied", userId, planKey, previousPlanKey };
 }
 
-/** Append-only. Never let an audit failure break the action it describes —
- * a lost log line is bad; a half-applied money operation is worse. */
-async function recordAudit(
-  actorId: string,
-  action: string,
-  targetType: string,
-  targetId: string,
-  detail: unknown
-): Promise<void> {
-  try {
-    await db().insert(schema.auditLog).values({ actorId, action, targetType, targetId, detail });
-  } catch (e) {
-    console.error("[audit] failed to record", action, e);
-  }
-}

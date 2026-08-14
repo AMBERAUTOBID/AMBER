@@ -16,9 +16,17 @@
  *   activePlanKey → null; an erased account holds nothing
  *   sessions      → deleted outright, so access stops immediately
  *   action_tokens → deleted, so no emailed reset link can resurrect it
+ *   favorites     → deleted; saved cars are personal data with no duty behind
+ *   activity      → deleted; browsing history, same reasoning as favourites
  *
  * What survives: deposit rows with their amounts, statuses and dates, and the
  * audit log. Neither names the person any more.
+ *
+ * ⚠️ **The split between the two history tables is enforced here.** The audit
+ * log survives an erasure because it is the accountability record — who
+ * confirmed a deposit, when a plan changed. `activity_events` does not, because
+ * it is behaviour and nothing obliges us to keep it. That is the whole reason
+ * they are two tables rather than one; see the schema comment.
  *
  * **The email is replaced rather than nulled**, and that is doing two jobs.
  * The column is NOT NULL with a unique index, so it needs *a* value; and
@@ -29,6 +37,7 @@
  */
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
+import { deleteActivityFor } from "@/modules/activity/model/events";
 
 /** Not a valid scrypt hash — `verifyPassword` rejects the format outright, so
  * no password, correct or otherwise, can ever match it. */
@@ -82,6 +91,17 @@ export async function deleteAccount(
   // the deposit rows there is no accounting duty to keep it. Deleted
   // outright, not anonymised: an unowned favourite means nothing.
   await db().delete(schema.favorites).where(eq(schema.favorites.userId, userId));
+
+  // Browsing history goes the same way, for the reason given on the line
+  // above: which cars a person looked at, searched for and costed is their
+  // personal data with no accounting duty behind it.
+  //
+  // ⚠️ NOT redundant with the table's `on delete cascade`. Erasure anonymises
+  // the user row rather than deleting it, so the cascade never fires — it is
+  // the backstop for a genuine hard delete, and this line is what actually
+  // runs. Relying on the cascade here would leave every event in place while
+  // looking, in the schema, as though it had been handled.
+  await deleteActivityFor(userId);
 
   // Any open request dies with the account. Found by testing: without this,
   // an erased user's pending deposit stayed in the admin queue as a row

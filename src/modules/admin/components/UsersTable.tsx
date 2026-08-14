@@ -10,6 +10,7 @@ import {
   Trash,
   WarningCircle,
 } from "@phosphor-icons/react/dist/ssr";
+import { Link } from "@/i18n/navigation";
 
 export interface UsersTableRow {
   id: string;
@@ -131,6 +132,17 @@ export default function UsersTable({
                 )}
                 {row.deposits > 0 && <span>{t("depositCount", { count: row.deposits })}</span>}
               </div>
+
+              {/* The way into one person's file. A link rather than making the
+                  whole row clickable: the row already carries a destructive
+                  button, and a card where any stray click navigates is a card
+                  where the wrong click eventually does something else. */}
+              <Link
+                href={`/admin/users/${row.id}`}
+                className="mt-2 inline-flex text-xs font-semibold text-amber-700 underline-offset-4 hover:underline"
+              >
+                {t("activity.viewActivity")}
+              </Link>
             </div>
 
             {confirming !== row.id && (

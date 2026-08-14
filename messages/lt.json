@@ -799,7 +799,7 @@
       "title": "Privatumo politika",
       "subtitle": "Kaip renkame, naudojame ir saugome jūsų informaciją, kai naudojatės SmartAutoBid."
     },
-    "updated": "Paskutinį kartą atnaujinta: 2026 m. liepos 23 d.",
+    "updated": "Paskutinį kartą atnaujinta: 2026 m. rugpjūčio 14 d.",
     "sections": [
       {
         "title": "Kas mes esame",
@@ -824,6 +824,16 @@
           "Kad susisiektume su jumis dėl jūsų užklausos ar užsakymo, kai įmanoma — jūsų pasirinkta kalba.",
           "Kad palaikytume ir tobulintume mūsų svetainės saugumą bei funkcionalumą.",
           "Nenaudojame jūsų informacijos automatiniam reklaminiam profiliavimui ir neparduodame jūsų asmens duomenų trečiosioms šalims."
+        ]
+      },
+      {
+        "title": "Kliento paskyros veikla",
+        "body": [
+          "Jei turite paskyrą, fiksuojame, kaip ja naudojatės: kurias transporto priemones atidarote, išsaugote ar pašalinate iš išsaugotų, kokias paieškas atliekate, kokius pristatymo kainos skaičiavimus užsakote ir kurį paskirties uostą pasirenkate, ar atidarote lotą Copart arba IAAI svetainėje, prisijungus išsiųstas užklausas bei paskyros įvykius — prisijungimą, el. pašto patvirtinimą, slaptažodžio keitimą, depozito užsakymą ir užbaigimą.",
+          "Tai darome tam, kad jūsų pirkimą kuruojantis specialistas žinotų, kurios transporto priemonės jus iš tikrųjų domina, ir galėtų patarti neprašydamas kartoti to paties. Šiuos duomenis mato tik mūsų darbuotojai. Nenaudojame jų reklamai, nekuriame profilių tretiesiems asmenims ir jų neparduodame.",
+          "Naršymo istorija automatiškai ištrinama praėjus 90 dienų. Paskyros įvykiai saugomi tol, kol egzistuoja paskyra, nes tai yra sprendimų dėl jūsų pinigų ir prieigos įrašas. Ištrynus paskyrą, naršymo istorija ištrinama visiškai.",
+          "Taip nesekame lankytojų, kurie nėra prisijungę, ir čia nesaugome žinučių turinio — tik patį užklausos faktą ir transporto priemonę, dėl kurios ji buvo.",
+          "Bet kada galite paprašyti šių duomenų apie save kopijos arba jų ištrynimo, susisiekę žemiau nurodytais kontaktais."
         ]
       },
       {
@@ -1722,7 +1732,72 @@
     "refundStillActive": "Kliento planas vis dar aktyvus. Pinigai dar neišsiųsti.",
     "refundApprove": "Grąžinti ir užbaigti planą",
     "refundDecline": "Atmesti",
-    "topUpFrom": "Perėjimas iš {plan} — aukščiau nurodytas skirtumas"
+    "topUpFrom": "Perėjimas iš {plan} — aukščiau nurodytas skirtumas",
+    "activity": {
+      "heading": "Veikla",
+      "viewActivity": "Žiūrėti veiklą",
+      "backToUsers": "Visi vartotojai",
+      "empty": "Kol kas nieko neužfiksuota.",
+      "retentionNote": "Naršymo istorija saugoma {days} dienų ir po to ištrinama automatiškai. Paskyros įvykiai saugomi tol, kol egzistuoja paskyra.",
+      "times": "{count}×",
+      "byStaff": "atliko darbuotojas",
+      "firstSeen": "pirmą kartą {date}",
+      "erased": "Paskyra ištrinta {date}. Naršymo istorija ištrinta kartu su ja.",
+      "plan": "Planas",
+      "noPlan": "Be plano",
+      "joined": "Registracija",
+      "savedCars": "Išsaugota mašinų",
+      "emailVerified": "El. paštas patvirtintas",
+      "yes": "Taip",
+      "no": "Ne",
+      "kind": {
+        "lot": {
+          "viewed": "Žiūrėjo mašiną",
+          "saved": "Išsaugojo mašiną",
+          "unsaved": "Pašalino išsaugotą mašiną",
+          "cost_calculated": "Skaičiavo kainą su pristatymu",
+          "external_opened": "Atidarė lotą aukcione"
+        },
+        "search": {
+          "performed": "Ieškojo"
+        },
+        "contact": {
+          "submitted": "Išsiuntė užklausą"
+        },
+        "plans": {
+          "viewed": "Žiūrėjo planus"
+        },
+        "auth": {
+          "login": "Prisijungė",
+          "login_failed": "Nepavykęs prisijungimas",
+          "email_verified": "Patvirtino el. paštą",
+          "reset_requested": "Paprašė slaptažodžio atstatymo",
+          "password_reset": "Atstatė slaptažodį",
+          "password_changed": "Pakeitė slaptažodį"
+        },
+        "account": {
+          "registered": "Užsiregistravo",
+          "profile_updated": "Atnaujino profilį",
+          "deleted": "Paskyra ištrinta"
+        },
+        "deposit": {
+          "requested": "Paprašė plano",
+          "cancelled": "Atšaukė plano užklausą",
+          "confirmed": "Depozitas patvirtintas",
+          "refund_requested": "Paprašė grąžinti depozitą",
+          "refund_declined": "Grąžinimo prašymas atmestas",
+          "refunded": "Depozitas grąžintas"
+        },
+        "plan": {
+          "overridden": "Planą pakeitė administratorius"
+        },
+        "maintenance": {
+          "enabled": "Techninės priežiūros režimas įjungtas",
+          "disabled": "Techninės priežiūros režimas išjungtas",
+          "bypass_reissued": "Apėjimo raktas išduotas iš naujo"
+        }
+      }
+    }
   },
   "Orders": {
     "title": "Mano automobiliai",

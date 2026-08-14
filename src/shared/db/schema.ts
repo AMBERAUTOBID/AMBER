@@ -251,8 +251,14 @@ export const favorites = pgTable(
 /**
  * Append-only record of consequential actions: who did what to whom, when.
  * Written by the code paths that change money- or access-relevant state
- * (deposit confirmation, plan assignment, self-bidding grant, admin login).
- * Nothing ever updates or deletes rows here.
+ * (deposit confirmation, plan assignment, account erasure, and — since
+ * 2026-08-14 — every authentication event). Nothing ever updates or deletes
+ * rows here.
+ *
+ * ⚠️ **This is not where browsing goes.** See `activity_events` below for the
+ * reasoning; the short version is that these two tables have opposite
+ * retention rules and merging them forces a choice between destroying the
+ * audit trail and keeping behavioural data forever.
  */
 export const auditLog = pgTable(
   "audit_log",
@@ -274,6 +280,103 @@ export const auditLog = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("audit_log_actor_idx").on(t.actorId), index("audit_log_action_idx").on(t.action)]
+);
+
+/**
+ * What a client is actually interested in — which cars they open, save, price
+ * up and click through to. The sales record behind "this person called, what
+ * were they looking at?"
+ *
+ * ── WHY THIS IS NOT `audit_log` ─────────────────────────────────────────
+ * One timeline on screen, two tables underneath, because the two have
+ * **opposite retention rules** and one table would force a choice between two
+ * bad answers:
+ *
+ *   - `audit_log` is accountability. It must survive: it is how we can say
+ *     who confirmed a deposit and when. Nothing may ever purge it.
+ *   - This is behaviour. It is high-volume, worth little per row, and is
+ *     personal data with no accounting duty attached — so it must expire, and
+ *     it must be **deleted outright** when someone erases their account.
+ *
+ * Put browsing in `audit_log` and you either purge the audit trail or keep
+ * behavioural data forever. Both are wrong; two tables are neither.
+ * ────────────────────────────────────────────────────────────────────────
+ *
+ * **Rows collapse within a window** rather than being one row per hit. A
+ * client refreshing a lot page fourteen times is one fact — "he keeps coming
+ * back to this car" — and fourteen rows would bury it. `count` and the
+ * first/last pair carry that, and a gap longer than the window starts a new
+ * row so the timeline still reads as separate visits.
+ *
+ * Deliberately NOT recorded: ordinary page views (/about, /shipping), scroll
+ * depth, pointer movement. Those are surveillance rather than sales, and the
+ * noise would make the screen unreadable — which is the practical reason as
+ * well as the principled one.
+ */
+export const ACTIVITY_KINDS = [
+  /** Opened a lot's page. The baseline signal. */
+  "lot.viewed",
+  "lot.saved",
+  "lot.unsaved",
+  /**
+   * Ran the landed-cost calculator on a lot, to a named port. The strongest
+   * buying signal on the site: someone costing a car to Klaipėda is further
+   * along than someone who saved forty of them.
+   */
+  "lot.cost_calculated",
+  /** Clicked through to Copart/IAAI — leaving to look at the source listing. */
+  "lot.external_opened",
+  "search.performed",
+  "contact.submitted",
+  /** Opened the pricing page: thinking about paying us. */
+  "plans.viewed",
+] as const;
+
+export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
+
+export const activityEvents = pgTable(
+  "activity_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /**
+     * Cascade, unlike most tables here — there is no accounting reason to keep
+     * a row describing a person who no longer exists. `deleteAccount()`
+     * anonymises rather than deletes, so it removes these explicitly too;
+     * the cascade is the backstop for a genuine hard delete.
+     */
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: ACTIVITY_KINDS }).notNull(),
+    /**
+     * What the event is *about*, and the key repeats collapse on: a lot
+     * reference, a normalised search query, a plan page. Scoped per kind, so
+     * viewing and saving the same lot stay separate lines.
+     */
+    subjectKey: text("subject_key").notNull(),
+    /**
+     * How to render it, frozen at the time it happened — "2019 BMW X5,
+     * $12,400". Stored rather than looked up for the same reason favourites
+     * carry a snapshot: reading a client's history must cost zero calls to
+     * Apibara, and the label should say what they saw, not what the lot
+     * became afterwards.
+     */
+    label: text("label").notNull(),
+    /** Kind-specific extras: the port costed to, the filters searched on. */
+    detail: jsonb("detail"),
+    /** Hits collapsed into this row. See the window note above. */
+    count: integer("count").notNull().default(1),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    // The only read this table has: one client's history, newest first.
+    index("activity_events_user_idx").on(t.userId, t.lastSeenAt),
+    // The windowed upsert looks a row up by exactly this.
+    index("activity_events_subject_idx").on(t.userId, t.kind, t.subjectKey),
+    // The purge scans on age alone, across all users.
+    index("activity_events_age_idx").on(t.lastSeenAt),
+  ]
 );
 
 /**

@@ -1,4 +1,4 @@
-import { and, desc, isNull, isNotNull, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, isNull, isNotNull, or, sql, type SQL } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 
 /**
@@ -88,6 +88,51 @@ export async function listUsers(query: string): Promise<UsersResult> {
       deposits: Number(r.deposits),
     })),
     total: Number(counted[0]?.total ?? 0),
+  };
+}
+
+/**
+ * One person, for their own page.
+ *
+ * A separate query rather than filtering `listUsers`, because the two answer
+ * different questions and want different shapes — and because this one must
+ * be able to return an **erased** account. The list hides them (nothing left
+ * to act on), but a direct link to one has to resolve to something honest
+ * rather than a 404 that reads as "no such person".
+ */
+export async function findUser(id: string): Promise<AdminUserRow & { deletedAt: Date | null } | null> {
+  const rows = await db()
+    .select({
+      id: schema.users.id,
+      name: schema.users.name,
+      email: schema.users.email,
+      phone: schema.users.phone,
+      role: schema.users.role,
+      activePlanKey: schema.users.activePlanKey,
+      emailVerifiedAt: schema.users.emailVerifiedAt,
+      deletedAt: schema.users.deletedAt,
+      createdAt: schema.users.createdAt,
+      favorites: sql<number>`(select count(*) from ${schema.favorites} where ${schema.favorites.userId} = ${schema.users.id})`,
+      deposits: sql<number>`(select count(*) from ${schema.deposits} where ${schema.deposits.userId} = ${schema.users.id})`,
+    })
+    .from(schema.users)
+    .where(eq(schema.users.id, id))
+    .limit(1);
+
+  const r = rows[0];
+  if (!r) return null;
+  return {
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    phone: r.phone,
+    role: r.role,
+    activePlanKey: r.activePlanKey,
+    emailVerified: r.emailVerifiedAt !== null,
+    deletedAt: r.deletedAt,
+    createdAt: r.createdAt,
+    favorites: Number(r.favorites),
+    deposits: Number(r.deposits),
   };
 }
 
