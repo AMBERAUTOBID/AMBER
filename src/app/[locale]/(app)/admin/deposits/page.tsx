@@ -3,10 +3,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { currentAdmin } from "@/modules/admin/model/currentAdmin";
 import { activeClients } from "@/modules/admin/model/clients";
-import { pendingDeposits } from "@/modules/plans/model/deposits";
+import { pendingDeposits, refundRequests } from "@/modules/plans/model/deposits";
 import { PLAN_KEYS } from "@/modules/plans/model/plans";
 import AdminSection from "@/modules/admin/components/AdminSection";
 import DepositQueue from "@/modules/admin/components/DepositQueue";
+import RefundQueue from "@/modules/admin/components/RefundQueue";
 import ActiveClients from "@/modules/admin/components/ActiveClients";
 
 export async function generateMetadata({
@@ -48,7 +49,11 @@ export default async function AdminDepositsPage({
     PLAN_KEYS.map((key) => [key, tPlans(`tiers.${key}.name`)])
   );
 
-  const [queue, clients] = await Promise.all([pendingDeposits(), activeClients()]);
+  const [queue, refunds, clients] = await Promise.all([
+    pendingDeposits(),
+    refundRequests(),
+    activeClients(),
+  ]);
 
   return (
     <div className="max-w-2xl">
@@ -59,6 +64,14 @@ export default async function AdminDepositsPage({
       <div className="mt-8">
         <AdminSection title={t("queueHeading")} count={queue.length}>
           <DepositQueue rows={queue} planNames={planNames} />
+        </AdminSection>
+
+        {/* Its own section, between money coming in and who is on a plan,
+            because that is the order the workflow runs in — and because a
+            refund and a confirmation must never sit in one list where the
+            buttons do opposite things to adjacent rows. */}
+        <AdminSection title={t("refundQueueHeading")} count={refunds.length}>
+          <RefundQueue rows={refunds} planNames={planNames} />
         </AdminSection>
 
         <AdminSection title={t("clientsHeading")} count={clients.length}>

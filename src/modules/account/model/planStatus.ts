@@ -1,5 +1,5 @@
-import { isPlanKey, type PlanKey } from "@/modules/plans/model/plans";
-import { pendingDepositFor } from "@/modules/plans/model/deposits";
+import { isPlanKey, PLANS, PLAN_KEYS, type PlanKey } from "@/modules/plans/model/plans";
+import { ledgerFor, pendingDepositFor, planChangeFor } from "@/modules/plans/model/deposits";
 import type { SessionUser } from "@/modules/auth/model/session";
 
 /**
@@ -18,6 +18,23 @@ export interface PlanStatus {
     amountCents: number;
     requestedAt: Date;
   } | null;
+  /** Money we are holding for them, USD cents. Zero on the free tier. */
+  heldCents: number;
+  /**
+   * They have asked for the deposit back and an admin hasn't paid it yet. The
+   * plan still works meanwhile — nothing has moved.
+   */
+  refundPending: boolean;
+  /**
+   * Tiers they could move up to, with what each would cost them **today**:
+   * the catalogue price minus what we already hold.
+   *
+   * Computed here rather than in the page so the figure on the button, the
+   * figure in the dialog and the row `requestPlan` writes all come from one
+   * subtraction. A page doing its own arithmetic is how a client ends up
+   * quoted one number and invoiced another.
+   */
+  upgrades: { planKey: PlanKey; amountCents: number }[];
 }
 
 export async function planStatusFor(user: SessionUser): Promise<PlanStatus> {
@@ -26,7 +43,7 @@ export async function planStatusFor(user: SessionUser): Promise<PlanStatus> {
   // to translate a key that no longer has a name.
   const active = user.activePlanKey && isPlanKey(user.activePlanKey) ? user.activePlanKey : null;
 
-  const deposit = await pendingDepositFor(user.id);
+  const [deposit, ledger] = await Promise.all([pendingDepositFor(user.id), ledgerFor(user.id)]);
   const pending =
     deposit && isPlanKey(deposit.planKey)
       ? {
@@ -37,5 +54,21 @@ export async function planStatusFor(user: SessionUser): Promise<PlanStatus> {
         }
       : null;
 
-  return { active, pending };
+  const upgrades = PLAN_KEYS.flatMap((key) => {
+    if (!PLANS[key].available) return [];
+    const change = planChangeFor(PLANS[key].depositUsdCents, ledger);
+    // `first` never appears here: this list is only ever read by a client who
+    // already holds something. Matched explicitly anyway rather than by
+    // elimination, so a fourth kind added later fails loudly instead of being
+    // silently offered as an upgrade.
+    return change.kind === "top_up" ? [{ planKey: key, amountCents: change.amountCents }] : [];
+  });
+
+  return {
+    active,
+    pending,
+    heldCents: ledger.heldCents,
+    refundPending: ledger.refundPending,
+    upgrades,
+  };
 }

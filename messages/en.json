@@ -1426,7 +1426,17 @@
         "cancelled": "Cancelled by you",
         "refund_requested": "Refund requested",
         "refunded": "Refunded"
-      }
+      },
+      "depositHeld": "Deposit held",
+      "topUpDue": "To transfer",
+      "topUpTotal": "of {total} in total",
+      "upgrade": "Move up a tier",
+      "refundRequest": "Take the deposit back",
+      "refundConfirm": "This asks us to return your {amount} deposit and ends your plan. Your plan keeps working until the money is actually sent back.",
+      "refundYes": "Yes, return my deposit",
+      "refundNo": "Keep my plan",
+      "refundError": "We couldn't send that request. Reload the page and try again, or email us and we'll do it for you.",
+      "refundPending": "You've asked us to return your {amount} deposit. Your plan stays active until the money is sent back — we'll email you when it is."
     },
     "details": {
       "title": "My details",
@@ -1573,7 +1583,8 @@
         "body": "Your request has been received and is awaiting confirmation by an administrator. We will contact you within 1 business day by email or phone and activate your account.",
         "alreadyBody": "You already have a plan request awaiting confirmation. We will contact you within 1 business day — there is no need to send it again.",
         "close": "Close"
-      }
+      },
+      "topUpBadge": "{amount} to transfer — {total} deposit in total"
     },
     "requestEmail": {
       "subject": "Your {plan} plan request",
@@ -1582,7 +1593,9 @@
       "depositDue": "Refundable deposit: {amount}. We'll send you the transfer details separately.",
       "nextStep": "One of our team will be in touch within one business day. Your plan activates as soon as we confirm your deposit has arrived.",
       "termsRecorded": "You accepted our terms when you made this request. You can read them again here: {url}",
-      "signature": "— The {site} team"
+      "signature": "— The {site} team",
+      "receivedUpgrade": "We've received your request to move up to the {plan} plan.",
+      "topUpDue": "To transfer: {amount}. That completes your {total} refundable deposit — what you've already paid stays with us, and only the difference moves. We'll send you the transfer details separately."
     },
     "decisionEmail": {
       "greeting": "Hello {name},",
@@ -1596,7 +1609,32 @@
         "subject": "Your {plan} deposit has been refunded",
         "body": "We've refunded your deposit for the {plan} plan. The plan is no longer active on your account.",
         "nextStep": "You can choose a plan again whenever you like: {url}\nIf you weren't expecting this, write to {email} and we'll explain what happened."
+      },
+      "changed": {
+        "subject": "Your plan is now {plan}",
+        "body": "We've moved your account to the {plan} plan. Your deposit is unchanged — no money has been taken or returned.",
+        "nextStep": "You can see it any time here: {url}\nIf you weren't expecting this, write to {email} and we'll explain."
+      },
+      "removed": {
+        "subject": "Your plan has been removed",
+        "body": "Your account is no longer on a plan. Any deposit you have with us is unchanged — no money has been taken or returned.",
+        "nextStep": "You can choose a plan again whenever you like: {url}\nIf you weren't expecting this, write to {email} and we'll explain."
       }
+    },
+    "yourPlan": "Your plan",
+    "yourPlanNote": "This is your current plan",
+    "lowerTierNote": "Below your current plan",
+    "refundPendingNote": "Unavailable while your refund is open",
+    "moveUp": "Move up to this plan",
+    "topUpFromHere": "+{amount} to move up",
+    "requestStale": "Something changed since this page loaded. Reload it to see where your plan stands.",
+    "refundEmail": {
+      "subject": "We've received your refund request",
+      "greeting": "Hello {name},",
+      "received": "We've received your request to have your {amount} deposit returned.",
+      "stillActive": "Your {plan} plan stays active until the money is actually sent back — nothing has changed on your account yet.",
+      "nextStep": "One of our team will be in touch within one business day. Any questions in the meantime, write to {email}.",
+      "signature": "— The {site} team"
     }
   },
   "Admin": {
@@ -1632,7 +1670,7 @@
     "activeSince": "Active since {date}",
     "refund": "Refund",
     "refunding": "Refunding…",
-    "refundConfirm": "This refunds the deposit and removes {name}'s plan immediately. They'll be emailed about it. Transferring the money back is a separate, manual step.",
+    "refundConfirm": "This returns {amount} to {name} and removes their plan immediately. They'll be emailed about it. Transferring the money back is a separate, manual step.",
     "refundYes": "Yes, refund it",
     "refundNo": "Cancel",
     "maintenance": {
@@ -1670,7 +1708,21 @@
       "eraseFailed": "That didn't work. Please try again.",
       "truncated": "Showing {shown} of {total}. Search to narrow the list.",
       "erasedNote": "{count, plural, one {# erased account is not shown} other {# erased accounts are not shown}}."
-    }
+    },
+    "held": "{amount} held",
+    "acrossRows": "{n, plural, one {# transfer} other {# transfers}}",
+    "underfunded": "We hold {held}, but this tier's deposit is {required}. Check the Bid Limits on the broker platform.",
+    "refundPendingNote": "Refund requested — nothing has moved yet.",
+    "setPlan": "Set plan",
+    "setPlanHint": "Override — no money moves.",
+    "noPlan": "No plan",
+    "refundQueueHeading": "Refund requests",
+    "refundQueueEmpty": "No refund requests.",
+    "toReturn": "{amount} to return",
+    "refundStillActive": "Their plan is still active. Nothing has moved yet.",
+    "refundApprove": "Refund and end the plan",
+    "refundDecline": "Decline",
+    "topUpFrom": "Moving up from {plan} — the amount above is the difference"
   },
   "Orders": {
     "title": "My vehicles",

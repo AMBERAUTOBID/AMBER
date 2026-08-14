@@ -68,6 +68,17 @@ export default function DepositQueue({
               {/* Bronze is free; printing "— $0" states an amount nobody owes. */}
               {row.amountCents > 0 && <> — <strong>{formatUsd(row.amountCents)}</strong></>}
             </p>
+            {/* An upgrade's figure is the DIFFERENCE, and an admin about to
+                watch a bank account for it must not read it as the tier's
+                price. Named from the client's live tier, because a row is a
+                top-up exactly when one exists. */}
+            {row.userActivePlanKey && (
+              <p className="mt-0.5 text-xs font-semibold text-amber-800">
+                {t("topUpFrom", {
+                  plan: planNames[row.userActivePlanKey] ?? row.userActivePlanKey,
+                })}
+              </p>
+            )}
             <p className="mt-0.5 text-xs text-char-500">
               {t("requestedOn", { date: row.createdAt.toISOString().slice(0, 10) })}
             </p>

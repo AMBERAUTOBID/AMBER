@@ -11,6 +11,11 @@
  * silently disappearing looks like a fault, and a client whose access stopped
  * working deserves to know it was deliberate.
  *
+ * The same argument extends to an admin override (`changed` / `removed`).
+ * That path moves no money, which makes it *more* important to send, not
+ * less: nothing else — no transfer, no bank line, no request of their own —
+ * would tell the client their limits moved.
+ *
  * Never fatal, always awaited — see `deliverQuietly`, and the same reasoning
  * as the request path: this is reporting something already committed, on a
  * platform that may freeze the function the moment the response is sent.
@@ -22,7 +27,7 @@ import { SITE, siteUrl } from "@/shared/config/site";
 import { deliver, deliverQuietly } from "./deliver";
 import { isPlanKey } from "../model/plans";
 
-type Decision = "confirmed" | "refunded";
+export type Decision = "confirmed" | "refunded" | "changed" | "removed";
 
 /**
  * Looks the recipient up rather than taking them as an argument: the admin

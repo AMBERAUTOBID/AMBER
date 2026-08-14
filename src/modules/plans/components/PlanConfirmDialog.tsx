@@ -23,16 +23,29 @@ import { planCoreLines } from "../model/planFeatures";
  */
 export default function PlanConfirmDialog({
   plan,
+  dueCents,
+  topUp,
   onClose,
 }: {
   plan: Plan;
+  /**
+   * What this client will actually be asked to transfer — the tier's deposit
+   * for a first request, the **difference** for someone moving up.
+   *
+   * Separate from `plan.depositUsdCents` because this dialog is the terms a
+   * client agrees to, and the terms have to name the sum that will land on
+   * their bank instruction. It is computed on the server by the same function
+   * that writes the deposit row, so the two cannot disagree.
+   */
+  dueCents: number;
+  topUp: boolean;
   onClose: () => void;
 }) {
   const t = useTranslations("Plans");
   const [agreed, setAgreed] = useState(false);
-  const [state, setState] = useState<"terms" | "sending" | "received" | "already" | "error">(
-    "terms"
-  );
+  const [state, setState] = useState<
+    "terms" | "sending" | "received" | "already" | "error" | "stale"
+  >("terms");
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -61,8 +74,18 @@ export default function PlanConfirmDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planKey: plan.key, acceptedTerms: true }),
       });
-      const body = (await res.json().catch(() => ({}))) as { ok?: boolean; status?: string };
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        status?: string;
+        error?: string;
+      };
       if (res.ok && body.ok) setState(body.status === "already_pending" ? "already" : "received");
+      // These two mean the page was rendered before something changed — a
+      // refund was requested, or the tier was granted, in another tab or by an
+      // admin. Telling them to reload is the true and actionable answer; the
+      // generic failure message would send them to support instead.
+      else if (body.error === "not_an_upgrade" || body.error === "refund_pending")
+        setState("stale");
       else setState("error");
     } catch {
       setState("error");
@@ -117,9 +140,17 @@ export default function PlanConfirmDialog({
             </h2>
 
             <span className="mt-3 inline-flex items-center rounded-full bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-800">
-              {plan.depositUsdCents === 0
-                ? t("noDeposit")
-                : t("dialog.depositBadge", { amount: formatUsd(plan.depositUsdCents) })}
+              {/* On an upgrade the badge names both figures: what completes
+                  the tier's deposit, and what the deposit then is. Either
+                  alone is a half-truth on the screen where they agree to it. */}
+              {topUp
+                ? t("dialog.topUpBadge", {
+                    amount: formatUsd(dueCents),
+                    total: formatUsd(plan.depositUsdCents),
+                  })
+                : dueCents === 0
+                  ? t("noDeposit")
+                  : t("dialog.depositBadge", { amount: formatUsd(dueCents) })}
             </span>
 
             <h3 className="mt-6 text-xs font-semibold uppercase tracking-wider text-char-500">
@@ -199,10 +230,10 @@ export default function PlanConfirmDialog({
               </button>
             </div>
 
-            {state === "error" && (
+            {(state === "error" || state === "stale") && (
               <p className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800">
                 <WarningCircle size={16} weight="fill" className="shrink-0 text-red-600" />
-                {t("requestError")}
+                {state === "stale" ? t("requestStale") : t("requestError")}
               </p>
             )}
           </>

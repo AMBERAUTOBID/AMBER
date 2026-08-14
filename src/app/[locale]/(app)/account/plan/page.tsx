@@ -4,6 +4,7 @@ import { Check } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/modules/account/model/requireUser";
 import { planStatusFor } from "@/modules/account/model/planStatus";
 import CancelPlanRequest from "@/modules/account/components/CancelPlanRequest";
+import RequestRefund from "@/modules/account/components/RequestRefund";
 import { PLANS, formatUsd, isPlanKey } from "@/modules/plans/model/plans";
 import { decidedDepositsFor } from "@/modules/plans/model/deposits";
 import { planFeatureLines } from "@/modules/plans/model/planFeatures";
@@ -67,7 +68,51 @@ export default async function AccountPlanPage({
               </li>
             ))}
           </ul>
+          {/* What we are actually holding for them. Absent, not zero, on the
+              free tier — the same rule the plan cards follow, and the reason
+              the two buttons below are hidden there too: there is nothing to
+              take back and nothing to count an upgrade against. */}
+          {status.heldCents > 0 && (
+            <dl className="mt-5 flex gap-2 border-t border-char-200/70 pt-4 text-sm">
+              <dt className="font-medium text-char-500">{t("depositHeld")}</dt>
+              <dd className="font-semibold text-char-900">{formatUsd(status.heldCents)}</dd>
+            </dl>
+          )}
+
+          {/*
+            The two client-facing actions, and deliberately only two: move up,
+            or take the money back. There is no self-service downgrade — which
+            is what removes the question that stalled this feature, because
+            with no downgrade there is no "refund the difference or hold it as
+            credit" for a page to answer on its own. Somebody who wants a
+            smaller commitment takes the deposit back and starts again.
+
+            Both are requests. Neither changes anything by itself.
+          */}
+          {status.refundPending ? (
+            <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-sm leading-relaxed text-char-700">
+              {t("refundPending", { amount: formatUsd(status.heldCents) })}
+            </p>
+          ) : (
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-char-200/70 pt-5">
+              {/* Hidden while a request is already open rather than shown and
+                  refused: requestPlan allows one at a time, and a button that
+                  always errors is worse than no button. */}
+              {status.upgrades.length > 0 && !status.pending && (
+                <Link
+                  href="/plans"
+                  className="inline-flex items-center rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+                >
+                  {t("upgrade")}
+                </Link>
+              )}
+              {status.heldCents > 0 && <RequestRefund amount={formatUsd(status.heldCents)} />}
+            </div>
+          )}
+
           <p className="mt-6 border-t border-char-200/70 pt-4 text-sm leading-relaxed text-char-600">
+            {/* Still the answer for everything the two buttons don't cover —
+                a step down, a free-tier holder leaving, anything unusual. */}
             {t.rich("changeHint", {
               contact: (chunks) => (
                 <a
@@ -99,8 +144,23 @@ export default async function AccountPlanPage({
                 would say "$0 due" is omitted rather than shown as zero. */}
             {status.pending.amountCents > 0 && (
               <div className="flex gap-2">
-                <dt className="font-medium text-char-500">{t("depositDue")}</dt>
-                <dd className="font-semibold">{formatUsd(status.pending.amountCents)}</dd>
+                {/* On an upgrade this figure is the DIFFERENCE, not the tier's
+                    price, so it gets its own label and names the total it
+                    completes. Calling $1,000 "Deposit" on a $2,500 tier is
+                    exactly how a correct transfer gets queried. */}
+                <dt className="font-medium text-char-500">
+                  {status.active ? t("topUpDue") : t("depositDue")}
+                </dt>
+                <dd className="font-semibold">
+                  {formatUsd(status.pending.amountCents)}
+                  {status.active && (
+                    <span className="ml-2 font-normal text-char-500">
+                      {t("topUpTotal", {
+                        total: formatUsd(PLANS[status.pending.planKey].depositUsdCents),
+                      })}
+                    </span>
+                  )}
+                </dd>
               </div>
             )}
           </dl>

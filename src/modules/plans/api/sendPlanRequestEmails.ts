@@ -34,6 +34,19 @@ interface PlanRequestMail {
   plan: Plan;
   /** The client ticked the agreement box. Recorded in the email as evidence. */
   acceptedTerms: boolean;
+  /**
+   * What actually has to be transferred — the tier's deposit for a first
+   * request, or **only the difference** for a client moving up.
+   *
+   * Passed in rather than read off `plan.depositUsdCents`, because those two
+   * numbers stop being the same the moment upgrades exist, and this email is
+   * the one place a client is told a figure before they go to their bank.
+   * Quoting the headline price to somebody who already has $1,500 with us
+   * would collect $2,500 for a $2,500 tier and leave us holding $4,000.
+   */
+  amountDueCents: number;
+  /** They already hold a deposit; this request tops it up to a higher tier. */
+  topUp: boolean;
 }
 
 export async function sendPlanRequestEmails(mail: PlanRequestMail): Promise<void> {
@@ -44,12 +57,23 @@ export async function sendPlanRequestEmails(mail: PlanRequestMail): Promise<void
   );
 }
 
-async function sendAdminNotification({ user, plan, acceptedTerms }: PlanRequestMail): Promise<void> {
-  const deposit = plan.depositUsdCents > 0 ? formatUsd(plan.depositUsdCents) : "none";
+async function sendAdminNotification({
+  user,
+  plan,
+  acceptedTerms,
+  amountDueCents,
+  topUp,
+}: PlanRequestMail): Promise<void> {
+  const due = amountDueCents > 0 ? formatUsd(amountDueCents) : "none";
   const body = [
     `${user.name} <${user.email}> requested the ${plan.key} plan.`,
     "",
-    `Deposit due:    ${deposit}`,
+    // Both numbers on an upgrade, never one. The admin is about to watch a
+    // bank account for a specific figure, and "$2,500 plan" next to a $1,000
+    // transfer is how a correct payment gets queried.
+    topUp
+      ? `To transfer:    ${due}  (top-up to the ${formatUsd(plan.depositUsdCents)} tier)`
+      : `Deposit due:    ${due}`,
     `Account locale: ${user.locale}`,
     `Terms accepted: ${acceptedTerms ? "yes" : "NO — check before proceeding"}`,
     "",
@@ -63,12 +87,12 @@ async function sendAdminNotification({ user, plan, acceptedTerms }: PlanRequestM
     // Reply goes to the customer, not to ourselves — the admin's first
     // action on this email is usually to answer them.
     replyTo: user.email,
-    subject: `Plan request: ${plan.key} — ${user.name}`,
+    subject: `${topUp ? "Plan upgrade" : "Plan request"}: ${plan.key} — ${user.name}`,
     text: body,
   });
 }
 
-async function sendClientCopy({ user, plan }: PlanRequestMail): Promise<void> {
+async function sendClientCopy({ user, plan, amountDueCents, topUp }: PlanRequestMail): Promise<void> {
   const t = await getTranslations({ locale: user.locale, namespace: "Plans.requestEmail" });
   const tPlans = await getTranslations({ locale: user.locale, namespace: "Plans" });
   const planName = tPlans(`tiers.${plan.key}.name`);
@@ -76,12 +100,22 @@ async function sendClientCopy({ user, plan }: PlanRequestMail): Promise<void> {
   const body = [
     t("greeting", { name: user.name }),
     "",
-    t("received", { plan: planName }),
+    topUp ? t("receivedUpgrade", { plan: planName }) : t("received", { plan: planName }),
     "",
     // Omitted entirely for a free plan rather than stated as $0 — the same
-    // rule the plan cards follow: an amount that isn't owed is absent.
-    ...(plan.depositUsdCents > 0
-      ? [t("depositDue", { amount: formatUsd(plan.depositUsdCents) }), ""]
+    // rule the plan cards follow: an amount that isn't owed is absent. On an
+    // upgrade the line names the difference and says what it is a difference
+    // from, so the client can check the arithmetic against their own records.
+    ...(amountDueCents > 0
+      ? [
+          topUp
+            ? t("topUpDue", {
+                amount: formatUsd(amountDueCents),
+                total: formatUsd(plan.depositUsdCents),
+              })
+            : t("depositDue", { amount: formatUsd(amountDueCents) }),
+          "",
+        ]
       : []),
     t("nextStep"),
     "",

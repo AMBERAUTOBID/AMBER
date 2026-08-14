@@ -1426,7 +1426,17 @@
         "cancelled": "Jūsų atšaukta",
         "refund_requested": "Pateiktas grąžinimo prašymas",
         "refunded": "Grąžinta"
-      }
+      },
+      "depositHeld": "Laikomas depozitas",
+      "topUpDue": "Pervesti",
+      "topUpTotal": "iš {total} iš viso",
+      "upgrade": "Pereiti į aukštesnį planą",
+      "refundRequest": "Atsiimti depozitą",
+      "refundConfirm": "Tai prašymas grąžinti {amount} depozitą ir užbaigti planą. Planas veikia tol, kol pinigai iš tikrųjų grąžinami.",
+      "refundYes": "Taip, grąžinkite depozitą",
+      "refundNo": "Palikti planą",
+      "refundError": "Prašymo išsiųsti nepavyko. Perkraukite puslapį ir bandykite dar kartą arba parašykite mums — padarysime už jus.",
+      "refundPending": "Paprašėte grąžinti {amount} depozitą. Planas lieka aktyvus, kol pinigai bus išsiųsti atgal — apie tai pranešime el. paštu."
     },
     "details": {
       "title": "Mano duomenys",
@@ -1573,7 +1583,8 @@
         "body": "Jūsų užklausa gauta ir laukia administratoriaus patvirtinimo. Susisieksime su jumis per 1 darbo dieną el. paštu arba telefonu ir aktyvuosime jūsų paskyrą.",
         "alreadyBody": "Jūs jau turite užklausą, laukiančią patvirtinimo. Susisieksime su jumis per 1 darbo dieną — siųsti iš naujo nereikia.",
         "close": "Uždaryti"
-      }
+      },
+      "topUpBadge": "{amount} pervesti — iš viso {total} depozitas"
     },
     "requestEmail": {
       "subject": "Jūsų {plan} plano užklausa",
@@ -1582,7 +1593,9 @@
       "depositDue": "Grąžinamas depozitas: {amount}. Mokėjimo rekvizitus atsiųsime atskirai.",
       "nextStep": "Mūsų specialistas susisieks su jumis per vieną darbo dieną. Planas aktyvuojamas, kai tik patvirtiname, kad depozitas gautas.",
       "termsRecorded": "Pateikdami užklausą sutikote su mūsų sąlygomis. Jas galite dar kartą perskaityti čia: {url}",
-      "signature": "— {site} komanda"
+      "signature": "— {site} komanda",
+      "receivedUpgrade": "Gavome jūsų prašymą pereiti į {plan} planą.",
+      "topUpDue": "Pervesti: {amount}. Ši suma papildo jūsų grąžinamą depozitą iki {total} — jau sumokėta suma lieka pas mus, pervedamas tik skirtumas. Mokėjimo rekvizitus atsiųsime atskirai."
     },
     "decisionEmail": {
       "greeting": "Sveiki, {name},",
@@ -1596,7 +1609,32 @@
         "subject": "Jūsų {plan} depozitas grąžintas",
         "body": "Grąžinome jūsų {plan} plano depozitą. Planas jūsų paskyroje nebeaktyvus.",
         "nextStep": "Naują planą galite pasirinkti bet kada: {url}\nJei to nesitikėjote, parašykite {email} ir paaiškinsime, kas įvyko."
+      },
+      "changed": {
+        "subject": "Jūsų planas pakeistas į {plan}",
+        "body": "Perkėlėme jūsų paskyrą į {plan} planą. Depozitas nepasikeitė — pinigai nebuvo nuskaityti ar grąžinti.",
+        "nextStep": "Peržiūrėti galite bet kada čia: {url}\nJei to nesitikėjote, parašykite {email} ir paaiškinsime."
+      },
+      "removed": {
+        "subject": "Planas pašalintas iš jūsų paskyros",
+        "body": "Jūsų paskyra nebeturi plano. Depozitas nepasikeitė — pinigai nebuvo nuskaityti ar grąžinti.",
+        "nextStep": "Naują planą galite pasirinkti bet kada: {url}\nJei to nesitikėjote, parašykite {email} ir paaiškinsime."
       }
+    },
+    "yourPlan": "Jūsų planas",
+    "yourPlanNote": "Tai jūsų dabartinis planas",
+    "lowerTierNote": "Žemesnis nei jūsų dabartinis planas",
+    "refundPendingNote": "Negalima, kol nagrinėjamas grąžinimo prašymas",
+    "moveUp": "Pereiti į šį planą",
+    "topUpFromHere": "+{amount} perėjimui",
+    "requestStale": "Nuo puslapio įkėlimo kažkas pasikeitė. Perkraukite jį, kad pamatytumėte dabartinę plano būseną.",
+    "refundEmail": {
+      "subject": "Gavome jūsų prašymą grąžinti depozitą",
+      "greeting": "Sveiki, {name},",
+      "received": "Gavome jūsų prašymą grąžinti {amount} depozitą.",
+      "stillActive": "{plan} planas lieka aktyvus, kol pinigai iš tikrųjų nebus išsiųsti atgal — paskyroje kol kas niekas nepasikeitė.",
+      "nextStep": "Mūsų specialistas susisieks su jumis per vieną darbo dieną. Klausimais rašykite {email}.",
+      "signature": "— {site} komanda"
     }
   },
   "Admin": {
@@ -1632,7 +1670,7 @@
     "activeSince": "Aktyvus nuo {date}",
     "refund": "Grąžinti depozitą",
     "refunding": "Grąžinama…",
-    "refundConfirm": "Depozitas bus grąžintas, o {name} planas nedelsiant panaikintas. Klientas gaus pranešimą el. paštu. Pinigų pervedimas atliekamas atskirai, rankiniu būdu.",
+    "refundConfirm": "Klientui {name} bus grąžinta {amount}, o planas nedelsiant panaikintas. Klientas gaus pranešimą el. paštu. Pinigų pervedimas atliekamas atskirai, rankiniu būdu.",
     "refundYes": "Taip, grąžinti",
     "refundNo": "Atšaukti",
     "maintenance": {
@@ -1670,7 +1708,21 @@
       "eraseFailed": "Nepavyko. Bandykite dar kartą.",
       "truncated": "Rodoma {shown} iš {total}. Patikslinkite paiešką, kad sąrašas susiaurėtų.",
       "erasedNote": "{count, plural, one {# ištrinta paskyra nerodoma} few {# ištrintos paskyros nerodomos} other {# ištrintų paskyrų nerodoma}}."
-    }
+    },
+    "held": "{amount} laikoma",
+    "acrossRows": "{n, plural, one {# pervedimas} few {# pervedimai} many {# pervedimo} other {# pervedimų}}",
+    "underfunded": "Laikome {held}, o šio plano depozitas yra {required}. Patikrinkite Bid Limits brokerio platformoje.",
+    "refundPendingNote": "Prašoma grąžinti — pinigai dar neišsiųsti.",
+    "setPlan": "Nustatyti planą",
+    "setPlanHint": "Rankinis pakeitimas — pinigai nejudinami.",
+    "noPlan": "Be plano",
+    "refundQueueHeading": "Grąžinimo prašymai",
+    "refundQueueEmpty": "Grąžinimo prašymų nėra.",
+    "toReturn": "{amount} grąžinti",
+    "refundStillActive": "Kliento planas vis dar aktyvus. Pinigai dar neišsiųsti.",
+    "refundApprove": "Grąžinti ir užbaigti planą",
+    "refundDecline": "Atmesti",
+    "topUpFrom": "Perėjimas iš {plan} — aukščiau nurodytas skirtumas"
   },
   "Orders": {
     "title": "Mano automobiliai",

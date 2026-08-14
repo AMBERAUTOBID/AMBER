@@ -7,6 +7,7 @@ import { clsx } from "clsx";
 import { Link } from "@/i18n/navigation";
 import { formatUsd, type Plan } from "../model/plans";
 import { planFeatureLines } from "../model/planFeatures";
+import type { CardState } from "../model/cardState";
 import PlanConfirmDialog from "./PlanConfirmDialog";
 
 /**
@@ -18,8 +19,13 @@ import PlanConfirmDialog from "./PlanConfirmDialog";
  * where they're heading) but are visually recessed and offer a Contact link
  * instead of a select button. The server refuses them too; this is only the
  * polite half.
+ *
+ * **What a signed-in client is offered is decided on the server** and arrives
+ * as `state` — see cardState.ts. The card renders the decision and never makes
+ * one, which is what keeps the figure on the button equal to the figure
+ * `requestPlan` writes to the deposit row.
  */
-export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boolean }) {
+export default function PlanCard({ plan, state }: { plan: Plan; state: CardState }) {
   const t = useTranslations("Plans");
   const locale = useLocale();
   // The card no longer submits anything: it opens the confirmation dialog,
@@ -29,8 +35,14 @@ export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boo
   // Generated from the plan table, never written per-card — see planFeatures.
   const features = planFeatureLines(plan, t);
 
+  const selectable = state.kind === "signed_out" || state.kind === "select" ||
+    state.kind === "upgrade";
+  // The difference on an upgrade, the full deposit otherwise. Undefined for
+  // every state that has no button to put a price on.
+  const dueCents = state.kind === "select" || state.kind === "upgrade" ? state.amountCents : null;
+
   function choose() {
-    if (!signedIn) {
+    if (state.kind === "signed_out") {
       window.location.assign(locale === "en" ? "/register" : `/${locale}/register`);
       return;
     }
@@ -50,7 +62,15 @@ export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boo
             : "border-char-200/70 bg-white hover:shadow-md"
       )}
     >
-      {plan.available && plan.featured && (
+      {/* "Your plan" replaces "Most popular" on the tier they hold. One badge
+          slot, and which tier is theirs is worth more to them than which tier
+          is popular. */}
+      {plan.available && state.kind === "current" && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-char-800 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+          {t("yourPlan")}
+        </span>
+      )}
+      {plan.available && plan.featured && state.kind !== "current" && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
           {t("popular")}
         </span>
@@ -83,6 +103,18 @@ export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boo
         {plan.depositUsdCents === 0 ? t("noDepositLabel") : t("refundableDeposit")}
       </p>
 
+      {/* The headline stays the tier's price — that is what the tier costs,
+          and it is how a client compares the row. The difference goes beneath
+          it as its own line, because the two numbers answer different
+          questions ("what is this tier" vs "what do I transfer today") and
+          collapsing them into one figure loses whichever question you didn't
+          pick. */}
+      {state.kind === "upgrade" && (
+        <p className="mt-2 inline-flex rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800">
+          {t("topUpFromHere", { amount: formatUsd(state.amountCents) })}
+        </p>
+      )}
+
       <p className="mt-4 text-sm leading-relaxed text-char-600">{t(`tiers.${plan.key}.tagline`)}</p>
 
       <ul className="mt-6 flex-1 space-y-3 border-t border-char-200/70 pt-6">
@@ -108,22 +140,49 @@ export default function PlanCard({ plan, signedIn }: { plan: Plan; signedIn: boo
       </ul>
 
       {plan.available ? (
-        <>
-          <button
-            type="button"
-            onClick={choose}
-            className={clsx(
-              "mt-7 inline-flex w-full items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold transition-colors",
-              plan.featured
-                ? "bg-amber-500 text-white hover:bg-amber-600"
-                : "border border-char-200 bg-white text-char-800 hover:border-amber-400 hover:text-amber-700"
-            )}
-          >
-            {signedIn ? t("choose") : t("chooseSignedOut")}
-          </button>
+        selectable ? (
+          <>
+            <button
+              type="button"
+              onClick={choose}
+              className={clsx(
+                "mt-7 inline-flex w-full items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold transition-colors",
+                plan.featured
+                  ? "bg-amber-500 text-white hover:bg-amber-600"
+                  : "border border-char-200 bg-white text-char-800 hover:border-amber-400 hover:text-amber-700"
+              )}
+            >
+              {state.kind === "signed_out"
+                ? t("chooseSignedOut")
+                : state.kind === "upgrade"
+                  ? t("moveUp")
+                  : t("choose")}
+            </button>
 
-          {dialogOpen && <PlanConfirmDialog plan={plan} onClose={() => setDialogOpen(false)} />}
-        </>
+            {dialogOpen && (
+              <PlanConfirmDialog
+                plan={plan}
+                // The dialog states the terms being agreed to, so it must name
+                // the amount that will actually be asked for — not the tier's
+                // price, when those differ.
+                dueCents={dueCents ?? plan.depositUsdCents}
+                topUp={state.kind === "upgrade"}
+                onClose={() => setDialogOpen(false)}
+              />
+            )}
+          </>
+        ) : (
+          /* Not selectable, and the card says which of the three reasons it is
+             rather than showing a dead button. A disabled control with no
+             explanation is the version of this that generates support email. */
+          <p className="mt-7 rounded-full border border-char-200 bg-char-50 px-6 py-3.5 text-center text-sm font-semibold text-char-600">
+            {state.kind === "current"
+              ? t("yourPlanNote")
+              : state.kind === "refund_pending"
+                ? t("refundPendingNote")
+                : t("lowerTierNote")}
+          </p>
+        )
       ) : (
         <>
           {/* Carries which tier they were looking at. Without it a Platinum
