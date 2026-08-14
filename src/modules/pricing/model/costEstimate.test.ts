@@ -24,7 +24,7 @@ import {
   inferCoreVehicleKind,
   isUsaBuiltVin,
   normalizeApibaraLocation,
-  BROKERAGE_FEE_USD,
+  brokerageFeeUsd,
   CORE_VEHICLE_BASE_SHIPPING,
   CUSTOMS_CLEARANCE_FEE_USD,
   PORT_CUSTOMS,
@@ -191,15 +191,38 @@ describe("estimateVehicleCost", () => {
 
     expect(result.lotPriceUsd).toBe(10_000);
     expect(result.auctionFeesUsd).toBe(1_000);
-    expect(result.brokerageFeeUsd).toBe(BROKERAGE_FEE_USD);
+    expect(result.brokerageFeeUsd).toBe(brokerageFeeUsd(null));
     expect(result.truckingUsd).toBe(TRUCKING_FLAT_USD);
     expect(result.shippingUsd).toBe(950);
     expect(result.dutyUsd).toBe(0);
     expect(result.vatUsd).toBeCloseTo(2_299.5, 6); // 21% of (10,000 + 950)
-    // 10,000 lot + 1,000 fees + 350 brokerage + 450 trucking + 950 freight
-    // + 0 duty + 2,299.50 VAT
-    expect(result.totalUsd).toBeCloseTo(15_049.5, 6);
-    expect(result.totalEur).toBeCloseTo(15_049.5 * USD_TO_EUR, 6);
+    // 10,000 lot + 1,000 fees + brokerage + 450 trucking + 950 freight
+    // + 0 duty + 2,299.50 VAT.
+    //
+    // The brokerage term is read from the plan table rather than written here,
+    // and that is the point: this baseline exists to catch numbers moving by
+    // ACCIDENT. The fee moving on purpose — $350 → $400 for the no-deposit
+    // rate on 2026-08-14 — is a decision recorded in `plans.ts`, and a test
+    // that restated the figure would fail for the one reason that is not a
+    // regression while still missing a drift in any other term.
+    const expectedTotal = 10_000 + 1_000 + brokerageFeeUsd(null) + 450 + 950 + 2_299.5;
+    expect(result.totalUsd).toBeCloseTo(expectedTotal, 6);
+    expect(result.totalEur).toBeCloseTo(expectedTotal * USD_TO_EUR, 6);
+  });
+
+  it("quotes a deposit tier the reduced rate, not the public one", () => {
+    // The fault this guards: the calculator was plan-blind, so everyone who had
+    // frozen $1,500+ to get the reduced fee was shown a landed cost built on
+    // the rate they do not pay — on every car they looked at.
+    const publicQuote = estimateVehicleCost(input);
+    const silverQuote = estimateVehicleCost({ ...input, planKey: "silver" });
+
+    expect(silverQuote.brokerageFeeUsd).toBe(brokerageFeeUsd("silver"));
+    expect(silverQuote.brokerageFeeUsd).toBeLessThan(publicQuote.brokerageFeeUsd);
+    expect(publicQuote.totalUsd - silverQuote.totalUsd).toBeCloseTo(
+      publicQuote.brokerageFeeUsd - silverQuote.brokerageFeeUsd,
+      6
+    );
   });
 
   it("totals exactly the sum of its own line items", () => {

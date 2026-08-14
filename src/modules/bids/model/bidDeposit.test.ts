@@ -14,7 +14,7 @@ import {
   DEPOSIT_FREE_AT_OR_BELOW_CENTS,
   PER_CAR_DEPOSIT_CEILING_CENTS,
 } from "./bidDeposit";
-import { PLANS } from "@/modules/plans/model/plans";
+import { PLANS, PLAN_KEYS } from "@/modules/plans/model/plans";
 
 const usd = (dollars: number) => dollars * 100;
 
@@ -103,11 +103,19 @@ describe("above $10,000 the answer is a plan, not a bigger hold", () => {
 });
 
 describe("tierCovering never answers with the free plan", () => {
-  it("skips uncapped tiers", () => {
-    // Bronze has maxBidUsd null. "The cheapest plan covering $30,000" must not
-    // be "the free one" just because it has no cap written down.
+  it("skips deposit-free plans, even once they carry a cap of their own", () => {
+    // Bronze now has a real $10,000 cap — given one so the free plan would stop
+    // out-promising Platinum on /plans. That broke the original exclusion here,
+    // which rested on Bronze being UNCAPPED rather than on Bronze being FREE:
+    // at a $0 deposit it is always the cheapest candidate, so once it had a cap
+    // covering $9,000, "the cheapest plan covering $9,000" answered "the free
+    // one" — and the client would have been told to take a plan they are
+    // already on instead of being quoted a deposit.
     expect(tierCovering(usd(30000))).toBe("platinum");
     expect(tierCovering(usd(9000))).toBe("silver");
+    // The rule stated directly, so it cannot regress silently a second time.
+    const free = PLAN_KEYS.filter((k) => PLANS[k].depositUsdCents === 0);
+    expect(free).not.toContain(tierCovering(usd(9000)));
   });
 
   it("picks the cheapest that fits, not the first that fits", () => {

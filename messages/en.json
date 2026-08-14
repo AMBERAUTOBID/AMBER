@@ -1523,6 +1523,7 @@
       "open": "Bid for me",
       "signedOut": "Register to bid",
       "callInstead": "Too close — call {phone}",
+      "callConsultant": "Too close for a form — call your consultant",
       "urgentHint": "This lot sells soon — tell us today.",
       "title": "Bid for me",
       "explainer": "Tell us the most you're willing to pay. We place the bid for you at the auction and stop at your maximum — never above it.",
@@ -1566,7 +1567,7 @@
     "metaDescription": "Choose how you work with SmartAutoBid.",
     "title": "Plans",
     "intro": "Every plan includes a personal consultant and our full buying, shipping and paperwork service. The deposit is refundable and returned when you finish working with us.",
-    "popular": "Most popular",
+    "popular": "For one or two cars",
     "noDeposit": "Free",
     "noDepositLabel": "get started free",
     "refundableDeposit": "refundable deposit",
@@ -1593,22 +1594,22 @@
     "tiers": {
       "bronze": {
         "name": "Bronze",
-        "tagline": "No deposit. We find the car and place the bids together with you — you pay only when you buy.",
+        "tagline": "For buying one car, or two. No deposit — we find it and bid alongside you, and you pay only when you buy.",
         "terms": "The Bronze plan requires no deposit. We search the auctions together with you: we help you find the vehicle you are looking for, calculate the full landed cost including fees, shipping and customs, and give you our honest view of the car's condition and resale prospects before you commit. Every bid is placed by us on your behalf. Our service fee is {fee} per vehicle, payable only when you successfully buy — if you never buy, you owe us nothing."
       },
       "silver": {
         "name": "Silver",
-        "tagline": "Your first deposit tier — one lot in play at a time.",
+        "tagline": "For buying regularly. Your first deposit tier — one lot at a time, at the reduced per-car fee.",
         "terms": "The Silver plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $10,000 with one active bid at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
       },
       "gold": {
         "name": "Gold",
-        "tagline": "More bidding power, two lots in play at once.",
+        "tagline": "For regular buyers who need more room — more bidding power, two lots in play at once.",
         "terms": "The Gold plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $25,000 with two active bids at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
       },
       "platinum": {
         "name": "Platinum",
-        "tagline": "Our highest limits, built for regular buyers.",
+        "tagline": "Our highest limits, for buying often and in volume.",
         "terms": "The Platinum plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $50,000 with five active bids at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
       }
     },

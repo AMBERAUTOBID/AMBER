@@ -9,7 +9,16 @@
  * lower-level pieces here (auctionFeesUsd/customsBreakdown) directly. The
  * bot only ever deals with car/suv/motorcycle auction listings, so it uses
  * estimateVehicleCost() for the full breakdown in one call.
+ *
+ * The plan table is the ONE import here, and it is data only — `plans.ts` has
+ * no imports of its own, so this file stays free of `next/*` and keeps working
+ * under the bot's plain `tsx` runtime. See `brokerageFeeUsd` for why the fee
+ * has to come from there rather than being written down again.
  */
+// Relative, not `@/` — the bot runs this file under plain `tsx`, where the
+// tsconfig path alias is not resolved. Every other import in this file is
+// relative for the same reason; keep it that way.
+import { PLANS, type PlanKey } from "../../plans/model/plans";
 import { localTransportRateUsd, type AuctionNetwork } from "./localTransportRates";
 
 export type CoreVehicleKind = "car" | "suv" | "motorcycle";
@@ -84,8 +93,39 @@ export function isUsaBuiltVin(vin: string | null | undefined): boolean | null {
 }
 
 export const TRUCKING_FLAT_USD = 450;
-export const BROKERAGE_FEE_USD = 350;
 export const USD_TO_EUR = 0.92;
+
+/**
+ * The brokerage fee, in dollars, for the plan the reader is actually on.
+ *
+ * ⚠️ THIS USED TO BE `export const BROKERAGE_FEE_USD = 350` AND IT WAS WRONG IN
+ * TWO SEPARATE WAYS AT ONCE.
+ *
+ * First, it was a flat number, so every Silver/Gold/Platinum client — the
+ * people who froze $1,500 or more precisely to get the reduced rate — was shown
+ * a landed cost built on the rate they do not pay. The one figure the deposit
+ * buys was the one figure the calculator ignored.
+ *
+ * Second, it was a SECOND COPY of a number that already lives in
+ * `plans.ts` as `feesPerVehicleUsdCents`. They are one commercial figure: the
+ * card calls it a service fee and the calculator calls it a brokerage fee, but
+ * a client pays it once. Two unlinked constants meant `/plans` could advertise
+ * one price while the calculator added another, with nothing erroring and no
+ * test failing — and `/plans` is indexed, so that is a published contradiction.
+ *
+ * Reading it from the plan table removes both faults together, and makes the
+ * fee change of 2026-08-14 ($350/$200 → $400/$350) a one-line edit there.
+ *
+ * **`null` means "nobody is signed in", and it resolves to Bronze deliberately.**
+ * A visitor with no account would pay the no-deposit rate if they bought today,
+ * so that is the honest quote — and quoting the cheaper one to someone not
+ * entitled to it understates a price, which is the worse of the two mistakes.
+ * The Telegram bot passes nothing and therefore quotes the same public rate.
+ */
+export function brokerageFeeUsd(planKey: PlanKey | null | undefined): number {
+  const plan = PLANS[planKey ?? "bronze"];
+  return (plan.feesPerVehicleUsdCents[0] ?? 0) / 100;
+}
 
 /**
  * Line items that only the per-lot vehicle-page calculator itemises. They're
@@ -127,6 +167,8 @@ export interface VehicleCostEstimateInput {
   auctionNetwork: AuctionNetwork;
   destinationPort: string;
   usaMade: boolean;
+  /** Whose rate to quote. Omitted / null = nobody signed in = the Bronze rate. */
+  planKey?: PlanKey | null;
 }
 
 export interface VehicleCostEstimateResult {
@@ -142,7 +184,9 @@ export interface VehicleCostEstimateResult {
 }
 
 export function estimateVehicleCost(input: VehicleCostEstimateInput): VehicleCostEstimateResult {
-  const { vehicleKind, lotPriceUsd, pickupLocation, auctionNetwork, destinationPort, usaMade } = input;
+  const { vehicleKind, lotPriceUsd, pickupLocation, auctionNetwork, destinationPort, usaMade, planKey } =
+    input;
+  const brokerage = brokerageFeeUsd(planKey);
   const fees = auctionFeesUsd(lotPriceUsd);
   const trucking = localTransportRateUsd(pickupLocation, auctionNetwork, vehicleKind, TRUCKING_FLAT_USD);
   const shipping = CORE_VEHICLE_BASE_SHIPPING[vehicleKind] * (PORT_MULTIPLIER[destinationPort] ?? 1);
@@ -152,12 +196,12 @@ export function estimateVehicleCost(input: VehicleCostEstimateInput): VehicleCos
     destinationPort,
     usaMade,
   });
-  const totalUsd = lotPriceUsd + fees + BROKERAGE_FEE_USD + trucking + shipping + dutyUsd + vatUsd;
+  const totalUsd = lotPriceUsd + fees + brokerage + trucking + shipping + dutyUsd + vatUsd;
 
   return {
     lotPriceUsd,
     auctionFeesUsd: fees,
-    brokerageFeeUsd: BROKERAGE_FEE_USD,
+    brokerageFeeUsd: brokerage,
     truckingUsd: trucking,
     shippingUsd: shipping,
     dutyUsd,
@@ -175,6 +219,8 @@ export interface LandedCostInput {
   auctionNetwork: AuctionNetwork;
   destinationPort: string;
   usaMade: boolean;
+  /** Whose rate to quote. Omitted / null = nobody signed in = the Bronze rate. */
+  planKey?: PlanKey | null;
   hazmat?: boolean;
   oversize?: boolean;
 }
@@ -219,7 +265,9 @@ export function estimateLandedCost(input: LandedCostInput): LandedCostResult {
     usaMade,
     hazmat = false,
     oversize = false,
+    planKey,
   } = input;
+  const brokerage = brokerageFeeUsd(planKey);
 
   const oceanFreightUsd =
     CORE_VEHICLE_BASE_SHIPPING[vehicleKind] * (PORT_MULTIPLIER[destinationPort] ?? 1);
@@ -237,7 +285,7 @@ export function estimateLandedCost(input: LandedCostInput): LandedCostResult {
     lotPriceUsd +
     auctionFees +
     TITLE_FEE_USD +
-    BROKERAGE_FEE_USD +
+    brokerage +
     oceanFreightUsd +
     truckingUsd +
     optionalServicesUsd;
@@ -256,7 +304,7 @@ export function estimateLandedCost(input: LandedCostInput): LandedCostResult {
       lotPriceUsd,
       auctionFeesUsd: auctionFees,
       titleFeeUsd: TITLE_FEE_USD,
-      brokerageFeeUsd: BROKERAGE_FEE_USD,
+      brokerageFeeUsd: brokerage,
       oceanFreightUsd,
       truckingUsd,
       optionalServicesUsd,

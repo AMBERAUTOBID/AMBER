@@ -60,10 +60,37 @@ describe("lines carry the catalogue's actual numbers", () => {
     );
   });
 
-  it("an uncapped plan says unlimited rather than a number", () => {
-    const uncapped = PLAN_KEYS.map((k) => PLANS[k]).find((p) => p.maxBidUsd === null);
-    expect(uncapped).toBeDefined();
-    expect(planCoreLines(uncapped!, stubTranslator)[0]).toBe("features.bidUnlimited");
+  /**
+   * ⚠️ THE CATALOGUE MUST NOT CONTAIN AN UNCAPPED TIER, and this is the test
+   * that says so — it used to require the opposite.
+   *
+   * Bronze carried `maxBidUsd: null` and `maxConcurrentBids: null`, which the
+   * card rendered as "unlimited bidding power" and "unlimited concurrent bids".
+   * The free plan therefore advertised more than Platinum at $5,000, and the
+   * page argued against its own price list. `null` had never been a promise —
+   * it meant only that every Bronze bid passes through us by hand, so there was
+   * nothing to enforce — but a client reads a card, not a data model.
+   *
+   * So the invariant flipped: every tier states a real limit.
+   */
+  it("no tier is uncapped — an unlimited free plan out-promises the paid ones", () => {
+    const uncapped = PLAN_KEYS.map((k) => PLANS[k]).filter(
+      (p) => p.maxBidUsd === null || p.maxConcurrentBids === null
+    );
+    expect(uncapped.map((p) => p.key)).toEqual([]);
+  });
+
+  /**
+   * The unlimited branch is now unreachable from the catalogue, so it is
+   * exercised directly. Keeping it covered is deliberate: the type still admits
+   * `null`, and a tier added later with an open cap must still render as words
+   * rather than as "$null".
+   */
+  it("still renders an uncapped plan as unlimited rather than a number", () => {
+    const uncapped = { ...PLANS.bronze, maxBidUsd: null, maxConcurrentBids: null };
+    const lines = planCoreLines(uncapped, stubTranslator);
+    expect(lines[0]).toBe("features.bidUnlimited");
+    expect(lines[1]).toBe("features.concurrentUnlimited");
   });
 
   /**

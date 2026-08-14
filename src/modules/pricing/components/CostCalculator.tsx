@@ -25,7 +25,7 @@ import { QUOTE_ONLY_DESTINATION_PORTS } from "@/modules/pricing/model/mapGeo";
 import {
   PORT_MULTIPLIER,
   TRUCKING_FLAT_USD,
-  BROKERAGE_FEE_USD,
+  brokerageFeeUsd,
   USD_TO_EUR,
   CORE_VEHICLE_BASE_SHIPPING,
   auctionFeesUsd,
@@ -188,7 +188,12 @@ export default function CostCalculator() {
 
     const lotPrice = Number(price) || 0;
     const auctionFees = auctionFeesUsd(lotPrice);
-    const brokerageFee = BROKERAGE_FEE_USD;
+    // The PUBLIC rate, deliberately. This calculator sits on the home page and
+    // /shipping, which are statically generated — reading a session to learn the
+    // reader's plan would make both pages dynamic for a $50 difference. A
+    // visitor with no deposit pays exactly this, so it is also the honest quote.
+    // The per-lot panel on a vehicle page is the one that knows who is looking.
+    const brokerageFee = brokerageFeeUsd(null);
     // Real per-location rates only cover Car/SUV/Motorcycle; every other
     // vehicle kind (ATV, boat, etc.) keeps the flat placeholder rate.
     const trucking =

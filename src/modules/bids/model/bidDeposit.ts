@@ -59,14 +59,27 @@ export type BidDeposit =
  * The cheapest available tier whose bidding cap covers this amount.
  *
  * Derived from the plan table rather than written out, so adding or repricing
- * a tier moves this with it. Tiers with no cap (`maxBidUsd: null`) are skipped
- * — Bronze is uncapped, and "the cheapest plan that covers $30,000" must not
- * answer "the free one".
+ * a tier moves this with it. Plans that take **no deposit** are skipped:
+ * "the cheapest plan that covers $30,000" must not answer "the free one".
+ *
+ * ⚠️ THAT EXCLUSION USED TO BE `maxBidUsd !== null`, AND IT WAS RIGHT ONLY BY
+ * ACCIDENT. It kept Bronze out because Bronze happened to be uncapped — so the
+ * moment Bronze was given a real $10,000 cap (to stop the free plan
+ * out-promising Platinum on /plans), the guard excluded nothing and Bronze, at
+ * a $0 deposit, would have won the cheapest-tier reduce outright. The property
+ * that matters was never the cap; it is whether the plan takes a deposit at
+ * all. Saying so directly makes this independent of what any tier's limits
+ * happen to become next.
  */
 export function tierCovering(amountCents: number): PlanKey | null {
   const candidates = PLAN_KEYS.filter((key) => {
     const plan = PLANS[key];
-    return plan.available && plan.maxBidUsd !== null && plan.maxBidUsd * 100 >= amountCents;
+    return (
+      plan.available &&
+      plan.depositUsdCents > 0 &&
+      plan.maxBidUsd !== null &&
+      plan.maxBidUsd * 100 >= amountCents
+    );
   });
   if (candidates.length === 0) return null;
   return candidates.reduce((cheapest, key) =>

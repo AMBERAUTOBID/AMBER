@@ -17,7 +17,7 @@
  * only; if a plan were ever withdrawn, existing holders would keep what they
  * paid for.
  *
- * ⚠️ **WHAT A DEPOSIT TIER BUYS TODAY IS THE $200 RATE AND THE BIDDING TERMS,
+ * ⚠️ **WHAT A DEPOSIT TIER BUYS TODAY IS THE $350 RATE AND THE BIDDING TERMS,
  * NOT SOFTWARE.** We still place every bid ourselves, exactly as with Bronze.
  * The caps below are commercial terms honoured by hand — and set as Bid Limits
  * on the broker platform — not features of this website. Which is why two
@@ -37,14 +37,29 @@
  * `can()` all follow, because none of them restate it.
  *
  * ── ALL FIGURES CONFIRMED BY THE OWNER ──────────────────────────────────
- * The four names; Bronze free at $350 per vehicle; Silver/Gold/Platinum
- * deposits of $1,500/$2,500/$5,000 at $200 per vehicle, with limits matching
- * bidauto.online's published tiers.
+ * The four names; Bronze free at **$400** per vehicle; Silver/Gold/Platinum
+ * deposits of $1,500/$2,500/$5,000 at **$350** per vehicle, with limits
+ * matching bidauto.online's published tiers.
  *
  * The fee is the whole commercial shape of the offer: a deposit buys the
- * reduced $200 rate, and Bronze trades that discount for costing nothing up
- * front. Change one of those numbers and the reason to pay a deposit changes
- * with it.
+ * reduced rate, and Bronze trades that discount for costing nothing up front.
+ * Change one of those numbers and the reason to pay a deposit changes with it.
+ *
+ * ⚠️ **AND IT JUST CHANGED, 2026-08-14 — the gap narrowed from $150 to $50.**
+ * It was $350 Bronze against $200 on a deposit tier. The owner raised both,
+ * and the consequence is worth stating plainly because the whole plans pitch
+ * rests on it: a deposit used to save $150 on every car, and now saves $50, so
+ * "Silver is cheaper than Bronze from the very first vehicle" survives but is
+ * three times weaker. The deposit is refundable, so it still costs nothing but
+ * frozen cash — that argument is now doing most of the work and belongs on the
+ * page, where it does not yet appear.
+ *
+ * ⚠️ **THE SAME NUMBER LIVES IN `modules/pricing/costEstimate.ts`.** The
+ * landed-cost calculator's brokerage line and the per-vehicle fee here are one
+ * commercial figure, and they were two unlinked constants that had already been
+ * measured drifting. `costEstimate` now imports from this table — never restate
+ * a fee there. Note the calculator is also imported by the Telegram bot, so a
+ * change here moves numbers in future channel captions.
  * ────────────────────────────────────────────────────────────────────────
  */
 
@@ -92,26 +107,59 @@ export interface Plan {
   selfBiddingEligible: boolean;
   /** False = shown on /plans but not selectable. See AVAILABILITY above. */
   available: boolean;
-  /** Highlighted as "most popular" on the plans page. Presentation only. */
+  /**
+   * Carries the highlighted badge on the plans page. Presentation only.
+   *
+   * ⚠️ The badge used to read "Most popular", and that was a claim about a
+   * track record this company does not have — the same class of statement as
+   * an invented testimonial or a "10 years in business" line, both of which
+   * were scrubbed site-wide once already. It now names the AUDIENCE instead
+   * ("For one or two cars"), which is a description of who a tier suits and
+   * therefore true on the day it ships.
+   */
   featured: boolean;
 }
 
 export const PLANS: Record<PlanKey, Plan> = {
   /**
-   * Bronze — free, and today the only plan anyone can take. We find the car
-   * and place the bids together with the client, so there is no deposit and
-   * no bidding cap to enforce: every bid passes through us. Revenue is the
-   * per-lot fee on a successful purchase.
+   * Bronze — free. We find the car and place every bid by hand together with
+   * the client. Revenue is the per-lot fee on a successful purchase.
+   *
+   * ⚠️ BOTH CAPS USED TO BE `null` — "unlimited" — AND THAT INVERTED THE PAGE.
+   * Read left to right, a client saw the free tier offering unlimited bidding
+   * power and unlimited concurrent bids, while Platinum at $5,000 offered
+   * $50,000 and five lots. The free plan read as strictly better than the most
+   * expensive one, and nothing on the page explained why anyone would pay.
+   *
+   * `null` was never a promise, only an absence: every bronze bid passes through
+   * us, so there had been nothing to cap. But §6 forbids a screen from
+   * describing a limit in prose — a card may only say what this table says — so
+   * the honest repair is to record the real limits here, where
+   * `judgeBidRequest()` already enforces them, not to reword a card.
+   *
+   * NEITHER NUMBER IS NEW. $10,000 is exactly where `bidDepositFor()` already
+   * stops taking a per-car deposit and quotes a tier instead: above it a hold
+   * and a tier cost the same money, and the tier covers every car.
+   *
+   * ⚠️ CONCURRENCY IS 1, NOT 2, AND THE DIFFERENCE IS EASY TO GET WRONG. The
+   * owner describes this client as buying "one car, at most two" — but that is
+   * a LIFETIME intent, not a number of simultaneous bids. Setting 2 here would
+   * let the free plan run MORE bids at once than Silver, which allows 1, and
+   * rebuild the same inversion one column to the left. The "one or two cars"
+   * idea belongs in the card's audience copy, which claims no limit at all.
+   *
+   * So Bronze and Silver share their caps deliberately. Silver is not more
+   * capacity — it is a cheaper fee ($350 against $400) and live-auction access.
    */
   bronze: {
     key: "bronze",
     depositUsdCents: 0,
-    maxBidUsd: null,
-    maxConcurrentBids: null,
+    maxBidUsd: 10000,
+    maxConcurrentBids: 1,
     concurrencyThresholdUsd: null,
     nightReserveVisible: false,
     liveAuctionAccess: false,
-    feesPerVehicleUsdCents: [35000], // $350 per vehicle — the no-deposit rate
+    feesPerVehicleUsdCents: [40000], // $400 — the no-deposit rate. See FEES below.
     selfBiddingEligible: false,
     available: true,
     featured: true,
@@ -126,7 +174,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: null,
     nightReserveVisible: false,
     liveAuctionAccess: true,
-    feesPerVehicleUsdCents: [20000], // $200 — the reduced rate a deposit buys
+    feesPerVehicleUsdCents: [35000], // $350 — the reduced rate a deposit buys
     selfBiddingEligible: false,
     available: true,
     featured: false,
@@ -141,7 +189,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: 10000,
     nightReserveVisible: false,
     liveAuctionAccess: true,
-    feesPerVehicleUsdCents: [20000],
+    feesPerVehicleUsdCents: [35000],
     selfBiddingEligible: false,
     available: true,
     featured: false,
@@ -156,7 +204,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     concurrencyThresholdUsd: 10000,
     nightReserveVisible: false,
     liveAuctionAccess: true,
-    feesPerVehicleUsdCents: [20000],
+    feesPerVehicleUsdCents: [35000],
     // Turn back on together with the broker account — see AVAILABILITY above.
     selfBiddingEligible: false,
     available: true,

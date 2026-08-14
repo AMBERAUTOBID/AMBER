@@ -17,6 +17,7 @@ import {
   type CoreVehicleKind,
 } from "@/modules/pricing/model/costEstimate";
 import { formatUsd, formatEur } from "@/modules/pricing/model/format";
+import type { PlanKey } from "@/modules/plans/model/plans";
 import { reportActivity } from "@/modules/activity/components/reportActivity";
 import { portLabel as localisedPortLabel, portCityNominative } from "@/modules/pricing/model/ports";
 
@@ -99,6 +100,7 @@ export default function VehicleCostPanel({
   lotTitle,
   vin,
   lotNumber,
+  viewerPlanKey,
 }: {
   currentBidUsd: number | null;
   buyNowUsd: number | null;
@@ -113,6 +115,13 @@ export default function VehicleCostPanel({
   lotTitle: string;
   vin: string;
   lotNumber: string;
+  /**
+   * The signed-in reader's plan, or null for a visitor. It decides the
+   * brokerage line — the ONE figure a deposit actually buys. Quoting everyone
+   * the no-deposit rate showed every paying client a landed cost higher than
+   * the one they are entitled to, on every car they looked at.
+   */
+  viewerPlanKey: PlanKey | null;
 }) {
   const t = useTranslations("VehicleDetail.calculator");
   const locale = useLocale();
@@ -166,6 +175,7 @@ export default function VehicleCostPanel({
     auctionNetwork,
     destinationPort: port,
     usaMade: effectiveUsaMade,
+    planKey: viewerPlanKey,
     hazmat,
     oversize,
   });

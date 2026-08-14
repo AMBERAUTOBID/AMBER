@@ -342,8 +342,29 @@ export default async function VehicleDetailPage({
             )}
           </Reveal>
 
-          <Reveal delay={0.05} className="mt-3 flex flex-wrap items-end justify-between gap-4">
-            <div>
+          {/*
+            TWO COLUMNS, NOT THREE — and that distinction is the entire fix.
+
+            This row used to be `flex flex-wrap justify-between` with THREE
+            children: the title block, the bid button and the countdown card.
+            `justify-between` pushes a middle child to the centre, so the
+            "call instead" pill floated in the middle of empty space; and
+            because `flex-wrap` re-flows on width, the countdown sat top-right
+            on one lot and dropped below-left on the next. The layout was
+            therefore decided by how long a TRANSLATED STRING happened to be,
+            which is why it looked different in each language and on each car.
+
+            Identity grows on the left; everything actionable lives in one
+            fixed-width panel on the right, stacked in the order a buyer needs
+            it — how long is left, what I can do, keep it for later. Fixed
+            width is the point: the panel cannot stretch to fill the row, so no
+            copy change can pull the layout out of shape again.
+          */}
+          <Reveal
+            delay={0.05}
+            className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"
+          >
+            <div className="min-w-0 lg:flex-1">
               <h1 className="text-2xl font-extrabold tracking-tight text-char-900 sm:text-3xl">
                 {detail.title}
               </h1>
@@ -369,31 +390,35 @@ export default async function VehicleDetailPage({
                 )}
               </div>
 
-              {/* Offered on sold lots too, deliberately. Someone comparing
-                  what similar cars actually went for still wants to keep the
-                  reference, and the saved card is dated — so it never implies
-                  a closed lot is still available. */}
-              <div className="mt-4">
-                {/* The LOT is saved, not the VIN. This reference is what a
-                    later refresh re-fetches, so saving a VIN would quietly
-                    resolve to a different appearance of the same car and
-                    overwrite the snapshot with another sale's price — the same
-                    fault as the card links, only delayed. */}
-                <SaveLotButton
-                  lot={detail.lot_number || detail.vin}
-                  initiallySaved={alreadySaved}
-                  signedIn={viewer !== null}
-                  variant="detail"
-                />
-              </div>
             </div>
 
-            {/* "Bid for me". Offered only while the lot can still be bid on —
-                a sold car has nothing to instruct us about, and the button
-                would be the page contradicting itself two lines below the
-                "sale closed" badge. */}
-            {!saleClosed && (
-              <div className="mt-5 max-w-md">
+            {/* The action panel. Fixed width on desktop, full width stacked on
+                a phone — so the three things a buyer acts on stay together and
+                in the same place on every lot. */}
+            <div className="w-full shrink-0 space-y-3 lg:w-[19rem]">
+              {saleDate && (
+                <AuctionDateCard
+                  isoDate={saleDate}
+                  formatted={detail.auction?.formatted ?? null}
+                  locale={locale}
+                  isUpcoming={isUpcoming}
+                  labels={{
+                    endsIn: t("auction.endsIn"),
+                    saleDate: t("auction.saleDate"),
+                    closed: t("auction.closed"),
+                    dayShort: t("auction.dayShort"),
+                    hourShort: t("auction.hourShort"),
+                    minuteShort: t("auction.minuteShort"),
+                    secondShort: t("auction.secondShort"),
+                  }}
+                />
+              )}
+
+              {/* "Bid for me". Offered only while the lot can still be bid on —
+                  a sold car has nothing to instruct us about, and the button
+                  would be the page contradicting itself two lines below the
+                  "sale closed" badge. */}
+              {!saleClosed && (
                 <BidRequestButton
                   lotRef={detail.lot_number || detail.vin}
                   // Computed here, on the server's clock, rather than in the
@@ -417,26 +442,25 @@ export default async function VehicleDetailPage({
                       : null
                   }
                 />
-              </div>
-            )}
+              )}
 
-            {saleDate && (
-              <AuctionDateCard
-                isoDate={saleDate}
-                formatted={detail.auction?.formatted ?? null}
-                locale={locale}
-                isUpcoming={isUpcoming}
-                labels={{
-                  endsIn: t("auction.endsIn"),
-                  saleDate: t("auction.saleDate"),
-                  closed: t("auction.closed"),
-                  dayShort: t("auction.dayShort"),
-                  hourShort: t("auction.hourShort"),
-                  minuteShort: t("auction.minuteShort"),
-                  secondShort: t("auction.secondShort"),
-                }}
+              {/* Offered on sold lots too, deliberately. Someone comparing what
+                  similar cars actually went for still wants to keep the
+                  reference, and the saved card is dated — so it never implies a
+                  closed lot is still available.
+
+                  The LOT is saved, not the VIN. This reference is what a later
+                  refresh re-fetches, so saving a VIN would quietly resolve to a
+                  different appearance of the same car and overwrite the snapshot
+                  with another sale's price — the same fault as the card links,
+                  only delayed. */}
+              <SaveLotButton
+                lot={detail.lot_number || detail.vin}
+                initiallySaved={alreadySaved}
+                signedIn={viewer !== null}
+                variant="detail"
               />
-            )}
+            </div>
           </Reveal>
         </Container>
       </section>
@@ -736,6 +760,14 @@ export default async function VehicleDetailPage({
 
                     <div className="mt-5">
                       <VehicleCostPanel
+                        // The deposit's whole point is the reduced per-vehicle
+                        // fee, so the one page that knows who is reading must
+                        // quote their rate rather than the public one.
+                        viewerPlanKey={
+                          viewer?.activePlanKey && isPlanKey(viewer.activePlanKey)
+                            ? viewer.activePlanKey
+                            : null
+                        }
                         currentBidUsd={currentBid}
                         buyNowUsd={buyNow}
                         pickupLocation={

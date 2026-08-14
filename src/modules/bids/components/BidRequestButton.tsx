@@ -88,20 +88,16 @@ export default function BidRequestButton({
     }
   }
 
-  // Below the cutoff nothing is offered that a form cannot keep. A phone
-  // number is not a refusal — somebody ringing now may still get the bid in.
-  if (windowState === "closed") {
-    return (
-      <a
-        href={CONTACT_HREF.tel}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-char-300 bg-white px-6 py-3.5 text-sm font-semibold text-char-800 transition-colors hover:border-amber-400 hover:text-amber-700"
-      >
-        <Phone size={17} weight="bold" />
-        {t("callInstead", { phone: SITE.phone.display })}
-      </a>
-    );
-  }
-
+  /**
+   * ⚠️ SIGNED-IN IS ASKED FIRST, AND THE ORDER USED TO BE THE OTHER WAY ROUND.
+   *
+   * The closed-window check came first, so a visitor with no account who opened
+   * a lot selling within four hours was handed a phone number instead of being
+   * asked to register. That is the wrong answer to give a stranger twice over:
+   * it invites a call we cannot act on for somebody who has no account, and it
+   * skips the one step every other path on the site insists on. **Whoever is
+   * not registered always gets "register first", whatever the clock says.**
+   */
   if (!signedIn) {
     return (
       <button
@@ -112,6 +108,30 @@ export default function BidRequestButton({
         <Gavel size={17} weight="bold" />
         {t("signedOut")}
       </button>
+    );
+  }
+
+  /**
+   * Below the cutoff nothing is offered that a form cannot keep — but WHO is
+   * told to ring depends on whose bids we place.
+   *
+   * A client without a deposit has no other way in: we place every one of their
+   * bids by hand, so the phone is genuinely their fastest remaining route and
+   * ringing now may still get the bid in. A deposit tier carries live-auction
+   * access and a named consultant, so sending them to a general number is the
+   * slower path, not the faster one — they are pointed at their consultant.
+   */
+  if (windowState === "closed") {
+    return (
+      <a
+        href={CONTACT_HREF.tel}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-char-300 bg-white px-6 py-3.5 text-sm font-semibold text-char-800 transition-colors hover:border-amber-400 hover:text-amber-700"
+      >
+        <Phone size={17} weight="bold" />
+        {onDepositTier
+          ? t("callConsultant")
+          : t("callInstead", { phone: SITE.phone.display })}
+      </a>
     );
   }
 

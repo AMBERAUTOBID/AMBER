@@ -1523,6 +1523,7 @@
       "open": "Statykite už mane",
       "signedOut": "Registruokitės, kad galėtumėte statyti",
       "callInstead": "Per vėlu — skambinkite {phone}",
+      "callConsultant": "Formai per vėlu — skambinkite savo konsultantui",
       "urgentHint": "Šis lotas netrukus parduodamas — praneškite mums šiandien.",
       "title": "Statykite už mane",
       "explainer": "Nurodykite daugiausia, kiek esate pasiruošę mokėti. Statymą atliksime už jus ir sustosime ties jūsų suma — niekada aukščiau.",
@@ -1566,7 +1567,7 @@
     "metaDescription": "Pasirinkite, kaip dirbsime kartu.",
     "title": "Planai",
     "intro": "Kiekviename plane — asmeninis konsultantas ir visas aptarnavimas: pirkimas, gabenimas ir dokumentai. Depozitas grąžinamas pasibaigus bendradarbiavimui.",
-    "popular": "Populiariausias",
+    "popular": "Vienam ar dviem automobiliams",
     "noDeposit": "Nemokamas",
     "noDepositLabel": "pradėkite nemokamai",
     "refundableDeposit": "grąžinamas depozitas",
@@ -1593,22 +1594,22 @@
     "tiers": {
       "bronze": {
         "name": "Bronza",
-        "tagline": "Be depozito. Automobilį surandame ir statymus atliekame kartu su jumis — mokate tik nusipirkę.",
+        "tagline": "Tiems, kurie perka vieną ar du automobilius. Be depozito — surandame automobilį ir statome kartu su jumis, mokate tik nusipirkę.",
         "terms": "Bronzos plane depozitas nereikalingas. Automobilio aukcionuose ieškome kartu su jumis: padedame surasti ieškomą automobilį, apskaičiuojame visą savikainą su mokesčiais, gabenimu ir muitine, sąžiningai įvertiname automobilio būklę bei perpardavimo perspektyvas prieš jums apsisprendžiant. Visus statymus atliekame mes jūsų vardu. Aptarnavimo mokestis — {fee} už automobilį, mokamas tik sėkmingai nusipirkus: nenusipirkus nemokate nieko."
       },
       "silver": {
         "name": "Sidabras",
-        "tagline": "Pirmoji depozito pakopa — vienas lotas vienu metu.",
+        "tagline": "Tiems, kurie perka nuolat. Pirmoji depozito pakopa — vienas lotas vienu metu ir mažesnis mokestis už automobilį.",
         "terms": "Sidabro planui reikalingas {deposit} depozitas, kuris visiškai grąžinamas pasibaigus bendradarbiavimui, jei nėra aktyvių statymų. Planas leidžia statyti iki $10,000, vienas aktyvus statymas vienu metu, aptarnavimo mokestis — {fee} už nupirktą automobilį. Visus statymus atliekame mes jūsų vardu."
       },
       "gold": {
         "name": "Auksas",
-        "tagline": "Daugiau galimybių: du lotai vienu metu.",
+        "tagline": "Nuolat perkantiems, kai reikia daugiau galios — du lotai vienu metu.",
         "terms": "Aukso planui reikalingas {deposit} depozitas, kuris visiškai grąžinamas pasibaigus bendradarbiavimui, jei nėra aktyvių statymų. Planas leidžia statyti iki $25,000, du aktyvūs statymai vienu metu, aptarnavimo mokestis — {fee} už nupirktą automobilį. Visus statymus atliekame mes jūsų vardu."
       },
       "platinum": {
         "name": "Platina",
-        "tagline": "Didžiausi mūsų limitai — nuolat perkantiems klientams.",
+        "tagline": "Didžiausi mūsų limitai — perkantiems reguliariai ir daug.",
         "terms": "Platinos planui reikalingas {deposit} depozitas, kuris visiškai grąžinamas pasibaigus bendradarbiavimui, jei nėra aktyvių statymų. Planas leidžia statyti iki $50,000, penki aktyvūs statymai vienu metu, aptarnavimo mokestis — {fee} už nupirktą automobilį. Visus statymus atliekame mes jūsų vardu."
       }
     },
