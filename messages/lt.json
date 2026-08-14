@@ -2035,5 +2035,27 @@
     "referenceLine": "Bylos Nr. {reference}",
     "cta": "Peržiūrėti bylą",
     "footer": "Šį laišką gavote, nes esate SmartAutoBid klientas."
+  },
+  "AdminBids": {
+    "deposit": {
+      "heading": "Užstatas už šią mašiną",
+      "ruleSays": "Pagal taisyklę",
+      "currently": "Dabar",
+      "none": "Nėra",
+      "newAmount": "Nauja suma",
+      "confirmRaise": "Patvirtink pakeitimą",
+      "confirmReduce": "Patvirtink užstato sumažinimą",
+      "riskUp": "Mūsų rizika didėja {amount}.",
+      "riskDown": "Mūsų rizika mažėja {amount}.",
+      "passwordWhy": "Užstato atsisakymas ar sumažinimas įrašomas su tavo vardu. Įvesk savo slaptažodį, kad patvirtintum.",
+      "passwordLabel": "Tavo slaptažodis",
+      "confirmSet": "Nustatyti {amount}",
+      "confirmWaive": "Atsisakyti užstato",
+      "saving": "Saugoma…",
+      "cancel": "Atšaukti",
+      "wrongPassword": "Slaptažodis neteisingas.",
+      "tooMany": "Per daug bandymų. Palauk kelias minutes.",
+      "failed": "Nepavyko išsaugoti. Bandyk dar kartą."
+    }
   }
 }

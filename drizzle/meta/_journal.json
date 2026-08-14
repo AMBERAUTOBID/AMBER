@@ -134,6 +134,13 @@
       "when": 1786712997460,
       "tag": "0018_square_killer_shrike",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1786721219122,
+      "tag": "0019_perpetual_wendigo",
+      "breakpoints": true
     }
   ]
 }

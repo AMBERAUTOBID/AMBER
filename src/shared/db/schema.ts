@@ -1341,3 +1341,185 @@ export const orderPayments = pgTable(
   },
   (t) => [index("order_payments_order_idx").on(t.orderId, t.paidAt)]
 );
+
+/**
+ * A client asking us to bid on a specific lot for them — the "statyti už mane"
+ * button on the vehicle page.
+ *
+ * ── WHY THIS EXISTS AND WILL KEEP EXISTING ──────────────────────────────
+ * Measured 2026-08-14: BidManager's public API is **read-only for bids**
+ * (`GET /bids/...` and nothing else), and its customer app works by logging
+ * the client into Copart/IAAI inside a WebView so they bid on the auction's
+ * own interface. Nothing anywhere lets a bid be placed programmatically. So
+ * placing bids from our site is not a feature waiting on an integration — it
+ * is impossible, and the clients this table serves have no auction access of
+ * their own at all. **We place every one of these by hand.**
+ *
+ * ── A BINDING INSTRUCTION, NOT AN ENQUIRY ───────────────────────────────
+ * Decided with the owner: the row carries a maximum bid the client has agreed
+ * to, because of the clock rather than a preference. US auctions run
+ * 16:00–01:00 Lithuanian time, so the client is asleep at the moment the lot
+ * sells and cannot be asked anything. Whatever we are going to be allowed to
+ * do has to be written down in advance.
+ *
+ * That makes this table a record of money someone committed to, so it follows
+ * the same rules as `deposits`: the amount and the fee are frozen server-side
+ * from our own sources, the acceptance timestamp is stamped here and never
+ * taken from the browser, and a human decides before anything happens.
+ */
+export const BID_REQUEST_STATUSES = [
+  /** The client asked. Nobody has looked yet. */
+  "requested",
+  /** We have agreed to place it. The instruction is live. */
+  "accepted",
+  /** We will not place it, with a reason the client is told. */
+  "declined",
+  /** The client withdrew before we placed it. */
+  "cancelled",
+  /** The bid is in at the auction. */
+  "placed",
+  "won",
+  "lost",
+] as const;
+
+export type BidRequestStatus = (typeof BID_REQUEST_STATUSES)[number];
+
+/** Statuses where the instruction is still live and counts against the plan's
+ * concurrency allowance. Exported because `can()` must be given exactly these
+ * and nothing else — see judgeBidRequest. */
+export const OPEN_BID_REQUEST_STATUSES = ["requested", "accepted", "placed"] as const;
+
+export const bidRequests = pgTable(
+  "bid_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /**
+     * `restrict`, matching `vehicle_orders` rather than `deposits`.
+     *
+     * This is the instruction behind a purchase; where one was won it is the
+     * evidence of what the client authorised us to pay. A hard delete should
+     * fail loudly rather than quietly take that with it. In practice neither
+     * fires — `deleteAccount()` anonymises — but the default should be the
+     * one that refuses.
+     */
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+
+    // ── which car, snapshotted at the moment of asking ────────────────────
+    /**
+     * Every field below is written from OUR OWN fetch of the lot, never from
+     * the request body — the rule `deposits.amountCents` and the favourites
+     * snapshot both follow. A client who could supply the title could
+     * instruct us to bid on "Ferrari — $500".
+     */
+    platform: text("platform", { enum: ["copart", "iaai"] }).notNull(),
+    lotNumber: text("lot_number").notNull(),
+    vin: text("vin"),
+    title: text("title").notNull(),
+    imageUrl: text("image_url"),
+    /** The sale time as known when they asked. Stored because the whole
+     * question "did this reach us in time?" is unanswerable without it. */
+    auctionAt: timestamp("auction_at", { withTimezone: true }),
+
+    // ── the instruction ───────────────────────────────────────────────────
+    /** The most the client authorises us to bid. USD cents. */
+    maxBidUsdCents: integer("max_bid_usd_cents").notNull(),
+    /**
+     * The per-vehicle service fee agreed AT THIS MOMENT, frozen.
+     *
+     * Read from the client's plan when the request is made and stored, for the
+     * same reason a deposit top-up records what actually transferred: if their
+     * plan lapses between asking and winning, the fee they agreed to must not
+     * silently become the higher one. What was agreed is what is owed.
+     */
+    feeUsdCents: integer("fee_usd_cents").notNull(),
+    /** Which plan they held when they asked — context for the frozen fee. */
+    planKeyAtRequest: text("plan_key_at_request"),
+    /** Free text from the client: "only if the title is clean". Bounded in
+     * the model; shown to whoever places the bid. */
+    clientNote: text("client_note"),
+
+    // ── the security deposit for THIS car ─────────────────────────────────
+    /**
+     * ⚠️ **Not the same thing as `deposits`, and deliberately not in it.**
+     *
+     * `deposits` is one running ledger per client whose invariant is
+     * "Σ confirmed − Σ refunded = the money held for their tier". This is a
+     * hold against ONE car: sized from that car's max bid and resolved when
+     * that one auction ends. Putting it in the plans ledger would make "how
+     * much do we hold" mean two things at once and quietly break an invariant
+     * that is currently proved by tests.
+     *
+     * What it protects against is narrower than it looks: not a client failing
+     * to buy, but a client **winning and then walking away**, which leaves us
+     * the relist fee, the storage, and the conversation with Aivi. That is the
+     * exposure the figure should be sized against — worth revisiting once the
+     * real relist fees are known.
+     */
+    depositRequiredCents: integer("deposit_required_cents").notNull().default(0),
+    /**
+     * What the rule computed before anybody interfered.
+     *
+     * Kept beside the live figure so an override is visible **on the row
+     * itself** rather than only in the audit log — "was this waived, and by
+     * how much?" is a question asked while looking at the request, not while
+     * reading a log.
+     */
+    depositDefaultCents: integer("deposit_default_cents").notNull().default(0),
+    depositStatus: text("deposit_status", {
+      enum: ["not_required", "awaiting", "received", "returned", "forfeited"],
+    })
+      .notNull()
+      .default("not_required"),
+    /** Who reduced or waived it, and when. Set only by the password-confirmed
+     * override — raising a deposit is not an override and needs no record. */
+    depositOverrideBy: uuid("deposit_override_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    depositOverrideAt: timestamp("deposit_override_at", { withTimezone: true }),
+
+    // ── lifecycle ─────────────────────────────────────────────────────────
+    status: text("status", { enum: BID_REQUEST_STATUSES }).notNull().default("requested"),
+    /** When the client ticked the agreement. Stamped server-side; a timestamp
+     * from the browser would be worthless as evidence. */
+    termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
+    /** Which admin accepted or declined, and when. `set null` for the same
+     * reason as `deposits.reviewedBy`: staff must stay deletable. */
+    reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    /** Told to the client. A refusal with no reason generates a phone call. */
+    declineReason: text("decline_reason"),
+    /** When the bid actually went in at the auction, by hand. */
+    placedAt: timestamp("placed_at", { withTimezone: true }),
+    /**
+     * The case file, once a request becomes a bought car. `set null` so an
+     * order can be removed without destroying the instruction behind it.
+     */
+    orderId: uuid("order_id").references((): AnyPgColumn => vehicleOrders.id, {
+      onDelete: "set null",
+    }),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    /** The client's own list, and the admin queue filtered by state. */
+    index("bid_requests_user_idx").on(t.userId, t.createdAt),
+    index("bid_requests_status_idx").on(t.status, t.createdAt),
+    /**
+     * **One live instruction per client per lot, enforced by the database.**
+     *
+     * A partial unique index rather than a check in the model, because this
+     * one is worth more than the "one open request at a time" rule deposits
+     * settles for. A double-tapped button or two open tabs must not produce
+     * two bid instructions on the same car — that is not a duplicate row, it
+     * is an ambiguous order about money, and whoever places the bid would
+     * have to guess which one the client meant. Superseded and finished
+     * states are excluded, so a client may ask again after losing.
+     */
+    uniqueIndex("bid_requests_one_open_per_lot_idx")
+      .on(t.userId, t.platform, t.lotNumber)
+      .where(sql`status in ('requested', 'accepted', 'placed')`),
+  ]
+);

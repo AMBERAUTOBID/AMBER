@@ -2035,5 +2035,27 @@
     "referenceLine": "File no. {reference}",
     "cta": "View the file",
     "footer": "You are receiving this because you are a SmartAutoBid client."
+  },
+  "AdminBids": {
+    "deposit": {
+      "heading": "Security deposit for this car",
+      "ruleSays": "Rule says",
+      "currently": "Currently",
+      "none": "None",
+      "newAmount": "New amount",
+      "confirmRaise": "Confirm the change",
+      "confirmReduce": "Confirm reducing the deposit",
+      "riskUp": "Our risk increases by {amount}.",
+      "riskDown": "Our risk decreases by {amount}.",
+      "passwordWhy": "Waiving or reducing a deposit is recorded against your name. Enter your password to confirm.",
+      "passwordLabel": "Your password",
+      "confirmSet": "Set {amount}",
+      "confirmWaive": "Waive the deposit",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "wrongPassword": "That password is not right.",
+      "tooMany": "Too many attempts. Wait a few minutes.",
+      "failed": "That didn't save. Try again."
+    }
   }
 }

@@ -53,6 +53,11 @@ export const LIMITS = {
    * every cycle, unmetered (2026-08-06 audit). Five an hour is generous for
    * a person deciding on a plan and useless for spamming an inbox. */
   planRequestPerUser: { max: 5, windowSeconds: 60 * 60 },
+  /** Keyed by admin id. Changing a bid's security deposit verifies the
+   * admin's password when the figure goes down, which makes it the same kind
+   * of guessing oracle as the password-change and maintenance endpoints — and
+   * nobody adjusts a deposit ten times in a quarter hour. */
+  bidDepositPerUser: { max: 10, windowSeconds: 15 * 60 },
   /** Keyed by user id. The browser-reported half of the activity history —
    * the cost calculator and auction click-throughs. The collapse window keeps
    * the *rows* down; this keeps the *writes* down, because a calculator that
