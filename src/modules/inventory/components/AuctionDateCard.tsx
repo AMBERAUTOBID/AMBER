@@ -2,6 +2,8 @@
 
 import { useSyncExternalStore } from "react";
 import { CalendarBlank, Clock } from "@phosphor-icons/react/dist/ssr";
+import { formatInstant } from "@/shared/time/formatInstant";
+import { splitDuration } from "@/shared/time/splitDuration";
 import { auctionClockStore } from "./auctionClock";
 
 /**
@@ -26,13 +28,17 @@ import { auctionClockStore } from "./auctionClock";
 export default function AuctionDateCard({
   isoDate,
   formatted,
+  locale,
   /** The server's verdict at render time. The clock can only move this to
    *  closed, never back — a sale time in the past does not return. */
   isUpcoming,
   labels,
 }: {
   isoDate: string;
+  /** The vendor's own rendering — a fallback, never the preferred answer.
+   *  See the sale-time note below. */
   formatted: string | null;
+  locale: string;
   isUpcoming: boolean;
   labels: {
     endsIn: string;
@@ -53,6 +59,23 @@ export default function AuctionDateCard({
   const target = new Date(isoDate).getTime();
   const hasClock = nowSeconds > 0 && Number.isFinite(target);
   const remaining = hasClock ? target - nowSeconds * 1000 : null;
+
+  /**
+   * THE SALE TIME, IN THE READER'S ZONE — not the vendor's.
+   *
+   * `formatted` arrives from the data vendor already rendered, in English and
+   * in a zone of their choosing. Printing it under a countdown computed in the
+   * reader's zone put two contradictory numbers on one card: measured
+   * 2026-08-13, "5val 50min" above "Aug 14, 2026 04:00", seven hours apart for
+   * a reader in Savannah.
+   *
+   * `nowSeconds > 0` is the same signal the countdown uses for "the clock is
+   * running, so we are on the client". Before it the vendor's string shows, so
+   * the first paint is identical on both sides and the card does not resize
+   * when the real answer arrives.
+   */
+  const localWhen = nowSeconds > 0 ? formatInstant(isoDate, locale) : null;
+  const when = localWhen ?? formatted;
 
   // Before hydration `remaining` is null and only the server's verdict is
   // available, which is what keeps the first paint identical on both sides.
@@ -89,9 +112,12 @@ export default function AuctionDateCard({
         )}
       </div>
 
-      {formatted && (
+      {when && (
         <p className={`mt-0.5 text-xs ${closed ? "text-red-700/60" : "text-char-400"}`}>
-          {formatted}
+          {/* The machine-readable instant stays in the markup whatever the
+              rendered text says, so the page carries the one unambiguous form
+              of this fact. */}
+          <time dateTime={isoDate}>{when}</time>
         </p>
       )}
     </div>
@@ -105,11 +131,9 @@ function Countdown({
   remaining: number;
   labels: { dayShort: string; hourShort: string; minuteShort: string; secondShort: string };
 }) {
-  const total = Math.max(0, Math.floor(remaining / 1000));
-  const days = Math.floor(total / 86400);
-  const hours = Math.floor((total % 86400) / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const seconds = total % 60;
+  // Shared with the result cards' countdown so the same sale cannot be shown
+  // as "2d 4h" in a grid and "2d 5h" one click later.
+  const { days, hours, minutes, seconds } = splitDuration(remaining);
   /** Under an hour is when a buyer has to decide now rather than later. */
   const urgent = remaining < 60 * 60 * 1000;
 

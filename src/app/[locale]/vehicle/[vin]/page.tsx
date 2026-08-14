@@ -6,12 +6,15 @@ import Button from "@/shared/ui/Button";
 import Reveal from "@/shared/ui/Reveal";
 import InventoryGallery from "@/modules/inventory/components/InventoryGallery";
 import AuctionDateCard from "@/modules/inventory/components/AuctionDateCard";
+import LocalDateTime from "@/shared/time/LocalDateTime";
 import VehicleCostPanel from "@/modules/pricing/components/VehicleCostPanel";
 import PastSalesTable from "@/modules/inventory/components/PastSalesTable";
 import LotCard from "@/modules/inventory/components/LotCard";
 import SaveLotButton from "@/modules/favorites/components/SaveLotButton";
 import { auctionDisplayName, auctionLotUrl } from "@/modules/inventory/model/auctionLotUrl";
 import { isStillUpcoming } from "@/modules/inventory/model/relatedLots";
+import { ownSaleInstant } from "@/modules/inventory/model/saleInstant";
+import LotCountdown from "@/modules/inventory/components/LotCountdown";
 import { currentUser } from "@/modules/auth/model/currentUser";
 import { savedLotKeys, lotKey } from "@/modules/favorites/model/favorites";
 import {
@@ -23,7 +26,11 @@ import {
   extractMediaExtras,
   isUsaManufactured,
 } from "@/modules/inventory/api";
-import { inferCoreVehicleKind, normalizeApibaraLocation } from "@/modules/pricing/model/costEstimate";
+import {
+  inferCoreVehicleKind,
+  isUsaBuiltVin,
+  normalizeApibaraLocation,
+} from "@/modules/pricing/model/costEstimate";
 import { formatUsd as formatMoneyUsd } from "@/modules/pricing/model/format";
 import {
   MapPin,
@@ -111,6 +118,15 @@ export default async function VehicleDetailPage({
   const { locale, vin } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("VehicleDetail");
+  /** The similar-lots grid is the same LotCard the search page renders, so it
+   *  borrows the one place that badge is worded rather than growing a second. */
+  const tSearch = await getTranslations("Search");
+  const countdownLabels = {
+    dayShort: t("auction.dayShort"),
+    hourShort: t("auction.hourShort"),
+    minuteShort: t("auction.minuteShort"),
+    secondShort: t("auction.secondShort"),
+  };
 
   const source = getAuctionSource();
 
@@ -152,6 +168,19 @@ export default async function VehicleDetailPage({
     .slice(0, 6);
 
   const saleDate = detail.auction?.full_date ?? detail.auction?.auction_at ?? null;
+  /**
+   * The sale time as the reader's own clock would show it.
+   *
+   * `detail.auction.formatted` is the vendor's rendering — English, and in a
+   * zone they chose — so printing it put a different hour in the spec table
+   * from the one the countdown above was counting towards. It survives only as
+   * the pre-hydration fallback; see shared/time/LocalDateTime.
+   */
+  const auctionDateSpec = saleDate ? (
+    <LocalDateTime iso={saleDate} locale={locale} fallback={detail.auction?.formatted ?? null} />
+  ) : (
+    (detail.auction?.formatted ?? null)
+  );
   // Decided from Apibara's own `diff_minutes` rather than a clock read here,
   // so the render stays pure and the answer matches the cached payload it came
   // with. If the sale tips over while a cached page is being served, the
@@ -313,6 +342,7 @@ export default async function VehicleDetailPage({
               <AuctionDateCard
                 isoDate={saleDate}
                 formatted={detail.auction?.formatted ?? null}
+                locale={locale}
                 isUpcoming={isUpcoming}
                 labels={{
                   endsIn: t("auction.endsIn"),
@@ -494,7 +524,7 @@ export default async function VehicleDetailPage({
                   <Spec label={t("sale.saleDocument")} value={detail.sale_document?.name} />
                   <Spec label={t("sale.titleState")} value={deepSpecs?.titleState} />
                   <Spec label={t("sale.titleBrand")} value={deepSpecs?.titleBrand} />
-                  <Spec label={t("sale.auctionDate")} value={detail.auction?.formatted} />
+                  <Spec label={t("sale.auctionDate")} value={auctionDateSpec} />
                   <Spec label={t("sale.branch")} value={deepSpecs?.branchAddress} />
                   {/* The US port the branch feeds into - this is the leg our
                       ocean-freight estimate is actually priced from. */}
@@ -589,7 +619,7 @@ export default async function VehicleDetailPage({
                         label={t("pricing.finalBid")}
                         value={formatPrice(currentBid) ?? t("pricing.notAvailable")}
                       />
-                      <Spec label={t("sale.auctionDate")} value={detail.auction?.formatted} />
+                      <Spec label={t("sale.auctionDate")} value={auctionDateSpec} />
                     </div>
 
                     <p className="mt-4 text-sm leading-relaxed text-char-600">
@@ -695,7 +725,17 @@ export default async function VehicleDetailPage({
                       // number two different things.
                       currentBid: t("pricing.currentBid"),
                       buyNow: t("pricing.buyNow"),
+                      madeInUsa: tSearch("results.madeInUsa"),
                     }}
+                    usaMade={isUsaBuiltVin(v.vin)}
+                    countdownSlot={(() => {
+                      // Same rule as the search grid: a countdown only where
+                      // the sale instant is this lot's own. These rows have
+                      // already passed isStillUpcoming(), but that answers
+                      // "is it in the future", not "is this date per-lot".
+                      const at = ownSaleInstant(v);
+                      return at ? <LotCountdown iso={at} labels={countdownLabels} /> : null;
+                    })()}
                   />
                 ))}
               </div>
