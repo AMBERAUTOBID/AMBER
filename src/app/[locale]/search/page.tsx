@@ -5,6 +5,9 @@ import Reveal from "@/shared/ui/Reveal";
 import Button from "@/shared/ui/Button";
 import SearchWidget from "@/modules/inventory/components/SearchWidget";
 import LotCard from "@/modules/inventory/components/LotCard";
+import LotCountdown from "@/modules/inventory/components/LotCountdown";
+import { ownSaleInstant } from "@/modules/inventory/model/saleInstant";
+import { isUsaBuiltVin } from "@/modules/pricing/model/costEstimate";
 import { Link } from "@/i18n/navigation";
 import FilterPanel, { countActiveFilters } from "@/modules/inventory/components/FilterPanel";
 import FilterDisclosure from "@/modules/inventory/components/FilterDisclosure";
@@ -59,6 +62,19 @@ export default async function SearchPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Search");
+  /**
+   * The countdown's unit abbreviations, read from the vehicle page's namespace
+   * rather than copied into this one. "d / val / min / s" are facts about the
+   * language, not about either page, and a second copy is a second thing to
+   * translate and a second thing to get out of step.
+   */
+  const ta = await getTranslations("VehicleDetail.auction");
+  const countdownLabels = {
+    dayShort: ta("dayShort"),
+    hourShort: ta("hourShort"),
+    minuteShort: ta("minuteShort"),
+    secondShort: ta("secondShort"),
+  };
   const sp = await searchParams;
 
   const q = str(sp.q) ?? "";
@@ -373,7 +389,15 @@ export default async function SearchPage({
                     damagePrefix: t("results.damagePrefix"),
                     currentBid: t("results.currentBid"),
                     buyNow: t("results.buyNow"),
+                    madeInUsa: t("results.madeInUsa"),
                   }}
+                  // The same VIN rule the duty calculation uses, imported
+                  // rather than restated — see LotCard's note on `usaMade`.
+                  usaMade={isUsaBuiltVin(v.vin)}
+                  countdownSlot={(() => {
+                    const at = ownSaleInstant(v);
+                    return at ? <LotCountdown iso={at} labels={countdownLabels} /> : null;
+                  })()}
                   saveSlot={
                     <SaveLotButton
                       // VIN when there is one, else the lot number: the

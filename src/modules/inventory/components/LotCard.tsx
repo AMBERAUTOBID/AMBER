@@ -24,6 +24,8 @@ export default function LotCard({
   vehicle,
   labels,
   saveSlot,
+  usaMade,
+  countdownSlot,
 }: {
   vehicle: VehicleListItem;
   labels: {
@@ -32,7 +34,25 @@ export default function LotCard({
     damagePrefix: string;
     currentBid: string;
     buyNow: string;
+    madeInUsa?: string;
   };
+  /**
+   * Whether the car was built in the United States — `null` when the VIN can't
+   * say, which is not the same as "no".
+   *
+   * Decided by the caller rather than here, and deliberately: the same fact
+   * drives the 0% import duty in `modules/pricing`, and a second rule living in
+   * `inventory` is how a card would come to fly a flag over a quote that still
+   * charged 10%. One source, passed in.
+   */
+  usaMade?: boolean | null;
+  /**
+   * Time left until the sale. A slot rather than a date prop, because the
+   * countdown must tick and this card is a synchronous server component — and
+   * because whether a row's timing can be trusted at all is a question about
+   * the source, which the caller is the one that knows.
+   */
+  countdownSlot?: React.ReactNode;
   /**
    * The save-to-favourites control, injected rather than imported.
    *
@@ -102,9 +122,19 @@ export default function LotCard({
             {labels.noPhoto}
           </div>
         )}
-        <span className="absolute left-2.5 top-2.5 rounded-full bg-char-900/80 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
-          {vehicle.platform}
-        </span>
+        <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5">
+          <span className="rounded-full bg-char-900/80 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
+            {vehicle.platform}
+          </span>
+          {/* Only when the VIN actually says so. `usaMade === null` means the
+              VIN could not answer — a pre-1981 format, or none recorded — and
+              an absent flag is the honest rendering of "we don't know". */}
+          {usaMade === true && labels.madeInUsa && (
+            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-char-800 backdrop-blur-sm">
+              🇺🇸 {labels.madeInUsa}
+            </span>
+          )}
+        </div>
       </div>
       <div className="p-4">
         <h3 className="line-clamp-1 font-bold text-char-900">{vehicle.title}</h3>
@@ -121,6 +151,7 @@ export default function LotCard({
             {labels.buyNow} <span className="text-amber-600">{buyNow}</span>
           </p>
         )}
+        {countdownSlot && <div className="mt-1.5">{countdownSlot}</div>}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-char-500">
           {vehicle.location?.display && (
             <span className="inline-flex items-center gap-1">

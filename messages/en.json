@@ -266,6 +266,7 @@
       "priceNA": "Price N/A",
       "currentBid": "Current bid",
       "buyNow": "Buy now",
+      "madeInUsa": "Made in USA",
       "empty": "No matching vehicles right now — try widening your filters.",
       "error": "Search is temporarily unavailable ({error}). Please try again shortly.",
       "previous": "Previous",
