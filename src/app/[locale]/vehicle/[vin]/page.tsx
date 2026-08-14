@@ -20,6 +20,9 @@ import { savedLotKeys, lotKey } from "@/modules/favorites/model/favorites";
 import { recordVisit } from "@/modules/activity/api/recordVisit";
 import { lotLabel, lotSubjectKey } from "@/modules/activity/model/subjects";
 import AuctionLinkTracker from "@/modules/activity/components/AuctionLinkTracker";
+import BidRequestButton from "@/modules/bids/components/BidRequestButton";
+import { bidWindow } from "@/modules/bids/model/bidWindow";
+import { PLANS, isPlanKey } from "@/modules/plans/model/plans";
 import {
   getAuctionSource,
   type VehicleDetailResponse,
@@ -378,6 +381,38 @@ export default async function VehicleDetailPage({
                 />
               </div>
             </div>
+
+            {/* "Bid for me". Offered only while the lot can still be bid on —
+                a sold car has nothing to instruct us about, and the button
+                would be the page contradicting itself two lines below the
+                "sale closed" badge. */}
+            {!saleClosed && (
+              <div className="mt-5 max-w-md">
+                <BidRequestButton
+                  lotRef={detail.lot_number || detail.vin}
+                  // Computed here, on the server's clock, rather than in the
+                  // browser: a device with a wrong clock would otherwise be
+                  // offered a form for a lot that sold an hour ago.
+                  windowState={bidWindow(saleDate ? new Date(saleDate) : null, new Date()).state}
+                  signedIn={viewer !== null}
+                  activePlanKey={
+                    viewer?.activePlanKey && isPlanKey(viewer.activePlanKey)
+                      ? viewer.activePlanKey
+                      : null
+                  }
+                  feeUsdCents={
+                    viewer?.activePlanKey && isPlanKey(viewer.activePlanKey)
+                      ? (PLANS[viewer.activePlanKey].feesPerVehicleUsdCents[0] ?? 0)
+                      : 0
+                  }
+                  suggestedBidUsdCents={
+                    detail.pricing?.current_bid_usd
+                      ? Math.round(detail.pricing.current_bid_usd * 100)
+                      : null
+                  }
+                />
+              </div>
+            )}
 
             {saleDate && (
               <AuctionDateCard

@@ -53,6 +53,11 @@ export const LIMITS = {
    * every cycle, unmetered (2026-08-06 audit). Five an hour is generous for
    * a person deciding on a plan and useless for spamming an inbox. */
   planRequestPerUser: { max: 5, windowSeconds: 60 * 60 },
+  /** Keyed by user id. Each bid instruction costs one Apibara call to fetch
+   * the lot we describe back to the client — metered like saving a favourite,
+   * against a quota the Telegram bot shares. Twenty an hour is far more cars
+   * than a person authorises and far fewer than a script would want. */
+  bidRequestPerUser: { max: 20, windowSeconds: 60 * 60 },
   /** Keyed by admin id. Changing a bid's security deposit verifies the
    * admin's password when the figure goes down, which makes it the same kind
    * of guessing oracle as the password-change and maintenance endpoints — and
