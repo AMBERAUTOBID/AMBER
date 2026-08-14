@@ -353,3 +353,53 @@ export function parseFreeTextQuery(q: string): ParsedQuery {
 
   return result;
 }
+
+/**
+ * Below this many exact hits, a single made-up-looking word is treated as a
+ * misspelling worth rescuing rather than as a genuinely rare car.
+ *
+ * MEASURED, NOT GUESSED, against the whole mirror on 2026-08-14. The catalogue
+ * holds **1,570 distinct make strings, and only 89 of them carry 25 lots or
+ * more**. The other 1,481 are fragments and vendor typos — `PORS`, `NISS`,
+ * `ICRP`, `VOLKSWAGON`. So 25 is where the real marques separate from the
+ * noise: a visitor typing a make that exists gets thousands of rows, and
+ * anything landing under this bar means we probably failed to understand the
+ * word rather than that the car is scarce.
+ */
+export const MISSPELLING_RESCUE_BELOW = 25;
+
+/**
+ * Should a search that already returned something still try the typo fallback?
+ *
+ * ⚠️ THE OLD ANSWER WAS "ONLY WHEN IT RETURNED NOTHING", AND ONE ROW BROKE IT.
+ * The auction itself lists lot 59193196 with make `VOLKSWAGON`, so searching
+ * that misspelling found exactly one car — non-empty, so the rescue never ran —
+ * and the visitor was shown **1 car instead of 2,789**, on a page that looked
+ * like a working search. A single misspelled row in the vendor's own data
+ * disabled typo rescue for an entire marque.
+ *
+ * The conditions are each doing a specific job:
+ *
+ *  - **A single word.** The fallback scores `word_similarity` of the whole term
+ *    against `make` and `model`, so it can only rescue one word. "ford f150"
+ *    scores poorly against either column and there is nothing to gain.
+ *  - **Letters only, four or more.** This is what keeps a PRECISE query
+ *    precise: VINs, lot numbers and years all carry digits, so none of them can
+ *    reach here. An exact VIN returning one row stays one row — the property
+ *    the original `=== 0` test was really protecting.
+ *  - **Under the measured bar**, so the fallback's ~900 ms scan stays rare.
+ *
+ * Zero still qualifies, so every case the old rule caught is still caught.
+ *
+ * ⚠️ The caller must also keep the fallback's result ONLY IF IT FINDS MORE.
+ * The exact clause searches the whole `search_tsv` — trim names included —
+ * while the fallback looks at `make` and `model` alone, so for a word like a
+ * trim ("wolfsburg") the fallback can legitimately find FEWER. Typo rescue may
+ * only ever add cars, never take them away.
+ */
+export function shouldRescueMisspelling(term: string | undefined, exactCount: number): boolean {
+  const trimmed = term?.trim() ?? "";
+  if (trimmed.length === 0) return false;
+  if (exactCount >= MISSPELLING_RESCUE_BELOW) return false;
+  return /^[\p{L}]{4,}$/u.test(trimmed);
+}

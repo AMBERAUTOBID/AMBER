@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseFreeTextQuery } from "./searchQuery";
+import {
+  parseFreeTextQuery,
+  shouldRescueMisspelling,
+  MISSPELLING_RESCUE_BELOW,
+} from "./searchQuery";
 
 /**
  * Every case here maps to a filter Apibara actually receives, so a wrong answer
@@ -135,5 +139,66 @@ describe("parseFreeTextQuery", () => {
     expect(parseFreeTextQuery("")).toEqual({});
     expect(parseFreeTextQuery("   ")).toEqual({});
     expect(parseFreeTextQuery("!!!")).toEqual({});
+  });
+});
+
+describe("shouldRescueMisspelling", () => {
+  /**
+   * The bug this rule exists for. The auction's own data lists lot 59193196
+   * with make `VOLKSWAGON`, so the misspelling matched exactly one car — and
+   * because the old trigger was "exactly zero results", typo rescue never ran.
+   * The visitor saw 1 car where 2,789 were available, on a page that gave every
+   * appearance of having worked.
+   */
+  it("rescues a misspelling that the vendor's own data also contains", () => {
+    expect(shouldRescueMisspelling("volkswagon", 1)).toBe(true);
+  });
+
+  it("still rescues the empty case the old rule caught", () => {
+    expect(shouldRescueMisspelling("mercedez", 0)).toBe(true);
+    expect(shouldRescueMisspelling("porshe", 0)).toBe(true);
+  });
+
+  it("leaves a real make alone", () => {
+    // Every marque anyone actually searches returns thousands.
+    expect(shouldRescueMisspelling("volkswagen", 2789)).toBe(false);
+    expect(shouldRescueMisspelling("toyota", 16185)).toBe(false);
+  });
+
+  /**
+   * THE PROPERTY THAT KEEPS A PRECISE QUERY PRECISE. A VIN or a lot number
+   * matching one row must stay one row — widening it would answer a question
+   * nobody asked. Both carry digits, so the letters-only test excludes them
+   * without needing to know anything about their formats.
+   */
+  it("never touches a VIN, a lot number or a year", () => {
+    expect(shouldRescueMisspelling("3VW7M7BU9NM019630", 1)).toBe(false);
+    expect(shouldRescueMisspelling("59193196", 1)).toBe(false);
+    expect(shouldRescueMisspelling("2015", 3)).toBe(false);
+    expect(shouldRescueMisspelling("f150", 2)).toBe(false);
+  });
+
+  it("ignores multi-word queries, which the fallback cannot help", () => {
+    // It scores the whole term against `make`/`model`, so a phrase scores
+    // poorly against either and there is nothing to gain for the ~900ms scan.
+    expect(shouldRescueMisspelling("ford f150", 0)).toBe(false);
+    expect(shouldRescueMisspelling("mercedez benz", 0)).toBe(false);
+  });
+
+  it("ignores very short and empty terms", () => {
+    expect(shouldRescueMisspelling("bmw", 0)).toBe(false);
+    expect(shouldRescueMisspelling("", 0)).toBe(false);
+    expect(shouldRescueMisspelling(undefined, 0)).toBe(false);
+    expect(shouldRescueMisspelling("   ", 0)).toBe(false);
+  });
+
+  it("accepts non-ASCII letters — the site is searched in three languages", () => {
+    expect(shouldRescueMisspelling("mersedas", 2)).toBe(true);
+    expect(shouldRescueMisspelling("порше", 0)).toBe(true);
+  });
+
+  it("uses the measured threshold, not a round number", () => {
+    expect(shouldRescueMisspelling("someword", MISSPELLING_RESCUE_BELOW - 1)).toBe(true);
+    expect(shouldRescueMisspelling("someword", MISSPELLING_RESCUE_BELOW)).toBe(false);
   });
 });

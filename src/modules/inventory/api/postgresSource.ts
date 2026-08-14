@@ -49,6 +49,7 @@ import type {
   VehicleSearchResponse,
 } from "./types";
 import { isStillUpcoming } from "../model/relatedLots";
+import { shouldRescueMisspelling } from "../model/searchQuery";
 import {
   mirrorRowToVehicleListItem,
   BUY_NOW_MARGIN_HOURS,
@@ -789,11 +790,22 @@ async function runSearch(
 
   // A typed make is the one thing full-text cannot rescue: it matches whole
   // lexemes, so "mercedez" is simply absent from every document however the
-  // document is built. Retry with trigram similarity — but ONLY on a genuinely
-  // empty result, so the ordinary path stays one round trip and precise queries
-  // are never quietly widened into something the visitor did not ask for.
-  if (total === 0 && params.s && params.s.trim().length > 0) {
-    ({ pageRows: rows, n: total } = await fetchPage(true));
+  // document is built. Retry with trigram similarity.
+  //
+  // ⚠️ THE TRIGGER WAS "EXACTLY ZERO RESULTS", AND A SINGLE ROW DEFEATED IT.
+  // The auction lists lot 59193196 with make `VOLKSWAGON`, so that misspelling
+  // found one car — non-empty, so the rescue never ran — and the visitor got
+  // **1 car instead of 2,789** on a page that looked like it had worked. One
+  // typo in the vendor's own data switched off typo rescue for a whole marque.
+  // `shouldRescueMisspelling` carries the replacement rule and the measurement
+  // behind its threshold; a VIN or lot number can never reach it.
+  if (params.s && shouldRescueMisspelling(params.s, total)) {
+    const rescued = await fetchPage(true);
+    // ONLY IF IT FINDS MORE. The exact clause searches the whole `search_tsv`,
+    // trim names included, while the fallback compares against `make` and
+    // `model` alone — so on a word like "wolfsburg" it legitimately finds
+    // fewer. Rescue may add cars; it must never take any away.
+    if (rescued.n > total) ({ pageRows: rows, n: total } = rescued);
   }
 
   const images =
