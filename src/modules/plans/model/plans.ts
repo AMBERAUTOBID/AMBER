@@ -64,10 +64,17 @@ export interface Plan {
    * bidauto's "bid on up to N lots at a time (if bid not higher than $X)".
    * null = concurrency is unconditional.
    *
-   * ⚠️ NOT YET ENFORCED IN can(). Harmless today because every plan carrying
-   * a threshold is `available: false`, so nobody can hold one. Implementing
-   * the conditional in judgeBidRequest() is a PREREQUISITE for flipping any
-   * of them to available — see can.test.ts, which asserts exactly that.
+   * Enforced in `judgeBidRequest()`, over the incoming bid *and* the ones
+   * already live: a rule that read only the new amount would let the set drift
+   * past the threshold one small bid at a time.
+   *
+   * This carried a warning that it was unenforced, kept true by every tier
+   * holding a threshold being `available: false`. Both halves stopped being
+   * true when Gold and Platinum opened and the enforcement landed with them —
+   * see the note above the conditional-concurrency tests in can.test.ts, where
+   * the tripwire that guarded this was replaced by the rule it was standing in
+   * for. Left recorded rather than deleted: a comment that once said "not
+   * enforced" is worth showing as settled, so nobody implements it twice.
    */
   concurrencyThresholdUsd: number | null;
   /** Whether night-auction reserve prices are shown. */
