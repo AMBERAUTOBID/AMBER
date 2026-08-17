@@ -1581,7 +1581,9 @@
       "feeOnWin": "Our fee, if you win",
       "depositLabel": "Security deposit",
       "depositNone": "None",
-      "depositExplainer": "This is a hold, not a cost. If you win it goes toward the car; if you don't, we return it.",
+      "depositExplainer": "This is a hold, not a cost. If you win, it goes toward the car. If you don't, it stays on your account for your next bid — or we return it within 5 business days whenever you ask.",
+      "depositTopUp": "We are already holding {held} for you, so this car needs a top-up rather than the full {rule}.",
+      "depositCovered": "Nothing to send — the {held} we are already holding covers this car.",
       "needsPlan": "At this amount a plan costs the same {amount} and covers every car, not just this one.",
       "seePlans": "See plans",
       "beyondTiers": "Above our standard limits — we'll call you to arrange this one.",
@@ -2186,6 +2188,22 @@
     "empty": "No bid requests.",
     "missedHeading": "Auction already run",
     "missedHint": "We accepted these and never marked a bid as placed, and the sale has passed. If a bid did go in, record the result. If it did not, the client needs to be told today.",
+    "depositMove": {
+      "to": {
+        "received": "{amount} received",
+        "returned": "Returned {amount}",
+        "forfeited": "Kept {amount}"
+      },
+      "confirm": {
+        "returned": "Return {amount} to the client?",
+        "forfeited": "Keep {amount} against our loss?"
+      },
+      "noUndo": "This cannot be undone. The money leaves the client's balance, and a new hold would be a new instruction.",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "conflict": "Somebody else recorded this a moment ago. Reload the page to see where it stands.",
+      "failed": "That didn't save. Try again."
+    },
     "withdrawnHeading": "Withdrawn by the client",
     "withdrawnHint": "The client took these back after we had accepted them. Check the auction that no bid of ours is live, and decide what happens to any deposit shown below — it is normally returned.",
     "waitingHeading": "Waiting for an answer",

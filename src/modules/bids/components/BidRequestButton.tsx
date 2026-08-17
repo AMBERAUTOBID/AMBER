@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { CONTACT_HREF, SITE } from "@/shared/config/site";
 import { formatUsd, type PlanKey } from "@/modules/plans/model/plans";
 import { bidDepositFor } from "../model/bidDeposit";
+import { quoteDeposit } from "../model/depositBalance";
 import type { BidWindowState } from "../model/bidWindow";
 
 /**
@@ -29,6 +30,7 @@ export default function BidRequestButton({
   signedIn,
   activePlanKey,
   feeUsdCents,
+  heldForBiddingCents = 0,
   suggestedBidUsdCents,
 }: {
   /** VIN or lot number — the ONLY thing sent. The server describes the car. */
@@ -38,6 +40,21 @@ export default function BidRequestButton({
   activePlanKey: PlanKey | null;
   /** The per-vehicle fee this client would owe on a win. Zero = none published. */
   feeUsdCents: number;
+  /**
+   * The security deposit we already hold for this client's bidding.
+   *
+   * From the server, like the fee and the window state — the browser must not
+   * be trusted to say what we are holding.
+   *
+   * ⚠️ **Optional, defaulting to zero, and that is a compromise rather than a
+   * design.** Zero means "assume we hold nothing", so the dialog quotes the
+   * rule's full figure — the behaviour before the rolling balance existed. The
+   * server still charges the right amount either way; only the quote would be
+   * pessimistic. It is optional because the page that supplies it was being
+   * rewritten in a parallel session when this landed, and a required prop
+   * would have forced the two pieces of work into one commit. **Pass it.**
+   */
+  heldForBiddingCents?: number;
   /** Prefills the field with the current bid, so the number starts sensible. */
   suggestedBidUsdCents: number | null;
 }) {
@@ -60,6 +77,20 @@ export default function BidRequestButton({
   // worse value than the free one.
   const onDepositTier = activePlanKey !== null && activePlanKey !== "bronze";
   const deposit = onDepositTier ? { kind: "none" as const } : bidDepositFor(maxBidCents);
+
+  /**
+   * What is actually due, once the rolling balance is taken off.
+   *
+   * ⚠️ **This has to agree with `createBidRequest`, which is the only reason
+   * it is computed here at all.** The server subtracts the balance before it
+   * writes the row. If this dialog quoted the rule's whole figure, a client
+   * holding $800 would be shown $900, authorise it, and then be asked for
+   * $100. Being wrong in the client's favour is still being wrong, and it is
+   * the kind that makes somebody doubt every other number on the page.
+   */
+  const ruleCents =
+    deposit.kind === "per_car" || deposit.kind === "needs_plan" ? deposit.cents : 0;
+  const quote = quoteDeposit(ruleCents, heldForBiddingCents);
 
   async function submit() {
     setState("sending");
@@ -161,8 +192,10 @@ export default function BidRequestButton({
           {t("received")}
         </p>
         <p className="mt-2 text-sm leading-relaxed text-char-700">
-          {deposit.kind === "per_car" && deposit.cents > 0
-            ? t("receivedWithDeposit", { amount: formatUsd(deposit.cents) })
+          {/* The figure we will actually ask for, not the rule's — the same
+              one the dialog quoted a moment ago. */}
+          {deposit.kind === "per_car" && quote.dueCents > 0
+            ? t("receivedWithDeposit", { amount: formatUsd(quote.dueCents) })
             : t("receivedNext")}
         </p>
         <Link
@@ -214,9 +247,24 @@ export default function BidRequestButton({
           <div className="flex justify-between gap-4">
             <dt className="text-char-600">{t("depositLabel")}</dt>
             <dd className="font-semibold text-char-900">
-              {deposit.kind === "per_car" ? formatUsd(deposit.cents) : t("depositNone")}
+              {deposit.kind === "per_car" ? formatUsd(quote.dueCents) : t("depositNone")}
             </dd>
           </div>
+          {/* Why it is less than the rule would suggest. Said out loud, because
+              a client who lost an auction last month and is now quoted $100 on
+              a car whose hold is $900 would otherwise wonder what we had got
+              wrong — and the honest answer is that we are still holding their
+              money from last time. */}
+          {quote.heldCents > 0 && deposit.kind === "per_car" && (
+            <p className="pt-1 text-xs leading-relaxed text-char-700">
+              {quote.coveredByBalance
+                ? t("depositCovered", { held: formatUsd(quote.heldCents) })
+                : t("depositTopUp", {
+                    held: formatUsd(quote.heldCents),
+                    rule: formatUsd(quote.ruleCents),
+                  })}
+            </p>
+          )}
           {deposit.kind === "per_car" && (
             // The single sentence that removes the incentive to understate the
             // maximum: a hold is not a cost. Without it, a client lowers their

@@ -1581,7 +1581,9 @@
       "feeOnWin": "Mūsų mokestis laimėjus",
       "depositLabel": "Užstatas",
       "depositNone": "Nėra",
-      "depositExplainer": "Tai užstatas, ne kaina. Laimėjus jis įskaitomas į automobilio kainą; nelaimėjus — grąžiname.",
+      "depositExplainer": "Tai užstatas, ne kaina. Laimėjus jis įskaitomas į automobilio kainą. Nelaimėjus lieka jūsų sąskaitoje kitam statymui — arba grąžiname per 5 darbo dienas, kai tik paprašysite.",
+      "depositTopUp": "Jums jau laikome {held}, todėl už šį automobilį reikia tik papildyti, o ne mokėti visus {rule}.",
+      "depositCovered": "Siųsti nieko nereikia — jau laikomi {held} šį automobilį padengia.",
       "needsPlan": "Prie tokios sumos planas kainuoja tuos pačius {amount} ir dengia visas mašinas, ne vieną.",
       "seePlans": "Žiūrėti planus",
       "beyondTiers": "Viršija mūsų įprastas ribas — paskambinsime ir suderinsime.",
@@ -2186,6 +2188,22 @@
     "empty": "Statymo užklausų nėra.",
     "missedHeading": "Aukcionas jau įvyko",
     "missedHint": "Šias priėmėme, bet statymo taip ir nepažymėjome, o pardavimas jau praėjo. Jei statymas buvo padėtas — įrašykite rezultatą. Jei ne — klientui reikia pasakyti šiandien.",
+    "depositMove": {
+      "to": {
+        "received": "Gauta {amount}",
+        "returned": "Grąžinta {amount}",
+        "forfeited": "Pasilikta {amount}"
+      },
+      "confirm": {
+        "returned": "Grąžinti klientui {amount}?",
+        "forfeited": "Pasilikti {amount} nuostoliui padengti?"
+      },
+      "noUndo": "Šito atšaukti nebegalėsite. Pinigai dingsta iš kliento likučio, o naujas užstatas būtų jau naujas nurodymas.",
+      "saving": "Išsaugoma…",
+      "cancel": "Atšaukti",
+      "conflict": "Kažkas ką tik tai įrašė. Perkraukite puslapį ir pažiūrėkite būseną.",
+      "failed": "Neišsaugota. Bandykite dar kartą."
+    },
     "withdrawnHeading": "Klientas atsiėmė",
     "withdrawnHint": "Šiuos klientas atsiėmė po to, kai jau buvome priėmę. Patikrinkite aukcione, ar nėra gyvo mūsų statymo, ir nuspręskite dėl žemiau rodomo užstato — įprastai jis grąžinamas.",
     "waitingHeading": "Laukia atsakymo",

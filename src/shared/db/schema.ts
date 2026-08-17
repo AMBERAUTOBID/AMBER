@@ -1428,6 +1428,23 @@ export type BidRequestStatus = (typeof BID_REQUEST_STATUSES)[number];
  * and nothing else — see judgeBidRequest. */
 export const OPEN_BID_REQUEST_STATUSES = ["requested", "accepted", "placed"] as const;
 
+/**
+ * Where one bid instruction's security deposit stands.
+ *
+ * Named rather than written inline because the **rolling balance** reads it:
+ * what we hold for a client is the sum of their `received` rows, and `returned`
+ * and `forfeited` both mean the money has left. See `depositBalance.ts`.
+ */
+export const BID_DEPOSIT_STATUSES = [
+  "not_required",
+  "awaiting",
+  "received",
+  "returned",
+  "forfeited",
+] as const;
+
+export type BidDepositStatus = (typeof BID_DEPOSIT_STATUSES)[number];
+
 export const bidRequests = pgTable(
   "bid_requests",
   {
@@ -1506,9 +1523,7 @@ export const bidRequests = pgTable(
      * reading a log.
      */
     depositDefaultCents: integer("deposit_default_cents").notNull().default(0),
-    depositStatus: text("deposit_status", {
-      enum: ["not_required", "awaiting", "received", "returned", "forfeited"],
-    })
+    depositStatus: text("deposit_status", { enum: BID_DEPOSIT_STATUSES })
       .notNull()
       .default("not_required"),
     /** Who reduced or waived it, and when. Set only by the password-confirmed

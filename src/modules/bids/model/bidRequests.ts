@@ -17,11 +17,26 @@
 import { and, desc, eq, gt, inArray, isNotNull, lt, ne, or, sql } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 import { recordAudit } from "@/shared/db/audit";
-import { OPEN_BID_REQUEST_STATUSES, type BidRequestStatus } from "@/shared/db/schema";
+import {
+  BID_DEPOSIT_STATUSES,
+  OPEN_BID_REQUEST_STATUSES,
+  type BidDepositStatus,
+  type BidRequestStatus,
+} from "@/shared/db/schema";
+
+/** A runtime guard, because a deposit status arrives from a request body. */
+export function isBidDepositStatus(value: unknown): value is BidDepositStatus {
+  return typeof value === "string" && (BID_DEPOSIT_STATUSES as readonly string[]).includes(value);
+}
 import { PLANS, type PlanKey } from "@/modules/plans/model/plans";
 import { can, type Actor } from "@/modules/plans/model/can";
 import { bidDepositFor, depositOverrideNeedsPassword } from "./bidDeposit";
 import { canClientWithdraw, declineNeedsReason, isAllowedTransition } from "./bidStatus";
+import {
+  heldForBidding,
+  quoteDeposit,
+  type DepositLedgerRow,
+} from "./depositBalance";
 import { acceptsBidRequests, bidWindow } from "./bidWindow";
 
 /** Everything we need about the car — all of it fetched by us. */
@@ -93,6 +108,23 @@ export async function createBidRequest(input: {
   const deposit = depositForClient(planKey, input.maxBidUsdCents);
   if (deposit.kind === "beyond_tiers") return { status: "needs_quote" };
 
+  /**
+   * The rolling balance. **This is what stops us charging twice.**
+   *
+   * A client who lost on an $8,000 car is still holding $800 with us — the
+   * owner's rule is that a lost auction does not return the deposit. Asking
+   * the rule's full $900 for their next $9,000 car would take $1,700 for one
+   * car's worth of cover.
+   *
+   * ⚠️ `depositDefaultCents` keeps the RULE's figure while
+   * `depositRequiredCents` carries what is actually being asked. They are the
+   * same pair `BidDepositOverride` compares — it measures an admin's override
+   * against the rule, and it must go on measuring against the rule rather than
+   * against a figure that a balance happened to reduce.
+   */
+  const held = heldForBidding(await depositLedgerFor(input.actor.id));
+  const quote = quoteDeposit(deposit.cents, held);
+
   const rows = await db()
     .insert(schema.bidRequests)
     .values({
@@ -107,9 +139,12 @@ export async function createBidRequest(input: {
       feeUsdCents,
       planKeyAtRequest: planKey,
       clientNote: input.clientNote?.trim().slice(0, 500) || null,
-      depositRequiredCents: deposit.cents,
+      // What we ask for now — the rule's figure less what we already hold.
+      depositRequiredCents: quote.dueCents,
+      // What the rule says, kept whole. The override panel measures against
+      // this, so it must not be dented by the balance.
       depositDefaultCents: deposit.cents,
-      depositStatus: deposit.cents > 0 ? "awaiting" : "not_required",
+      depositStatus: quote.dueCents > 0 ? "awaiting" : "not_required",
       // Stamped here, never taken from the browser — a timestamp the client
       // supplied would be worthless as evidence of what they agreed to.
       termsAcceptedAt: input.acceptedTerms ? now : null,
@@ -120,11 +155,15 @@ export async function createBidRequest(input: {
     lot: `${input.lot.platform}:${input.lot.lotNumber}`,
     maxBidUsdCents: input.maxBidUsdCents,
     feeUsdCents,
-    depositRequiredCents: deposit.cents,
+    // Both figures, because "we asked for $100" is only explicable later
+    // alongside "the rule said $900 and we were holding $800".
+    depositRequiredCents: quote.dueCents,
+    depositRuleCents: deposit.cents,
+    depositHeldCents: held,
     planKey,
   });
 
-  return { status: "created", id: rows[0].id, depositRequiredCents: deposit.cents };
+  return { status: "created", id: rows[0].id, depositRequiredCents: quote.dueCents };
 }
 
 /**
@@ -144,6 +183,110 @@ export function depositForClient(
   return deposit.kind === "none" || deposit.kind === "beyond_tiers"
     ? { kind: deposit.kind, cents: 0 }
     : { kind: deposit.kind, cents: deposit.cents };
+}
+
+/**
+ * The rows the rolling balance is computed from — every instruction this
+ * client has ever had, whatever its status.
+ *
+ * **Not filtered to live instructions, and that is the point.** The money is
+ * held against the client, not against a car: a hold posted for a lost auction
+ * stays with us until somebody returns it, and the instruction it came from is
+ * finished. Filtering by status here would lose exactly the balance this
+ * feature exists to remember.
+ */
+export async function depositLedgerFor(userId: string): Promise<DepositLedgerRow[]> {
+  return db()
+    .select({
+      depositStatus: schema.bidRequests.depositStatus,
+      depositRequiredCents: schema.bidRequests.depositRequiredCents,
+    })
+    .from(schema.bidRequests)
+    .where(eq(schema.bidRequests.userId, userId));
+}
+
+/** What we are holding for this client's bidding, in USD cents. */
+export async function heldForBiddingBy(userId: string): Promise<number> {
+  return heldForBidding(await depositLedgerFor(userId));
+}
+
+export type DepositMoveResult =
+  | { status: "moved"; to: BidDepositStatus }
+  | { status: "not_allowed"; from: BidDepositStatus }
+  | { status: "not_found" };
+
+/**
+ * Which deposit states may follow which. Money, so it is a table.
+ *
+ * `awaiting → received` is the arrival. From `received` the hold can only go
+ * back to the client (`returned`) or be consumed covering our loss
+ * (`forfeited`); both are terminal, because a hold that has left cannot arrive
+ * again — the client posting another one creates a new instruction with its
+ * own row.
+ */
+const DEPOSIT_MOVES: Record<BidDepositStatus, readonly BidDepositStatus[]> = {
+  not_required: [],
+  awaiting: ["received"],
+  received: ["returned", "forfeited"],
+  returned: [],
+  forfeited: [],
+};
+
+export function allowedDepositMoves(from: BidDepositStatus): readonly BidDepositStatus[] {
+  return DEPOSIT_MOVES[from] ?? [];
+}
+
+/**
+ * An admin records that a hold arrived, went back, or was kept.
+ *
+ * ⚠️ **This is the only thing that moves the rolling balance**, so it is
+ * guarded like the status transitions next door: the legality is decided from
+ * the row that was read, and the UPDATE requires the status to still be that
+ * value. Two admins a second apart must not both mark the same hold returned
+ * and leave the client's balance short by one hold nobody can account for.
+ */
+export async function setDepositStatus(
+  requestId: string,
+  to: BidDepositStatus,
+  adminId: string
+): Promise<DepositMoveResult> {
+  const rows = await db()
+    .select({
+      depositStatus: schema.bidRequests.depositStatus,
+      cents: schema.bidRequests.depositRequiredCents,
+      userId: schema.bidRequests.userId,
+    })
+    .from(schema.bidRequests)
+    .where(eq(schema.bidRequests.id, requestId))
+    .limit(1);
+
+  const row = rows[0];
+  if (!row) return { status: "not_found" };
+  if (!allowedDepositMoves(row.depositStatus).includes(to)) {
+    return { status: "not_allowed", from: row.depositStatus };
+  }
+
+  const claimed = await db()
+    .update(schema.bidRequests)
+    .set({ depositStatus: to, updatedAt: new Date() })
+    .where(
+      and(
+        eq(schema.bidRequests.id, requestId),
+        eq(schema.bidRequests.depositStatus, row.depositStatus)
+      )
+    )
+    .returning({ id: schema.bidRequests.id });
+
+  if (!claimed[0]) return { status: "not_allowed", from: row.depositStatus };
+
+  await recordAudit(adminId, "bid.deposit_status_set", "bid_request", requestId, {
+    userId: row.userId,
+    from: row.depositStatus,
+    to,
+    cents: row.cents,
+  });
+
+  return { status: "moved", to };
 }
 
 export interface LiveInstruction {
@@ -195,7 +338,7 @@ export interface BidRequestRow {
   clientNote: string | null;
   depositRequiredCents: number;
   depositDefaultCents: number;
-  depositStatus: string;
+  depositStatus: BidDepositStatus;
   status: BidRequestStatus;
   /**
    * Why we refused. **Written for the client and shown to them verbatim** —

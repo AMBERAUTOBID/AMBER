@@ -9,11 +9,13 @@ import AdminSection from "@/modules/admin/components/AdminSection";
 import BidDepositOverride from "@/modules/admin/components/BidDepositOverride";
 import BidStatusActions from "@/modules/admin/components/BidStatusActions";
 import {
+  allowedDepositMoves,
   missedBidRequests,
   openBidRequests,
   withdrawnNeedingAttention,
   type BidRequestRow,
 } from "@/modules/bids/model/bidRequests";
+import DepositStatusActions from "@/modules/admin/components/DepositStatusActions";
 import { needsAnswer } from "@/modules/bids/model/bidStatus";
 import { formatUsd } from "@/modules/plans/model/plans";
 
@@ -248,6 +250,18 @@ function Row({
       )}
 
       <BidStatusActions requestId={row.id} status={row.status} />
+
+      {/* Where the hold has got to. Rendered whenever a move is possible, on
+          every section — a withdrawn instruction holding $1,500 needs this as
+          much as a live one, and it was the thing the "client withdrew"
+          section could describe but not resolve. */}
+      {row.depositRequiredCents > 0 && (
+        <DepositStatusActions
+          requestId={row.id}
+          amountCents={row.depositRequiredCents}
+          moves={allowedDepositMoves(row.depositStatus)}
+        />
+      )}
 
       <details className="mt-4 border-t border-char-100 pt-3">
         <summary className="cursor-pointer text-sm font-semibold text-char-600">
