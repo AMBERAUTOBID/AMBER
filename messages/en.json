@@ -1703,6 +1703,7 @@
       "overview": "Overview",
       "orders": "Vehicles",
       "money": "Money",
+      "bids": "Bid requests",
       "deposits": "Deposits",
       "users": "Users",
       "settings": "Settings",
@@ -2138,7 +2139,50 @@
     "footer": "You are receiving this because you are a SmartAutoBid client."
   },
   "AdminBids": {
+    "heading": "Bid requests",
+    "empty": "No bid requests.",
+    "missedHeading": "Auction already run",
+    "missedHint": "We accepted these and never marked a bid as placed, and the sale has passed. If a bid did go in, record the result. If it did not, the client needs to be told today.",
+    "waitingHeading": "Waiting for an answer",
+    "runningHeading": "Running",
+    "maxBid": "max bid",
+    "saleAt": "Sale",
+    "saleWas": "Sale was",
+    "saleUnknown": "No sale time recorded.",
+    "depositToggle": "Security deposit",
+    "status": {
+      "requested": "Requested",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "cancelled": "Withdrawn by client",
+      "placed": "Bid placed",
+      "won": "Won",
+      "lost": "Lost"
+    },
+    "actions": {
+      "to": {
+        "accepted": "Accept",
+        "declined": "Refuse",
+        "placed": "Bid is placed",
+        "won": "Won",
+        "lost": "Lost"
+      },
+      "reasonLabel": "Why we are refusing",
+      "reasonHint": "The client is shown this text exactly as written.",
+      "declineConfirm": "Refuse and tell the client",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "conflict": "Somebody else answered this a moment ago. Reload the page to see where it stands.",
+      "failed": "That didn't save. Try again."
+    },
     "deposit": {
+      "status": {
+        "not_required": "No deposit",
+        "awaiting": "{amount} deposit awaited",
+        "received": "{amount} deposit received",
+        "returned": "{amount} deposit returned",
+        "forfeited": "{amount} deposit forfeited"
+      },
       "heading": "Security deposit for this car",
       "ruleSays": "Rule says",
       "currently": "Currently",

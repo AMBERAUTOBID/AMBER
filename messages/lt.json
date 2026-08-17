@@ -1703,6 +1703,7 @@
       "overview": "Apžvalga",
       "orders": "Automobiliai",
       "money": "Pinigai",
+      "bids": "Statymo užklausos",
       "deposits": "Depozitai",
       "users": "Vartotojai",
       "settings": "Nustatymai",
@@ -2138,7 +2139,50 @@
     "footer": "Šį laišką gavote, nes esate SmartAutoBid klientas."
   },
   "AdminBids": {
+    "heading": "Statymo užklausos",
+    "empty": "Statymo užklausų nėra.",
+    "missedHeading": "Aukcionas jau įvyko",
+    "missedHint": "Šias priėmėme, bet statymo taip ir nepažymėjome, o pardavimas jau praėjo. Jei statymas buvo padėtas — įrašykite rezultatą. Jei ne — klientui reikia pasakyti šiandien.",
+    "waitingHeading": "Laukia atsakymo",
+    "runningHeading": "Vykdomos",
+    "maxBid": "maks. statymas",
+    "saleAt": "Pardavimas",
+    "saleWas": "Pardavimas buvo",
+    "saleUnknown": "Pardavimo laikas neįrašytas.",
+    "depositToggle": "Užstatas",
+    "status": {
+      "requested": "Užklausta",
+      "accepted": "Priimta",
+      "declined": "Atmesta",
+      "cancelled": "Klientas atšaukė",
+      "placed": "Statymas padėtas",
+      "won": "Laimėta",
+      "lost": "Pralaimėta"
+    },
+    "actions": {
+      "to": {
+        "accepted": "Priimti",
+        "declined": "Atmesti",
+        "placed": "Statymas padėtas",
+        "won": "Laimėta",
+        "lost": "Pralaimėta"
+      },
+      "reasonLabel": "Kodėl atmetame",
+      "reasonHint": "Klientui parodomas būtent šis tekstas.",
+      "declineConfirm": "Atmesti ir pranešti klientui",
+      "saving": "Išsaugoma…",
+      "cancel": "Atšaukti",
+      "conflict": "Kažkas ką tik į tai atsakė. Perkraukite puslapį ir pažiūrėkite būseną.",
+      "failed": "Neišsaugota. Bandykite dar kartą."
+    },
     "deposit": {
+      "status": {
+        "not_required": "Užstato nereikia",
+        "awaiting": "Laukiama {amount} užstato",
+        "received": "Gautas {amount} užstatas",
+        "returned": "Grąžintas {amount} užstatas",
+        "forfeited": "Negrąžintas {amount} užstatas"
+      },
       "heading": "Užstatas už šią mašiną",
       "ruleSays": "Pagal taisyklę",
       "currently": "Dabar",

@@ -8,9 +8,8 @@
  * some links don't work, which is exactly the habit you don't want when one of
  * the links refunds money.
  *
- * Deliberately absent until its feature lands:
- *
- *   /admin/bids      bid requests, Phase 2.3
+ * Nothing is absent from this list any more. `/admin/bids` was the last
+ * placeholder entry and landed 2026-08-17.
  */
 export interface AdminSectionLink {
   /** Message key under `Admin.nav`. */
@@ -27,6 +26,10 @@ export const ADMIN_SECTIONS: AdminSectionLink[] = [
   // questions — "where is this car?" and "who owes us money?" — and the answer
   // to the second decides whether the first is allowed to move.
   { key: "money", href: "/admin/money" },
+  // Above deposits, because this one has an auction clock on it: a bid
+  // instruction unanswered by tonight is worth nothing tomorrow, while a
+  // deposit waiting to be confirmed is merely waiting.
+  { key: "bids", href: "/admin/bids" },
   { key: "deposits", href: "/admin/deposits" },
   { key: "users", href: "/admin/users" },
   { key: "settings", href: "/admin/settings" },

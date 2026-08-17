@@ -21,6 +21,7 @@ import { OPEN_BID_REQUEST_STATUSES, type BidRequestStatus } from "@/shared/db/sc
 import { PLANS, type PlanKey } from "@/modules/plans/model/plans";
 import { can, type Actor } from "@/modules/plans/model/can";
 import { bidDepositFor, depositOverrideNeedsPassword } from "./bidDeposit";
+import { declineNeedsReason, isAllowedTransition } from "./bidStatus";
 import { acceptsBidRequests, bidWindow } from "./bidWindow";
 
 /** Everything we need about the car — all of it fetched by us. */
@@ -272,6 +273,79 @@ export async function missedBidRequests(now = new Date()): Promise<BidRequestRow
       )
     )
     .orderBy(schema.bidRequests.auctionAt);
+}
+
+export type StatusChangeResult =
+  | { status: "applied"; to: BidRequestStatus }
+  | { status: "not_allowed"; from: BidRequestStatus }
+  | { status: "needs_reason" }
+  | { status: "not_found" };
+
+/**
+ * An admin answers or advances one instruction.
+ *
+ * ── THE GUARD IS THE UPDATE, NOT A CHECK BEFORE IT ──────────────────────
+ * The legality of the move is decided from the row we read, and then the
+ * WHERE clause requires the status to **still** be that value. Two admins
+ * pressing "accepted" and "declined" a second apart would otherwise both read
+ * `requested`, both find their move legal, and the second would silently
+ * overwrite the first — leaving a client told one thing and a queue showing
+ * another. The same conditional-update discipline `deleteAccount()` uses,
+ * and for the same reason: this codebase has no interactive transactions.
+ *
+ * `reviewedAt` is stamped on every move rather than only on the first, because
+ * the question it answers is "when did somebody last take responsibility for
+ * this", not "when was it first seen".
+ */
+export async function setBidStatus(input: {
+  requestId: string;
+  to: BidRequestStatus;
+  adminId: string;
+  /** Told to the client verbatim. Required when declining. */
+  reason?: string | null;
+}): Promise<StatusChangeResult> {
+  const rows = await db()
+    .select({ status: schema.bidRequests.status, userId: schema.bidRequests.userId })
+    .from(schema.bidRequests)
+    .where(eq(schema.bidRequests.id, input.requestId))
+    .limit(1);
+
+  const row = rows[0];
+  if (!row) return { status: "not_found" };
+  if (!isAllowedTransition(row.status, input.to)) return { status: "not_allowed", from: row.status };
+
+  const reason = input.reason?.trim() || null;
+  if (declineNeedsReason(input.to) && !reason) return { status: "needs_reason" };
+
+  const claimed = await db()
+    .update(schema.bidRequests)
+    .set({
+      status: input.to,
+      reviewedBy: input.adminId,
+      reviewedAt: new Date(),
+      // Kept only where it means something. A reason carried over from an
+      // earlier refusal onto a later acceptance would be shown to the client
+      // as our explanation for a decision it does not describe.
+      ...(input.to === "declined" ? { declineReason: reason } : {}),
+      ...(input.to === "placed" ? { placedAt: new Date() } : {}),
+      updatedAt: new Date(),
+    })
+    .where(
+      and(eq(schema.bidRequests.id, input.requestId), eq(schema.bidRequests.status, row.status))
+    )
+    .returning({ id: schema.bidRequests.id });
+
+  // Somebody else moved it between our read and our write.
+  if (!claimed[0]) return { status: "not_allowed", from: row.status };
+
+  await recordAudit(input.adminId, "bid.status_set", "bid_request", input.requestId, {
+    userId: row.userId,
+    from: row.status,
+    to: input.to,
+    reason,
+  });
+
+  return { status: "applied", to: input.to };
 }
 
 export type OverrideResult =
