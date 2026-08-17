@@ -1550,6 +1550,17 @@
       "won": "Šį automobilį laimėjote. Byla jau atidaryta — kiek ir kaip sumokėti, rasite joje.",
       "lost": "Automobilis parduotas brangiau nei jūsų maksimumas, todėl atiteko kitam pirkėjui. Užstatas atlaisvinamas."
     },
+    "withdraw": {
+      "action": "Atsiimti šį nurodymą",
+      "confirmTitle": "Atsiimti šį nurodymą?",
+      "confirmBody": "Už {car} nestatysime, o jūsų leidimas iki {amount} nustos galioti. Vėliau galėsite kreiptis iš naujo, kol lotas dar neparduotas.",
+      "confirmYes": "Taip, atsiimti",
+      "confirmNo": "Palikti",
+      "working": "Atsiimama…",
+      "tooLate": "Šis nurodymas jau pasikeitė — pardavimas visai arti arba statymas jau padėtas. Skambinkite {phone} ir kartu patikrinsime aukcione.",
+      "failed": "Nepavyko. Bandykite dar kartą arba paskambinkite.",
+      "callInstead": "Pardavimas jau arti, todėl iš puslapio atsiimti nebegalima. Paskambinkite ir kartu patikrinsime aukcione:"
+    },
     "depositStatus": {
       "not_required": "Nereikia",
       "awaiting": "{amount} — su jumis susisieksime",
@@ -2175,6 +2186,8 @@
     "empty": "Statymo užklausų nėra.",
     "missedHeading": "Aukcionas jau įvyko",
     "missedHint": "Šias priėmėme, bet statymo taip ir nepažymėjome, o pardavimas jau praėjo. Jei statymas buvo padėtas — įrašykite rezultatą. Jei ne — klientui reikia pasakyti šiandien.",
+    "withdrawnHeading": "Klientas atsiėmė",
+    "withdrawnHint": "Šiuos klientas atsiėmė po to, kai jau buvome priėmę. Patikrinkite aukcione, ar nėra gyvo mūsų statymo, ir nuspręskite dėl žemiau rodomo užstato — įprastai jis grąžinamas.",
     "waitingHeading": "Laukia atsakymo",
     "runningHeading": "Vykdomos",
     "maxBid": "maks. statymas",

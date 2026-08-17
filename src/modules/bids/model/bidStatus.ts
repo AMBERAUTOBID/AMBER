@@ -82,6 +82,40 @@ export function needsAnswer(status: BidRequestStatus): boolean {
 }
 
 /**
+ * Whether a client may withdraw their own instruction, unaided.
+ *
+ * ── THE RULE THE OWNER SET (2026-08-17) ─────────────────────────────────
+ * They may take it back until we have confirmed the bid is placed — and, in
+ * their own decision, no later than **24 hours before the sale**.
+ *
+ * ── WHY THE STATUS ALONE IS NOT ENOUGH ──────────────────────────────────
+ * **The status lags the truth, and that is the whole danger here.** Every bid
+ * is placed by hand in BidManager, so between the moment a bid actually goes in
+ * and the moment somebody clicks "placed", the row still says `accepted` while
+ * a live bid exists at the auction. A withdrawal taken on the row alone would
+ * tell a client they were out of it, and then they would win a car they believe
+ * they cancelled. Copart and IAA also accept bids days early, so that gap is
+ * not always measured in minutes.
+ *
+ * The time rule is what covers it. **It is deliberately `bidWindow`'s existing
+ * `open` state and not a new number**: `open` means more than
+ * `URGENT_WITHIN_HOURS` (24) to the sale, which is exactly the period in which
+ * nobody here is at an auction screen for this lot. Inside it, the page hands
+ * the client a phone number rather than a button — the same answer, for the
+ * same reason, that the request form gives when a lot is too close.
+ *
+ * Neither rule is a substitute for the other, and neither is a substitute for
+ * an admin marking "placed" at the moment they place it.
+ */
+export function canClientWithdraw(
+  status: BidRequestStatus,
+  windowState: "open" | "urgent" | "closed"
+): boolean {
+  if (status !== "requested" && status !== "accepted") return false;
+  return windowState === "open";
+}
+
+/**
  * Whether this instruction is still running, from the client's side.
  *
  * The same three states `OPEN_BID_REQUEST_STATUSES` counts against a plan's

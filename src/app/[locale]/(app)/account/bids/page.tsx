@@ -13,9 +13,11 @@ import { Link } from "@/i18n/navigation";
 import LocalDateTime from "@/shared/time/LocalDateTime";
 import { formatInstant } from "@/shared/time/formatInstant";
 import { requireUser } from "@/modules/account/model/requireUser";
-import { whatsappHref, CONTACT_HREF } from "@/shared/config/site";
+import { whatsappHref, CONTACT_HREF, SITE } from "@/shared/config/site";
 import { bidRequestsFor, type BidRequestRow } from "@/modules/bids/model/bidRequests";
-import { isLiveInstruction } from "@/modules/bids/model/bidStatus";
+import { canClientWithdraw, isLiveInstruction } from "@/modules/bids/model/bidStatus";
+import { bidWindow } from "@/modules/bids/model/bidWindow";
+import WithdrawBidButton from "@/modules/bids/components/WithdrawBidButton";
 import { formatUsd } from "@/modules/plans/model/plans";
 
 export async function generateMetadata({
@@ -224,6 +226,42 @@ function Row({
           {t("openFile")} →
         </Link>
       )}
+
+      {/* Taking it back. The rule is re-checked on the server — this only
+          decides what to draw, and the two must agree, so both read
+          `canClientWithdraw`. Inside the window it is a phone number rather
+          than a disabled button: at that point a person here can still find
+          out whether a bid is live at the auction, and a form cannot. */}
+      {isLiveInstruction(row.status) &&
+        row.status !== "placed" &&
+        (canClientWithdraw(row.status, bidWindow(row.auctionAt, now).state) ? (
+          <WithdrawBidButton
+            requestId={row.id}
+            labels={{
+              action: t("withdraw.action"),
+              confirmTitle: t("withdraw.confirmTitle"),
+              confirmBody: t("withdraw.confirmBody", {
+                car: row.title,
+                amount: formatUsd(row.maxBidUsdCents),
+              }),
+              confirmYes: t("withdraw.confirmYes"),
+              confirmNo: t("withdraw.confirmNo"),
+              working: t("withdraw.working"),
+              tooLate: t("withdraw.tooLate", { phone: SITE.phone.display }),
+              failed: t("withdraw.failed"),
+            }}
+          />
+        ) : (
+          <p className="mt-3 text-sm leading-relaxed text-char-600">
+            {t("withdraw.callInstead")}{" "}
+            <a
+              href={CONTACT_HREF.tel}
+              className="font-semibold text-amber-700 underline-offset-4 hover:underline"
+            >
+              {SITE.phone.display}
+            </a>
+          </p>
+        ))}
 
       <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-char-100 pt-3 text-sm">
         <div>

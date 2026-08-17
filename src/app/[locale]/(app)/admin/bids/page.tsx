@@ -11,6 +11,7 @@ import BidStatusActions from "@/modules/admin/components/BidStatusActions";
 import {
   missedBidRequests,
   openBidRequests,
+  withdrawnNeedingAttention,
   type BidRequestRow,
 } from "@/modules/bids/model/bidRequests";
 import { needsAnswer } from "@/modules/bids/model/bidStatus";
@@ -66,7 +67,11 @@ export default async function AdminBidsPage({
   const format = await getFormatter({ locale });
 
   const now = new Date();
-  const [open, missed] = await Promise.all([openBidRequests(), missedBidRequests(now)]);
+  const [open, missed, withdrawn] = await Promise.all([
+    openBidRequests(),
+    missedBidRequests(now),
+    withdrawnNeedingAttention(now),
+  ]);
 
   // `missed` is a subset of `open` — an accepted instruction whose sale has
   // passed is still live. Listed once, at the top, where it is a problem
@@ -75,7 +80,7 @@ export default async function AdminBidsPage({
   const waiting = open.filter((row) => needsAnswer(row.status));
   const running = open.filter((row) => !needsAnswer(row.status) && !missedIds.has(row.id));
 
-  const empty = open.length === 0 && missed.length === 0;
+  const empty = open.length === 0 && missed.length === 0 && withdrawn.length === 0;
 
   return (
     <div className="max-w-3xl">
@@ -99,6 +104,25 @@ export default async function AdminBidsPage({
               <div className="space-y-3">
                 {missed.map((row) => (
                   <Row key={row.id} row={row} locale={locale} t={t} format={format} now={now} alarm />
+                ))}
+              </div>
+            </AdminSection>
+          )}
+
+          {/* Second, because a withdrawal we accepted carries the same class of
+              danger as a missed one: the database says the instruction is gone
+              and only the auction knows whether a bid is live. It also holds
+              any deposit that was received, which would otherwise leave the
+              queue while the money stayed with us. */}
+          {withdrawn.length > 0 && (
+            <AdminSection title={t("withdrawnHeading")} count={withdrawn.length}>
+              <p className="-mt-2 mb-3 flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm leading-relaxed text-char-800">
+                <WarningCircle size={17} weight="fill" className="mt-0.5 shrink-0 text-amber-600" />
+                {t("withdrawnHint")}
+              </p>
+              <div className="space-y-3">
+                {withdrawn.map((row) => (
+                  <Row key={row.id} row={row} locale={locale} t={t} format={format} now={now} />
                 ))}
               </div>
             </AdminSection>

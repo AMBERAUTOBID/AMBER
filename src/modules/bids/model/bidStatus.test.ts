@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   allowedTransitions,
+  canClientWithdraw,
   declineNeedsReason,
   isAllowedTransition,
   isBidRequestStatus,
@@ -52,6 +53,35 @@ describe("what an admin may do next", () => {
     // and crash the queue rather than simply offering nothing.
     for (const status of BID_REQUEST_STATUSES) {
       expect(Array.isArray(allowedTransitions(status))).toBe(true);
+    }
+  });
+});
+
+describe("a client taking their own instruction back", () => {
+  it("is allowed while nothing has been placed and the sale is far off", () => {
+    expect(canClientWithdraw("requested", "open")).toBe(true);
+    expect(canClientWithdraw("accepted", "open")).toBe(true);
+  });
+
+  it("is REFUSED once a bid is placed, whatever the clock says", () => {
+    // The owner's own rule: until we have confirmed it is placed.
+    expect(canClientWithdraw("placed", "open")).toBe(false);
+  });
+
+  it("is REFUSED near the sale even though the row still says accepted", () => {
+    /**
+     * The dangerous case, and the reason the clock matters at all. Between a
+     * bid actually going in at the auction and somebody clicking "placed", the
+     * row reads `accepted` while a live bid exists. Taking a withdrawal on the
+     * row alone would tell a client they were out of a car they then win.
+     */
+    expect(canClientWithdraw("accepted", "urgent")).toBe(false);
+    expect(canClientWithdraw("accepted", "closed")).toBe(false);
+  });
+
+  it("offers nothing on an instruction that already finished", () => {
+    for (const status of ["declined", "cancelled", "won", "lost"] as const) {
+      expect(canClientWithdraw(status, "open")).toBe(false);
     }
   });
 });

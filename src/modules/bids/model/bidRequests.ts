@@ -14,14 +14,14 @@
  * 3. **Asking grants nothing.** Only an admin moving the row to `accepted`
  *    means we will actually bid.
  */
-import { and, desc, eq, inArray, isNotNull, lt, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, lt, ne, or, sql } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
 import { recordAudit } from "@/shared/db/audit";
 import { OPEN_BID_REQUEST_STATUSES, type BidRequestStatus } from "@/shared/db/schema";
 import { PLANS, type PlanKey } from "@/modules/plans/model/plans";
 import { can, type Actor } from "@/modules/plans/model/can";
 import { bidDepositFor, depositOverrideNeedsPassword } from "./bidDeposit";
-import { declineNeedsReason, isAllowedTransition } from "./bidStatus";
+import { canClientWithdraw, declineNeedsReason, isAllowedTransition } from "./bidStatus";
 import { acceptsBidRequests, bidWindow } from "./bidWindow";
 
 /** Everything we need about the car — all of it fetched by us. */
@@ -355,6 +355,129 @@ export async function setBidStatus(input: {
   });
 
   return { status: "applied", to: input.to };
+}
+
+export type WithdrawResult =
+  | { status: "withdrawn"; hadBeenAccepted: boolean; depositHeldCents: number }
+  | { status: "too_late" }
+  | { status: "not_found" };
+
+/**
+ * A client takes their own instruction back.
+ *
+ * ── WHAT IT DELIBERATELY DOES NOT DO ────────────────────────────────────
+ * **It never touches the deposit.** The owner's rule (2026-08-17) is that a
+ * withdrawn deposit is normally returned but an admin decides, so this function
+ * leaves `depositStatus` exactly as it found it and reports what is being held.
+ * Returning money is a decision with a person's name on it; a client pressing a
+ * button on their own page is not that.
+ *
+ * ── THE THREE GUARDS, EACH FOR A DIFFERENT FAILURE ──────────────────────
+ * 1. **Ownership is in the WHERE clause**, not in a check the caller is trusted
+ *    to have made — the same shape as `getOrderForUser`.
+ * 2. **The window is re-checked here**, not just in the page that drew the
+ *    button. A page rendered an hour ago still shows a button that a form post
+ *    would otherwise honour, and an hour is exactly the kind of gap that puts a
+ *    withdrawal inside the danger zone.
+ * 3. **The UPDATE is conditional on the status we read.** If an admin marked
+ *    the bid placed a second ago, the claim finds nothing and the client is
+ *    told it is too late — rather than being told they are out of a car that
+ *    has a live bid on it.
+ *
+ * `hadBeenAccepted` comes from `reviewedAt`, which only an admin action ever
+ * sets. It is what tells the console whether this withdrawal needs somebody to
+ * go and check that no bid is live at the auction.
+ */
+export async function withdrawBidRequest(
+  requestId: string,
+  userId: string,
+  now = new Date()
+): Promise<WithdrawResult> {
+  const rows = await db()
+    .select({
+      status: schema.bidRequests.status,
+      auctionAt: schema.bidRequests.auctionAt,
+      reviewedAt: schema.bidRequests.reviewedAt,
+      depositStatus: schema.bidRequests.depositStatus,
+      depositRequiredCents: schema.bidRequests.depositRequiredCents,
+    })
+    .from(schema.bidRequests)
+    .where(and(eq(schema.bidRequests.id, requestId), eq(schema.bidRequests.userId, userId)))
+    .limit(1);
+
+  const row = rows[0];
+  // Same answer for "no such request" and "not yours", so ids cannot be probed.
+  if (!row) return { status: "not_found" };
+
+  if (!canClientWithdraw(row.status, bidWindow(row.auctionAt, now).state)) {
+    return { status: "too_late" };
+  }
+
+  const claimed = await db()
+    .update(schema.bidRequests)
+    .set({ status: "cancelled", updatedAt: now })
+    .where(
+      and(
+        eq(schema.bidRequests.id, requestId),
+        eq(schema.bidRequests.userId, userId),
+        eq(schema.bidRequests.status, row.status)
+      )
+    )
+    .returning({ id: schema.bidRequests.id });
+
+  if (!claimed[0]) return { status: "too_late" };
+
+  // The actor is the CLIENT here, which is unusual for this log and is the
+  // point: an instruction that vanished needs to say who withdrew it.
+  await recordAudit(userId, "bid.withdrawn_by_client", "bid_request", requestId, {
+    from: row.status,
+    hadBeenAccepted: row.reviewedAt !== null,
+    depositStatus: row.depositStatus,
+    depositRequiredCents: row.depositRequiredCents,
+  });
+
+  return {
+    status: "withdrawn",
+    hadBeenAccepted: row.reviewedAt !== null,
+    depositHeldCents: row.depositStatus === "received" ? row.depositRequiredCents : 0,
+  };
+}
+
+/**
+ * Withdrawn instructions that still need somebody here to do something.
+ *
+ * Two different obligations, deliberately in one list because both are answered
+ * by opening the same row:
+ *
+ * 1. **We had accepted it** (`reviewedAt` is set — only an admin sets that).
+ *    Somebody must confirm no bid is live at the auction, because the database
+ *    cannot know what BidManager knows.
+ * 2. **We are holding their money** (`deposit_status = 'received'`). Without
+ *    this the row would leave the queue with the deposit still ours.
+ *
+ * ⚠️ Bounded to `WITHDRAWN_REVIEW_DAYS` for the first case, because there is no
+ * "an admin has seen this" column and inventing one needs a migration. A row
+ * holding money is NOT time-bounded — that one stays until the deposit moves,
+ * which is the honest behaviour for money.
+ */
+export const WITHDRAWN_REVIEW_DAYS = 7;
+
+export async function withdrawnNeedingAttention(now = new Date()): Promise<BidRequestRow[]> {
+  const since = new Date(now.getTime() - WITHDRAWN_REVIEW_DAYS * 24 * 3_600_000);
+  return db()
+    .select(ROW_COLUMNS)
+    .from(schema.bidRequests)
+    .innerJoin(schema.users, eq(schema.bidRequests.userId, schema.users.id))
+    .where(
+      and(
+        eq(schema.bidRequests.status, "cancelled"),
+        or(
+          eq(schema.bidRequests.depositStatus, "received"),
+          and(isNotNull(schema.bidRequests.reviewedAt), gt(schema.bidRequests.updatedAt, since))
+        )
+      )
+    )
+    .orderBy(desc(schema.bidRequests.updatedAt));
 }
 
 export type OverrideResult =

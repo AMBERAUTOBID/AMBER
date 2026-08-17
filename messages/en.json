@@ -1550,6 +1550,17 @@
       "won": "You won this car. We have opened a file for it — the amount to pay and how to pay it are there.",
       "lost": "The car sold for more than your maximum, so it went to another buyer. Any security deposit is released."
     },
+    "withdraw": {
+      "action": "Withdraw this instruction",
+      "confirmTitle": "Withdraw this instruction?",
+      "confirmBody": "We will not bid on the {car}, and your authorisation of up to {amount} ends. You can ask again later while the lot is still open.",
+      "confirmYes": "Yes, withdraw it",
+      "confirmNo": "Keep it",
+      "working": "Withdrawing…",
+      "tooLate": "This instruction has moved on — the sale is close, or the bid is already placed. Call us on {phone} and we will check the auction with you.",
+      "failed": "That didn't go through. Try again, or call us.",
+      "callInstead": "The sale is close, so this can no longer be withdrawn from the page. Call us and we will check the auction with you:"
+    },
     "depositStatus": {
       "not_required": "None",
       "awaiting": "{amount} — we will be in touch",
@@ -2175,6 +2186,8 @@
     "empty": "No bid requests.",
     "missedHeading": "Auction already run",
     "missedHint": "We accepted these and never marked a bid as placed, and the sale has passed. If a bid did go in, record the result. If it did not, the client needs to be told today.",
+    "withdrawnHeading": "Withdrawn by the client",
+    "withdrawnHint": "The client took these back after we had accepted them. Check the auction that no bid of ours is live, and decide what happens to any deposit shown below — it is normally returned.",
     "waitingHeading": "Waiting for an answer",
     "runningHeading": "Running",
     "maxBid": "max bid",
