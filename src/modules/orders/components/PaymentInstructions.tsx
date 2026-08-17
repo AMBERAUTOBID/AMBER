@@ -3,6 +3,7 @@ import LocalDateTime from "@/shared/time/LocalDateTime";
 import { formatInstant } from "@/shared/time/formatInstant";
 import { CONTACT_HREF, SITE } from "@/shared/config/site";
 import { wireAccount } from "@/shared/config/wire";
+import AccountDetails from "@/shared/ui/AccountDetails";
 import DeclarePaymentButton from "./DeclarePaymentButton";
 import { formatMoney } from "../model/money";
 import type { PaymentStatus } from "../model/payment";
@@ -201,17 +202,7 @@ export default function PaymentInstructions({
       </div>
 
       {account ? (
-        <dl className="mt-4 divide-y divide-char-100 border-t border-char-100 text-sm">
-          <Field label={labels.beneficiary} value={account.beneficiary} />
-          {account.beneficiaryAddress && (
-            <Field label={labels.beneficiaryAddress} value={account.beneficiaryAddress} />
-          )}
-          <Field label={labels.bank} value={account.bankName} />
-          {account.bankAddress && <Field label={labels.bankAddress} value={account.bankAddress} />}
-          <Field label={labels.account} value={account.accountNumber} mono />
-          <Field label={labels.swift} value={account.swift} mono />
-          {account.routing && <Field label={labels.routing} value={account.routing} mono />}
-        </dl>
+        <AccountDetails account={account} labels={labels} className="mt-4" />
       ) : (
         <p className="mt-4 border-t border-char-100 pt-4 text-sm leading-relaxed text-char-600">
           {labels.noDetails}{" "}
@@ -233,22 +224,6 @@ export default function PaymentInstructions({
           failed: labels.declareFailed,
         }}
       />
-    </div>
-  );
-}
-
-/** `select-all` rather than a copy button: it needs no JavaScript, and one
- * click takes the whole value — which is what stops a half-copied account
- * number reaching a bank form. */
-function Field({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2">
-      <dt className="text-char-500">{label}</dt>
-      <dd
-        className={`select-all text-right font-medium text-char-900 ${mono ? "font-mono text-[0.9em]" : ""}`}
-      >
-        {value}
-      </dd>
     </div>
   );
 }

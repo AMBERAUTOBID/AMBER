@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { formatUsd } from "@/modules/plans/model/plans";
+import { depositReference } from "@/modules/plans/model/depositReference";
 import type { DepositRow } from "@/modules/plans/model/deposits";
 
 /**
@@ -63,6 +64,14 @@ export default function DepositQueue({
           <div className="min-w-0">
             <p className="truncate font-semibold text-char-900">{row.userName}</p>
             <p className="truncate text-sm text-char-600">{row.userEmail}</p>
+            {/* The string the client was told to put on the transfer. Shown
+                here because this is where an admin holds a bank statement
+                against a queue and decides which line is which — several
+                clients pay the same round figure on the same tier, so the
+                amount alone does not identify anybody. */}
+            <p className="truncate font-[family-name:var(--font-mono)] text-xs text-char-500">
+              {depositReference(row.id)}
+            </p>
             <p className="mt-1 text-sm text-char-700">
               {planNames[row.planKey] ?? row.planKey}
               {/* Bronze is free; printing "— $0" states an amount nobody owes. */}

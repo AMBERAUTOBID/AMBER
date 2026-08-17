@@ -1420,7 +1420,13 @@
       "pendingUpgradeHeading": "Pateikta plano keitimo užklausa",
       "requestedOn": "Pateikta",
       "depositDue": "Depozitas",
-      "pendingExplainer": "Planas aktyvuojamas, kai tik patvirtiname, kad depozitas gautas. Jei dar negavote iš mūsų mokėjimo rekvizitų, parašykite {email} ir juos atsiųsime.",
+      "pendingExplainer": "Planas aktyvuojamas, kai tik patvirtiname, kad depozitas gautas. Pavedimas paprastai užtrunka 1–3 darbo dienas. Jei kas neaišku, parašykite {email}.",
+      "deposit": {
+        "title": "Kaip atsiųsti depozitą",
+        "dollarsTitle": "Siųskite JAV dolerius",
+        "dollarsBody": "Aukščiau nurodyta suma turi ateiti tiksliai. Jei siųsite eurus, jūsų bankas juos konvertuos savo kursu, ateis kita suma ir ji nebeatitiks jūsų plano.",
+        "referenceHint": "Įrašykite tiksliai. Tą pačią sumą moka keli klientai — pagal šį numerį atpažįstame, kad pavedimas jūsų."
+      },
       "pendingExplainerNoDeposit": "Gavome jūsų užklausą. Šiam planui depozito mokėti nereikia — ją patvirtinsime ir netrukus su jumis susisieksime. Jei turite klausimų, parašykite {email}.",
       "cancelRequest": "Atšaukti šią užklausą",
       "cancelConfirm": "Užklausa bus atšaukta. Niekas nenuskaičiuojama, o naują užklausą galėsite pateikti bet kada.",

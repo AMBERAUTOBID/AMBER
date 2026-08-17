@@ -7,6 +7,8 @@ import CancelPlanRequest from "@/modules/account/components/CancelPlanRequest";
 import RequestRefund from "@/modules/account/components/RequestRefund";
 import { PLANS, formatUsd, isPlanKey } from "@/modules/plans/model/plans";
 import { decidedDepositsFor } from "@/modules/plans/model/deposits";
+import { depositReference } from "@/modules/plans/model/depositReference";
+import DepositInstructions from "@/modules/plans/components/DepositInstructions";
 import { planFeatureLines } from "@/modules/plans/model/planFeatures";
 import { Link } from "@/i18n/navigation";
 import { SITE, CONTACT_HREF } from "@/shared/config/site";
@@ -42,6 +44,8 @@ export default async function AccountPlanPage({
   // Feature lines are generated from the plan table and live in the Plans
   // namespace — the same strings the public plans page uses, by design.
   const tPlans = await getTranslations({ locale, namespace: "Plans" });
+  // The order invoice's copy, reused verbatim — see the labels below.
+  const tPay = await getTranslations({ locale, namespace: "Orders.pay" });
   const format = await getFormatter({ locale });
   const status = await planStatusFor(user);
   const history = await decidedDepositsFor(user.id);
@@ -172,6 +176,37 @@ export default async function AccountPlanPage({
               ? t("pendingExplainer", { email: SITE.email })
               : t("pendingExplainerNoDeposit", { email: SITE.email })}
           </p>
+
+          {/* Only where there is something to send. A free tier has no deposit,
+              and bank details under a $0 request describe a step that does not
+              exist. */}
+          {status.pending.amountCents > 0 && (
+            <DepositInstructions
+              amountLabel={formatUsd(status.pending.amountCents)}
+              reference={depositReference(status.pending.depositId)}
+              labels={{
+                title: t("deposit.title"),
+                dollarsTitle: t("deposit.dollarsTitle"),
+                dollarsBody: t("deposit.dollarsBody"),
+                // The charge instruction and the field labels are the ORDER
+                // page's own copy, read from its namespace rather than
+                // rewritten here. It is the same instruction about the same
+                // banking behaviour, and two translations of it would drift.
+                chargesTitle: tPay("chargesTitle"),
+                chargesBody: tPay("chargesBody"),
+                referenceLabel: tPay("referenceLabel"),
+                referenceHint: t("deposit.referenceHint"),
+                noDetails: tPay("noDetails"),
+                beneficiary: tPay("beneficiary"),
+                beneficiaryAddress: tPay("beneficiaryAddress"),
+                bank: tPay("bank"),
+                bankAddress: tPay("bankAddress"),
+                account: tPay("account"),
+                swift: tPay("swift"),
+                routing: tPay("routing"),
+              }}
+            />
+          )}
           <div className="mt-5 border-t border-amber-200 pt-4">
             <CancelPlanRequest depositId={status.pending.depositId} />
           </div>

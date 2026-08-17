@@ -1420,7 +1420,13 @@
       "pendingUpgradeHeading": "Requested plan change",
       "requestedOn": "Requested",
       "depositDue": "Deposit",
-      "pendingExplainer": "Your plan activates as soon as we confirm your deposit has arrived. If you haven't received transfer details from us yet, email {email} and we'll send them.",
+      "pendingExplainer": "Your plan activates as soon as we confirm your deposit has arrived. Transfers usually take 1–3 business days. If anything is unclear, email {email}.",
+      "deposit": {
+        "title": "How to send the deposit",
+        "dollarsTitle": "Send US dollars",
+        "dollarsBody": "The amount above has to arrive exactly. If you send euros, your own bank converts them at its rate, a different figure arrives, and it no longer matches your plan.",
+        "referenceHint": "Enter this exactly. Several clients pay the same amount, and this is how we know the transfer is yours."
+      },
       "pendingExplainerNoDeposit": "We've received your request. There's no deposit to pay on this plan — we'll confirm it and be in touch shortly. Any questions, email {email}.",
       "cancelRequest": "Cancel this request",
       "cancelConfirm": "This withdraws your request. Nothing is charged, and you can request a plan again whenever you like.",

@@ -43,29 +43,63 @@ function trimmed(name: string): string | null {
 }
 
 /**
- * The account, or null when it has not been configured.
+ * An account read from a prefixed set of variables, or null.
  *
  * The four required fields are the ones without which a transfer cannot be
  * made at all. Address and routing are genuinely optional — a European sender
  * never uses an ABA number — so their absence hides a row rather than the
  * whole panel.
  */
-export function wireAccount(): WireAccount | null {
-  const beneficiary = trimmed("WIRE_BENEFICIARY");
-  const bankName = trimmed("WIRE_BANK_NAME");
-  const accountNumber = trimmed("WIRE_ACCOUNT_NUMBER");
-  const swift = trimmed("WIRE_SWIFT");
+function readAccount(prefix: string): WireAccount | null {
+  const beneficiary = trimmed(`${prefix}_BENEFICIARY`);
+  const bankName = trimmed(`${prefix}_BANK_NAME`);
+  const accountNumber = trimmed(`${prefix}_ACCOUNT_NUMBER`);
+  const swift = trimmed(`${prefix}_SWIFT`);
 
   if (!beneficiary || !bankName || !accountNumber || !swift) return null;
 
   return {
     beneficiary,
-    beneficiaryAddress: trimmed("WIRE_BENEFICIARY_ADDRESS"),
+    beneficiaryAddress: trimmed(`${prefix}_BENEFICIARY_ADDRESS`),
     bankName,
-    bankAddress: trimmed("WIRE_BANK_ADDRESS"),
+    bankAddress: trimmed(`${prefix}_BANK_ADDRESS`),
     accountNumber,
     swift,
-    routing: trimmed("WIRE_ROUTING"),
-    currency: trimmed("WIRE_CURRENCY") ?? "USD",
+    routing: trimmed(`${prefix}_ROUTING`),
+    currency: trimmed(`${prefix}_CURRENCY`) ?? "USD",
   };
+}
+
+/**
+ * Where the invoice for a car is paid: a SWIFT transfer to Bank of America.
+ * `WIRE_*`.
+ */
+export function wireAccount(): WireAccount | null {
+  return readAccount("WIRE");
+}
+
+/**
+ * Where a deposit is paid: `WISE_*`.
+ *
+ * ── WHY A SECOND ACCOUNT AND NOT JUST THE FIRST ─────────────────────────
+ * Confirmed by the owner 2026-08-17: deposits come through Wise, while the
+ * much larger stage-two invoice goes by SWIFT to the bank. They are different
+ * accounts because they are different kinds of money — one is a refundable
+ * holding we may have to send straight back, the other is a payment we forward
+ * to an auction within hours.
+ *
+ * **Both are held in USD, and that is a rule rather than a coincidence.** A
+ * deposit has to equal its plan's figure exactly, and a client sending euros
+ * into a dollar account has them converted at somebody else's rate: $1,500
+ * becomes $1,498.63, matches no tier, and an admin is left deciding whether to
+ * activate a plan on a short payment. The instructions say *send dollars* for
+ * that reason alone.
+ *
+ * Same shape as the wire account, deliberately. A Wise USD account IS a US
+ * account — holder name, account number, routing, SWIFT, and a partner bank's
+ * name and address — so inventing a second vocabulary for it would only make
+ * the two panels drift apart.
+ */
+export function wiseAccount(): WireAccount | null {
+  return readAccount("WISE");
 }
