@@ -15,6 +15,8 @@ import {
 import { orderTitle } from "@/modules/orders/model/orderSnapshot";
 import { ORDER_STAGES, hasReached, stageProgress } from "@/modules/orders/model/stages";
 import { clientCostRows, formatMoney, formatRate, orderMoney } from "@/modules/orders/model/money";
+import { paymentStatus } from "@/modules/orders/model/payment";
+import PaymentInstructions from "@/modules/orders/components/PaymentInstructions";
 import { signFiles } from "@/modules/orders/api/signFiles";
 import StageBadge from "@/modules/orders/components/StageBadge";
 
@@ -234,6 +236,56 @@ export default async function ClientOrderPage({
           })}
         </ol>
       </section>
+
+      {/* ── how to pay ───────────────────────────────────────────────────
+          ABOVE the itemisation, deliberately. A client who opens this page
+          owing money wants two things — the number and where to send it — and
+          making them scroll past a cost table to reach the account details is
+          how a payment turns into a WhatsApp message instead. The breakdown
+          below is for checking; this is for acting. */}
+      <div className="mt-8">
+        <PaymentInstructions
+          status={paymentStatus(
+            {
+              soldAt: order.soldAt,
+              // The euro balance is what the client is quoted whenever a rate
+              // has been frozen; without one the order is dollars only.
+              balanceCents: money.balanceEur ?? money.balanceUsd,
+              paymentsMade: payments.length,
+              costLineCount: costLines.length,
+            },
+            new Date()
+          )}
+          currency={money.balanceEur !== null ? "EUR" : "USD"}
+          reference={order.reference}
+          locale={locale}
+          labels={{
+            title: t("pay.title"),
+            amount: t("pay.amount"),
+            deadline: t("pay.deadline"),
+            urgent: t("pay.urgent"),
+            overdue: t("pay.overdue"),
+            undated: t("pay.undated"),
+            chargesTitle: t("pay.chargesTitle"),
+            chargesBody: t("pay.chargesBody"),
+            referenceLabel: t("pay.referenceLabel"),
+            referenceHint: t("pay.referenceHint"),
+            beneficiary: t("pay.beneficiary"),
+            beneficiaryAddress: t("pay.beneficiaryAddress"),
+            bank: t("pay.bank"),
+            bankAddress: t("pay.bankAddress"),
+            account: t("pay.account"),
+            swift: t("pay.swift"),
+            routing: t("pay.routing"),
+            noDetails: t("pay.noDetails"),
+            paidTitle: t("pay.paidTitle"),
+            paidBody: t("pay.paidBody"),
+            forgiven: t("pay.forgiven"),
+            awaitingTitle: t("pay.awaitingTitle"),
+            awaitingBody: t("pay.awaitingBody"),
+          }}
+        />
+      </div>
 
       {/* ── money ────────────────────────────────────────────────────── */}
       <section className="mt-8 rounded-2xl border border-char-200/70 bg-white p-5">
