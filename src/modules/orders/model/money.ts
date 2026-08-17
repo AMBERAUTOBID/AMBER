@@ -1,3 +1,10 @@
+/**
+ * The cost vocabulary, re-exported from the schema the same way `stages.ts`
+ * re-exports `ORDER_STAGES`: the list is a constraint on a column, so it lives
+ * with the column, and everything that renders it reaches it through here.
+ */
+export { ORDER_COST_KINDS, type OrderCostKind } from "@/shared/db/schema";
+
 export type OrderCurrency = "USD" | "EUR";
 
 export interface MoneyRow {
@@ -119,6 +126,57 @@ export function orderMoney(
     balanceEur,
     settled: costLines.length > 0 && known !== null && known <= 0,
   };
+}
+
+export interface QuotedTotal {
+  /** What to print, in the order it should be read. Never empty. */
+  primary: MoneyRow[];
+  /** The same money in the other currency, or null when there is no other. */
+  secondary: MoneyRow | null;
+}
+
+/**
+ * How a total should be READ on an invoice.
+ *
+ * `combine` answers what the figures *are*; this answers which of them may be
+ * put in front of a client, and it exists because two wrong answers were on
+ * the real order page:
+ *
+ * 1. **"Total $15,895" printed twice**, once as the figure and once as its own
+ *    conversion, because with no rate `totalUsd` and `usdOnly` are the same
+ *    number and the second was rendered anyway. Harmless-looking, and it makes
+ *    an invoice look broken.
+ * 2. **"Paid €0.00" on a dollar invoice.** With nothing paid, both totals are a
+ *    legitimate zero, and "is the euro total non-null?" answers yes. A client
+ *    reading euros on a page that asks for dollars has every reason to wonder
+ *    which currency they are meant to send.
+ *
+ * The rule underneath both: **a file is quoted in euros only when it actually
+ * holds euros** — a rate somebody froze, or euro lines somebody entered.
+ *
+ * And when it holds both currencies with no rate to join them, the two are
+ * returned side by side rather than silently reduced to the dollar half. That
+ * is the same refusal `combine` makes when it returns null: a smaller,
+ * confident, wrong number is the one failure a client will act on.
+ */
+export function quotedTotal(totals: Totals, rateMicros: number | null): QuotedTotal {
+  const rated = rateMicros !== null && rateMicros > 0;
+
+  if (rated && totals.totalEur !== null) {
+    return {
+      primary: [{ amountCents: totals.totalEur, currency: "EUR" }],
+      secondary:
+        totals.totalUsd !== null ? { amountCents: totals.totalUsd, currency: "USD" } : null,
+    };
+  }
+
+  const parts: MoneyRow[] = [];
+  if (totals.usdOnly !== 0 || totals.eurOnly === 0) {
+    parts.push({ amountCents: totals.usdOnly, currency: "USD" });
+  }
+  if (totals.eurOnly !== 0) parts.push({ amountCents: totals.eurOnly, currency: "EUR" });
+
+  return { primary: parts, secondary: null };
 }
 
 export interface CostLineRow extends MoneyRow {

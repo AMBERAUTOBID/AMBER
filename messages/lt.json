@@ -1912,6 +1912,8 @@
       "urgent": "Liko nedaug — sumokėti iki",
       "overdue": "Terminas praėjo",
       "undated": "Terminas bus patikslintas, kai gausime aukciono sąskaitą.",
+      "expressTitle": "Banke prašykite skubaus (express) pavedimo",
+      "expressBody": "Įprastas tarptautinis pavedimas užtrunka nuo vienos iki trijų darbo dienų. Aukcionui sumokame iškart, kai pinigai pasiekia mus, o aukcionas nuo savo termino skaičiuoja vėlavimo mokestį ir saugojimą už kiekvieną dieną — šie mokesčiai pridedami prie šios bylos.",
       "chargesTitle": "Banko mokesčius turi apmokėti siuntėjas",
       "chargesBody": "Banko formoje pasirinkite, kad visus mokesčius apmoka siuntėjas. Skirtingi bankai tai vadina „OUR“, „Komisinius moka mokėtojas“ arba „Visus mokesčius apmoka siuntėjas“. Nepasirinkus, tarpiniai bankai nuskaito $20–50 ir mums atkeliauja mažiau, nei sąskaitoje.",
       "referenceLabel": "Mokėjimo paskirtis",
@@ -1946,6 +1948,8 @@
     "costKind": {
       "auction_price": "Automobilio kaina aukcione",
       "auction_fees": "Aukciono mokesčiai",
+      "late_fee": "Aukciono vėlavimo mokestis ir saugojimas",
+      "title_mailing": "Dokumento (title) siuntimas",
       "inland_transport": "Vidaus transportas JAV",
       "terminal": "Terminalo mokesčiai",
       "ocean_freight": "Jūrų frachtas",

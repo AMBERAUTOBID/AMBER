@@ -14,7 +14,14 @@ import {
 } from "@/modules/orders/model/orders";
 import { orderTitle } from "@/modules/orders/model/orderSnapshot";
 import { ORDER_STAGES, hasReached, stageProgress } from "@/modules/orders/model/stages";
-import { clientCostRows, formatMoney, formatRate, orderMoney } from "@/modules/orders/model/money";
+import {
+  clientCostRows,
+  formatMoney,
+  formatRate,
+  orderMoney,
+  quotedTotal,
+  type OrderCurrency,
+} from "@/modules/orders/model/money";
 import { paymentStatus } from "@/modules/orders/model/payment";
 import PaymentInstructions from "@/modules/orders/components/PaymentInstructions";
 import { signFiles } from "@/modules/orders/api/signFiles";
@@ -93,6 +100,16 @@ export default async function ClientOrderPage({
   const progress = stageProgress(order.stage);
   const money = orderMoney(costLines, payments, order.usdToEurMicros);
   const shownCosts = clientCostRows(costLines);
+
+  /**
+   * What the totals row may honestly print. See `quotedTotal` — it exists
+   * because this table showed the same dollar figure twice, and reported
+   * "Paid €0.00" on an invoice denominated in dollars.
+   */
+  const costQuote = quotedTotal(money.cost, order.usdToEurMicros);
+  const paidQuote = quotedTotal(money.paid, order.usdToEurMicros);
+  const quoted = (parts: { amountCents: number; currency: OrderCurrency }[]) =>
+    parts.map((part) => formatMoney(part.amountCents, part.currency, locale)).join(" + ");
 
   return (
     <div className="max-w-2xl">
@@ -267,6 +284,8 @@ export default async function ClientOrderPage({
             urgent: t("pay.urgent"),
             overdue: t("pay.overdue"),
             undated: t("pay.undated"),
+            expressTitle: t("pay.expressTitle"),
+            expressBody: t("pay.expressBody"),
             chargesTitle: t("pay.chargesTitle"),
             chargesBody: t("pay.chargesBody"),
             referenceLabel: t("pay.referenceLabel"),
@@ -318,27 +337,24 @@ export default async function ClientOrderPage({
             </table>
 
             <dl className="mt-4 space-y-1.5 border-t border-char-200 pt-4 text-sm">
+              {/* Both rows go through `quotedTotal`, which decides what may
+                  honestly be printed: it stopped this table showing the same
+                  dollar figure twice, and "Paid €0.00" underneath an invoice
+                  asking for dollars. */}
               <Row
                 label={t("costs.total")}
-                value={
-                  money.cost.totalEur !== null
-                    ? formatMoney(money.cost.totalEur, "EUR", locale)
-                    : formatMoney(money.cost.usdOnly, "USD", locale)
-                }
+                value={quoted(costQuote.primary)}
                 secondary={
-                  money.cost.totalUsd !== null
-                    ? formatMoney(money.cost.totalUsd, "USD", locale)
+                  costQuote.secondary
+                    ? formatMoney(
+                        costQuote.secondary.amountCents,
+                        costQuote.secondary.currency,
+                        locale
+                      )
                     : null
                 }
               />
-              <Row
-                label={t("costs.paid")}
-                value={
-                  money.paid.totalEur !== null
-                    ? formatMoney(money.paid.totalEur, "EUR", locale)
-                    : formatMoney(money.paid.usdOnly, "USD", locale)
-                }
-              />
+              <Row label={t("costs.paid")} value={quoted(paidQuote.primary)} />
               {money.settled ? (
                 <p className="pt-1 font-semibold text-green-800">{t("costs.settled")}</p>
               ) : (

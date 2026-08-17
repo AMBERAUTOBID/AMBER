@@ -1,4 +1,4 @@
-import { Bank, Clock, Warning, CheckCircle, Info } from "@phosphor-icons/react/dist/ssr";
+import { Bank, Clock, Lightning, Warning, CheckCircle, Info } from "@phosphor-icons/react/dist/ssr";
 import LocalDateTime from "@/shared/time/LocalDateTime";
 import { formatInstant } from "@/shared/time/formatInstant";
 import { CONTACT_HREF, SITE } from "@/shared/config/site";
@@ -53,6 +53,8 @@ export default function PaymentInstructions({
     urgent: string;
     overdue: string;
     undated: string;
+    expressTitle: string;
+    expressBody: string;
     chargesTitle: string;
     chargesBody: string;
     referenceLabel: string;
@@ -152,6 +154,28 @@ export default function PaymentInstructions({
           <Info size={15} /> {labels.undated}
         </p>
       )}
+
+      {/* WHY THE DEADLINE IS TIGHT, said where the deadline is read.
+
+          Added 2026-08-17, when the owner confirmed we no longer float the
+          auction price for a client we do not already know. Under the old
+          design our own cash absorbed the days a transfer spends in the
+          banking system; nothing absorbs them now. The chain is: the client's
+          money reaches us, then we pay Copart or IAA, and the auction's clock
+          has been running since the sale. An ordinary transfer takes one to
+          three business days and simply cannot make it.
+
+          The late fee is named here rather than left to appear on the invoice,
+          because it is now the CLIENT's charge and not ours. Somebody who
+          first learns of a fee and daily storage when they are billed for it
+          will argue, and they would be right to. */}
+      <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50/70 px-4 py-3">
+        <Lightning size={17} weight="fill" className="mt-0.5 shrink-0 text-amber-600" />
+        <div>
+          <p className="text-sm font-semibold text-char-900">{labels.expressTitle}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-char-700">{labels.expressBody}</p>
+        </div>
+      </div>
 
       {/* THE REFERENCE. Its own block because money without it cannot be
           matched to an order, and that is the failure that costs an admin an

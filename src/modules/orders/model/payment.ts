@@ -6,15 +6,23 @@
  * three business days (sale day plus two), **Copart gives two**. So the real
  * ceiling is two business days, and it belongs to Copart.
  *
- * We do not pass that ceiling on to the client, for a reason worth keeping:
- * **we pay the auction ourselves and the client reimburses us.** If we handed
- * them the same two days we have, nothing would be left for an international
- * transfer to clear — and a wire that leaves on the deadline arrives after it.
- * Twenty-four hours from the win leaves a full day of margin on our side, and
- * that day is the whole reason a late client is a nuisance rather than a $50
- * late fee and a suspended bidding account.
+ * We do not pass that ceiling on to the client, because their money has to
+ * arrive before ours can leave. A transfer that departs on the auction's
+ * deadline lands after it, so handing the client the full two days would leave
+ * nothing for the banking system to spend. Twenty-four hours from the win
+ * leaves a day of margin, and that day is the difference between a nuisance
+ * and a late fee with daily storage on top.
  *
- * ⚠️ It is a commercial judgement, not a fact, and it is deliberately the only
+ * ⚠️ **Whose money buys the day changed on 2026-08-17, and the number did not.**
+ * The original reasoning here was that *we* pay the auction and the client
+ * reimburses us, so the margin was ours to spend. The owner has since confirmed
+ * that we only front the money for a client we already know — two or more cars
+ * bought with us — and never for a first-time buyer. So for most orders the
+ * margin is the client's, the auction's late charges land on THEIR invoice
+ * (`late_fee`), and the express-transfer instruction on the payment panel
+ * stopped being advice and became the thing that makes this deadline possible.
+ *
+ * It remains a commercial judgement, not a fact, and is deliberately the only
  * number here so the owner can move it. Set by the owner 2026-08-15.
  *
  * ── AND WHY THE CLOCK STARTS AT THE WIN, NOT THE INVOICE ────────────────

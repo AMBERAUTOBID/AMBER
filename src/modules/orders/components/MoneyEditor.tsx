@@ -10,20 +10,9 @@ import {
   orderMoney,
   parseAmountToCents,
   parseRateToMicros,
+  ORDER_COST_KINDS,
   type OrderCurrency,
 } from "../model/money";
-
-const COST_KINDS = [
-  "auction_price",
-  "auction_fees",
-  "inland_transport",
-  "terminal",
-  "ocean_freight",
-  "customs",
-  "delivery",
-  "commission",
-  "other",
-] as const;
 
 const METHODS = ["bank_transfer", "cash", "other"] as const;
 
@@ -151,7 +140,7 @@ export default function MoneyEditor({
         )}
 
         <AmountForm
-          kinds={COST_KINDS}
+          kinds={ORDER_COST_KINDS}
           kindLabel={(k) => tk(k)}
           labels={{ kind: t("kind"), label: t("label"), amount: t("amount"), currency: t("currency"), add: t("add"), visible: t("visibleToClient") }}
           busy={busy}

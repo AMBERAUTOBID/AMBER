@@ -14,17 +14,7 @@ import { getOrder } from "@/modules/orders/model/orders";
  * locale-shaped string on the server, out of sight of the person who typed it,
  * is how a comma becomes a factor of a hundred with nobody to notice.
  */
-const COST_KINDS = [
-  "auction_price",
-  "auction_fees",
-  "inland_transport",
-  "terminal",
-  "ocean_freight",
-  "customs",
-  "delivery",
-  "commission",
-  "other",
-] as const;
+const COST_KINDS = schema.ORDER_COST_KINDS;
 
 const METHODS = ["bank_transfer", "cash", "other"] as const;
 

@@ -1912,6 +1912,8 @@
       "urgent": "Not long left — due by",
       "overdue": "Payment is overdue",
       "undated": "The deadline is set once we receive the auction invoice.",
+      "expressTitle": "Ask your bank for an express (urgent) transfer",
+      "expressBody": "An ordinary international transfer takes one to three business days. We pay the auction as soon as your money reaches us, and the auction charges a late fee plus daily storage from its own deadline — those charges are added to this order.",
       "chargesTitle": "Bank charges must be paid by the sender",
       "chargesBody": "In your bank's form, choose that the sender pays all charges. Banks label this “OUR”, “Sender pays all fees” or “Payer”. Without it, intermediary banks take $20–50 and less arrives than the invoice says.",
       "referenceLabel": "Payment reference",
@@ -1946,6 +1948,8 @@
     "costKind": {
       "auction_price": "Vehicle price at auction",
       "auction_fees": "Auction fees",
+      "late_fee": "Auction late fee and storage",
+      "title_mailing": "Title posting",
       "inland_transport": "Inland transport in the US",
       "terminal": "Terminal charges",
       "ocean_freight": "Ocean freight",

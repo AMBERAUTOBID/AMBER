@@ -6,6 +6,7 @@ import {
   orderMoney,
   parseAmountToCents,
   parseRateToMicros,
+  quotedTotal,
   usdCentsToEur,
   type CostLineRow,
   type MoneyRow,
@@ -280,5 +281,55 @@ describe("formatRate", () => {
   it("reads the way a rate is written down", () => {
     expect(formatRate(925_000)).toBe("0.9250");
     expect(formatRate(1_085_000)).toBe("1.0850");
+  });
+});
+
+describe("quotedTotal", () => {
+  const totals = (usdOnly: number, eurOnly: number, rate: number | null) =>
+    orderMoney(
+      [
+        { amountCents: usdOnly, currency: "USD" as const },
+        { amountCents: eurOnly, currency: "EUR" as const },
+      ],
+      [],
+      rate
+    ).cost;
+
+  it("quotes euros with the dollars beside them once a rate is frozen", () => {
+    const q = quotedTotal(totals(1_580_000, 0, 925_000), 925_000);
+    expect(q.primary).toEqual([{ amountCents: 1_461_500, currency: "EUR" }]);
+    expect(q.secondary).toEqual({ amountCents: 1_580_000, currency: "USD" });
+  });
+
+  it("does not print a dollar figure twice when there is no rate", () => {
+    // The fault on the real order page: with no rate, `totalUsd` and `usdOnly`
+    // are the same number, and rendering the second as a conversion of the
+    // first put "$15,895.00 $15,895.00" on a client's invoice.
+    const q = quotedTotal(totals(1_589_500, 0, null), null);
+    expect(q.primary).toEqual([{ amountCents: 1_589_500, currency: "USD" }]);
+    expect(q.secondary).toBeNull();
+  });
+
+  it("says nothing paid in dollars, not in euros", () => {
+    // Both totals are a legitimate zero, and picking the non-null one printed
+    // "€0.00" under an invoice asking for dollars.
+    const q = quotedTotal(orderMoney([], [], null).paid, null);
+    expect(q.primary).toEqual([{ amountCents: 0, currency: "USD" }]);
+  });
+
+  it("keeps a euro-only file in euros", () => {
+    const q = quotedTotal(totals(0, 120_000, null), null);
+    expect(q.primary).toEqual([{ amountCents: 120_000, currency: "EUR" }]);
+  });
+
+  it("shows both currencies side by side rather than only the dollar half", () => {
+    // Nothing reconciles them without a rate, and quoting the USD part alone
+    // as "the total" understates what is owed — the one error a client acts on.
+    const q = quotedTotal(totals(1_000_000, 50_000, null), null);
+    expect(q.primary).toEqual([
+      { amountCents: 1_000_000, currency: "USD" },
+      { amountCents: 50_000, currency: "EUR" },
+    ]);
+    expect(q.secondary).toBeNull();
   });
 });

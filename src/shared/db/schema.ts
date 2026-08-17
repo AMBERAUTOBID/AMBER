@@ -1280,6 +1280,41 @@ export const orderFiles = pgTable(
 );
 
 /**
+ * The kinds of cost a case file can carry, in roughly the order the money is
+ * spent — which is the order they appear in the admin's dropdown.
+ *
+ * ⚠️ **Declared once and imported.** This list used to be written out three
+ * times (here, `MoneyEditor`, and the money route), so adding a kind meant
+ * finding all three: miss the route and the form offers a kind the server
+ * rejects, miss the form and the kind exists but nobody can enter it.
+ *
+ * A TypeScript constraint on a plain `text` column — Postgres has no CHECK
+ * here — so adding a kind needs **no migration**, and removing one later will
+ * need a data fix rather than a schema one.
+ *
+ * `late_fee` and `title_mailing` were added 2026-08-17, when the owner
+ * confirmed that we stop financing first-time buyers: the auction's late
+ * charges now land on the client's invoice rather than on our own losses, and
+ * a charge a client is asked to pay has to be nameable. Until then both fell
+ * into `other`, which reads as "trust us" on a line somebody will query.
+ */
+export const ORDER_COST_KINDS = [
+  "auction_price",
+  "auction_fees",
+  "late_fee",
+  "title_mailing",
+  "inland_transport",
+  "terminal",
+  "ocean_freight",
+  "customs",
+  "delivery",
+  "commission",
+  "other",
+] as const;
+
+export type OrderCostKind = (typeof ORDER_COST_KINDS)[number];
+
+/**
  * What the car costs, one line at a time.
  *
  * `amountCents` + `currency` together, never apart — the auction is USD while
@@ -1298,19 +1333,7 @@ export const orderCostLines = pgTable(
     orderId: uuid("order_id")
       .notNull()
       .references(() => vehicleOrders.id, { onDelete: "cascade" }),
-    kind: text("kind", {
-      enum: [
-        "auction_price",
-        "auction_fees",
-        "inland_transport",
-        "terminal",
-        "ocean_freight",
-        "customs",
-        "delivery",
-        "commission",
-        "other",
-      ],
-    }).notNull(),
+    kind: text("kind", { enum: ORDER_COST_KINDS }).notNull(),
     label: text("label"),
     /** Minor units of `currency`. $1,250.00 is 125000. */
     amountCents: integer("amount_cents").notNull(),
