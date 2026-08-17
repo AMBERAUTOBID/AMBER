@@ -1927,7 +1927,11 @@
       "paidBody": "Ačiū. Toliau matysite kiekvieną gabenimo žingsnį šiame puslapyje.",
       "forgiven": "Ačiū. Bankas nuskaitė kelis dolerius pervedimo metu — skirtumo neprašome.",
       "awaitingTitle": "Kaina dar skaičiuojama",
-      "awaitingBody": "Kai gausime aukciono sąskaitą ir gabenimo kainas, čia atsiras tiksli suma ir rekvizitai. Iki tol nieko mokėti nereikia."
+      "awaitingBody": "Kai gausime aukciono sąskaitą ir gabenimo kainas, čia atsiras tiksli suma ir rekvizitai. Iki tol nieko mokėti nereikia.",
+      "declareAction": "Pavedimą atlikau",
+      "declareSending": "Siunčiame…",
+      "declareDone": "Ačiū — ieškosime jūsų pavedimo. Pinigai keliauja 1–3 darbo dienas; kai gausime, suma viršuje pasikeis.",
+      "declareFailed": "Nepavyko išsiųsti. Bandykite dar kartą arba parašykite mums."
     },
     "costs": {
       "heading": "Kaina",

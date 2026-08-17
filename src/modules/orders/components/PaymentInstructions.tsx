@@ -3,6 +3,7 @@ import LocalDateTime from "@/shared/time/LocalDateTime";
 import { formatInstant } from "@/shared/time/formatInstant";
 import { CONTACT_HREF, SITE } from "@/shared/config/site";
 import { wireAccount } from "@/shared/config/wire";
+import DeclarePaymentButton from "./DeclarePaymentButton";
 import { formatMoney } from "../model/money";
 import type { PaymentStatus } from "../model/payment";
 import type { OrderCurrency } from "../model/money";
@@ -37,6 +38,7 @@ export default function PaymentInstructions({
   currency,
   reference,
   locale,
+  orderId,
   labels,
 }: {
   status: PaymentStatus;
@@ -68,7 +70,13 @@ export default function PaymentInstructions({
     forgiven: string;
     awaitingTitle: string;
     awaitingBody: string;
+    declareAction: string;
+    declareSending: string;
+    declareDone: string;
+    declareFailed: string;
   };
+  /** Which order the "I've sent it" signal belongs to. */
+  orderId: string;
 }) {
   // Nothing has been priced yet. Says so plainly rather than showing a $0
   // invoice or, worse, congratulating the client on paying in full.
@@ -183,6 +191,19 @@ export default function PaymentInstructions({
           </a>
         </p>
       )}
+
+      {/* Last, because it is the step AFTER the details above have been used.
+          Offered even when no account is configured — a client who was sent
+          the details another way still needs to be able to say they paid. */}
+      <DeclarePaymentButton
+        orderId={orderId}
+        labels={{
+          action: labels.declareAction,
+          sending: labels.declareSending,
+          done: labels.declareDone,
+          failed: labels.declareFailed,
+        }}
+      />
     </div>
   );
 }

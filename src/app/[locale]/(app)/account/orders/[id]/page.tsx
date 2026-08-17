@@ -258,6 +258,7 @@ export default async function ClientOrderPage({
           )}
           currency={money.balanceEur !== null ? "EUR" : "USD"}
           reference={order.reference}
+          orderId={order.id}
           locale={locale}
           labels={{
             title: t("pay.title"),
@@ -283,6 +284,10 @@ export default async function ClientOrderPage({
             forgiven: t("pay.forgiven"),
             awaitingTitle: t("pay.awaitingTitle"),
             awaitingBody: t("pay.awaitingBody"),
+            declareAction: t("pay.declareAction"),
+            declareSending: t("pay.declareSending"),
+            declareDone: t("pay.declareDone"),
+            declareFailed: t("pay.declareFailed"),
           }}
         />
       </div>

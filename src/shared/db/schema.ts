@@ -330,6 +330,22 @@ export const ACTIVITY_KINDS = [
   "contact.submitted",
   /** Opened the pricing page: thinking about paying us. */
   "plans.viewed",
+  /**
+   * The client pressed "I've paid" on an order.
+   *
+   * ⚠️ **A CLAIM, NEVER A FACT, AND NOTHING MAY TREAT IT AS ONE.** It is the
+   * client telling us to go and look in the bank; only an admin writing a row
+   * into `order_payments` moves money on this system. Wiring this to the
+   * ledger would let anybody mark their own car paid.
+   *
+   * It lives here rather than as a column on `vehicle_orders` deliberately.
+   * The whole wire-transfer flow is a launch stopgap that gets replaced the
+   * day a provider settles payments automatically, and an activity row is
+   * something we can simply stop writing — a column would need one migration
+   * to add and another to remove. `kind` is plain `text` in Postgres (the
+   * enum is TypeScript-only), so adding a value here costs no migration.
+   */
+  "order.payment_declared",
 ] as const;
 
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];

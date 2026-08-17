@@ -1927,7 +1927,11 @@
       "paidBody": "Thank you. You'll see every shipping step on this page from here.",
       "forgiven": "Thank you. A bank took a few dollars in transit — we are not asking for the difference.",
       "awaitingTitle": "We are still costing this car",
-      "awaitingBody": "Once the auction invoice and the shipping rates are in, the exact amount and the bank details appear here. Nothing is due until then."
+      "awaitingBody": "Once the auction invoice and the shipping rates are in, the exact amount and the bank details appear here. Nothing is due until then.",
+      "declareAction": "I've sent the transfer",
+      "declareSending": "Sending…",
+      "declareDone": "Thank you — we'll watch for your transfer. Wires take one to three business days; the amount above changes when it lands.",
+      "declareFailed": "That didn't send. Try again, or message us."
     },
     "costs": {
       "heading": "Costs",
