@@ -1517,7 +1517,6 @@
   },
   "Bids": {
     "title": "My bids",
-    "comingBanner": "Bidding straight from your account arrives with one of our next updates. For now it works like this: once your plan is active, send us the car you want — the lot link or VIN — by email or WhatsApp, and we'll place the bid together.",
     "whatsappCta": "WhatsApp us the car",
     "whatsappPrefill": "Hello! I'd like to bid on this car: ",
     "emailCta": "Email us the car",
@@ -1525,6 +1524,39 @@
     "activeEmpty": "No active bids yet.",
     "historyHeading": "Bid history",
     "historyEmpty": "Your finished bids will appear here.",
+    "findCar": "Find a car",
+    "yourMax": "Your maximum",
+    "saleAt": "Auction",
+    "saleWas": "Auction was",
+    "saleUnknown": "Not set",
+    "deposit": "Security deposit",
+    "asked": "You asked",
+    "openFile": "Open the file for this car",
+    "status": {
+      "requested": "Waiting for us",
+      "accepted": "Confirmed",
+      "declined": "Not placed",
+      "cancelled": "Withdrawn",
+      "placed": "Bid placed",
+      "won": "Won",
+      "lost": "Lost"
+    },
+    "meaning": {
+      "requested": "We have your instruction and are checking it. We will confirm before the auction.",
+      "accepted": "We will bid for you, up to your maximum. There is nothing more for you to do.",
+      "declined": "We did not place this bid. Our reason is below.",
+      "cancelled": "You withdrew this instruction, so no bid was placed.",
+      "placed": "Your bid is in at the auction. We will tell you the result as soon as the lot sells.",
+      "won": "You won this car. We have opened a file for it — the amount to pay and how to pay it are there.",
+      "lost": "The car sold for more than your maximum, so it went to another buyer. Any security deposit is released."
+    },
+    "depositStatus": {
+      "not_required": "None",
+      "awaiting": "{amount} — we will be in touch",
+      "received": "{amount} received",
+      "returned": "{amount} returned",
+      "forfeited": "{amount} retained"
+    },
     "request": {
       "open": "Bid for me",
       "signedOut": "Register to bid",

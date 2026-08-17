@@ -197,6 +197,13 @@ export interface BidRequestRow {
   depositDefaultCents: number;
   depositStatus: string;
   status: BidRequestStatus;
+  /**
+   * Why we refused. **Written for the client and shown to them verbatim** —
+   * the column exists because a refusal with no reason generates a phone call.
+   */
+  declineReason: string | null;
+  /** The case file, once a won instruction became a bought car. */
+  orderId: string | null;
   createdAt: Date;
 }
 
@@ -219,6 +226,8 @@ const ROW_COLUMNS = {
   depositDefaultCents: schema.bidRequests.depositDefaultCents,
   depositStatus: schema.bidRequests.depositStatus,
   status: schema.bidRequests.status,
+  declineReason: schema.bidRequests.declineReason,
+  orderId: schema.bidRequests.orderId,
   createdAt: schema.bidRequests.createdAt,
 };
 

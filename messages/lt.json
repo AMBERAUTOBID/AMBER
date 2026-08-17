@@ -1517,7 +1517,6 @@
   },
   "Bids": {
     "title": "Mano statymai",
-    "comingBanner": "Galimybė teikti statymus tiesiai iš paskyros atsiras viename iš artimiausių atnaujinimų. Kol kas tai veikia taip: kai jūsų planas aktyvus, atsiųskite mums automobilį — loto nuorodą arba VIN — el. paštu arba per WhatsApp, ir statymą pateiksime kartu.",
     "whatsappCta": "Siųsti per WhatsApp",
     "whatsappPrefill": "Sveiki! Norėčiau pateikti statymą už šį automobilį: ",
     "emailCta": "Siųsti el. paštu",
@@ -1525,6 +1524,39 @@
     "activeEmpty": "Aktyvių statymų kol kas nėra.",
     "historyHeading": "Statymų istorija",
     "historyEmpty": "Čia matysite savo pasibaigusius statymus.",
+    "findCar": "Rasti automobilį",
+    "yourMax": "Jūsų maksimumas",
+    "saleAt": "Aukcionas",
+    "saleWas": "Aukcionas buvo",
+    "saleUnknown": "Nenurodyta",
+    "deposit": "Užstatas",
+    "asked": "Kreipėtės",
+    "openFile": "Atidaryti šio automobilio bylą",
+    "status": {
+      "requested": "Laukia mūsų",
+      "accepted": "Patvirtinta",
+      "declined": "Statymas nepadėtas",
+      "cancelled": "Atšaukta",
+      "placed": "Statymas padėtas",
+      "won": "Laimėta",
+      "lost": "Pralaimėta"
+    },
+    "meaning": {
+      "requested": "Gavome jūsų nurodymą ir jį tikriname. Patvirtinsime prieš aukcioną.",
+      "accepted": "Statysime už jus iki jūsų nurodyto maksimumo. Jums daugiau nieko daryti nereikia.",
+      "declined": "Šio statymo nepadėjome. Priežastis — žemiau.",
+      "cancelled": "Šį nurodymą atšaukėte, todėl statymas nebuvo padėtas.",
+      "placed": "Jūsų statymas įdėtas aukcione. Rezultatą pranešime iškart, kai lotas bus parduotas.",
+      "won": "Šį automobilį laimėjote. Byla jau atidaryta — kiek ir kaip sumokėti, rasite joje.",
+      "lost": "Automobilis parduotas brangiau nei jūsų maksimumas, todėl atiteko kitam pirkėjui. Užstatas atlaisvinamas."
+    },
+    "depositStatus": {
+      "not_required": "Nereikia",
+      "awaiting": "{amount} — su jumis susisieksime",
+      "received": "{amount} gauta",
+      "returned": "{amount} grąžinta",
+      "forfeited": "{amount} negrąžinta"
+    },
     "request": {
       "open": "Statykite už mane",
       "signedOut": "Registruokitės, kad galėtumėte statyti",

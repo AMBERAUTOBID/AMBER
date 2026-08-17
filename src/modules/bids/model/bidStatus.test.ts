@@ -4,6 +4,7 @@ import {
   declineNeedsReason,
   isAllowedTransition,
   isBidRequestStatus,
+  isLiveInstruction,
   needsAnswer,
   BID_REQUEST_STATUSES,
 } from "./bidStatus";
@@ -73,5 +74,19 @@ describe("guards", () => {
     expect(needsAnswer("requested")).toBe(true);
     expect(needsAnswer("accepted")).toBe(false);
     expect(needsAnswer("placed")).toBe(false);
+  });
+
+  it("calls exactly the plan-limited states live, so the two can never disagree", () => {
+    /**
+     * A client's "active bids" list and the concurrency allowance they are
+     * held to are the same three states. If they drifted, somebody would be
+     * told they had used up their allowance while their own page showed fewer
+     * bids than that, and there would be no way for them to tell who was right.
+     */
+    expect(BID_REQUEST_STATUSES.filter(isLiveInstruction)).toEqual([
+      "requested",
+      "accepted",
+      "placed",
+    ]);
   });
 });

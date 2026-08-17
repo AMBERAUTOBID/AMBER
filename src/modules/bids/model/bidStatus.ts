@@ -1,4 +1,8 @@
-import { BID_REQUEST_STATUSES, type BidRequestStatus } from "@/shared/db/schema";
+import {
+  BID_REQUEST_STATUSES,
+  OPEN_BID_REQUEST_STATUSES,
+  type BidRequestStatus,
+} from "@/shared/db/schema";
 
 export { BID_REQUEST_STATUSES, type BidRequestStatus };
 
@@ -75,4 +79,17 @@ export function isBidRequestStatus(value: unknown): value is BidRequestStatus {
  */
 export function needsAnswer(status: BidRequestStatus): boolean {
   return status === "requested";
+}
+
+/**
+ * Whether this instruction is still running, from the client's side.
+ *
+ * The same three states `OPEN_BID_REQUEST_STATUSES` counts against a plan's
+ * concurrency allowance, and deliberately read from that constant rather than
+ * listed again: **a client's "active" list and the limit they are held to must
+ * never disagree.** If the two drifted, somebody would be told they had used
+ * up their allowance while their own page showed fewer bids than that.
+ */
+export function isLiveInstruction(status: BidRequestStatus): boolean {
+  return (OPEN_BID_REQUEST_STATUSES as readonly string[]).includes(status);
 }
