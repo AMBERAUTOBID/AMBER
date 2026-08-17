@@ -42,7 +42,7 @@ export const PAYMENT_DUE_HOURS = 24;
 export const SHORT_PAYMENT_TOLERANCE_CENTS = 3000;
 
 /** Hours left when the client is warned rather than merely informed. */
-const URGENT_WITHIN_HOURS = 6;
+export const URGENT_WITHIN_HOURS = 6;
 
 export type PaymentState =
   /**
@@ -55,6 +55,23 @@ export type PaymentState =
    * draws the same distinction — its `settled` requires `costLines.length > 0`.
    */
   | "awaiting_costs"
+  /**
+   * Costs exist but no balance can be computed, because the file holds both
+   * currencies and no rate has been frozen. `orderMoney()` returns null there
+   * rather than a confident partial sum.
+   *
+   * ⚠️ **Its own state because the obvious reading of null is catastrophic.**
+   * Treating "unknown" as zero made this report `settled` — the page told a
+   * client their car was paid for while an unpriced euro column sat next to
+   * it, and the admin money list, which lists what is owed, would have left
+   * the order out entirely. Neither screen may claim anything about the money
+   * here; both must say the figure is not final yet.
+   *
+   * To the client this is indistinguishable from `awaiting_costs` and is shown
+   * with the same words. To an admin it is different and actionable: the costs
+   * are entered, the exchange rate is not.
+   */
+  | "needs_rate"
   /** Paid in full, or short by less than the tolerance. */
   | "settled"
   /** Owed, with time in hand. */
@@ -112,9 +129,12 @@ export function paymentStatus(
 ): PaymentStatus {
   const outstanding = Math.max(0, input.balanceCents ?? 0);
 
-  if (input.costLineCount === 0) {
+  if (input.costLineCount === 0 || input.balanceCents === null) {
     return {
-      state: "awaiting_costs",
+      // Both mean "no figure to ask for yet", and both keep the deadline: it
+      // is a fact about the auction, and a client whose car is still being
+      // priced should still be able to see when the money will be wanted.
+      state: input.costLineCount === 0 ? "awaiting_costs" : "needs_rate",
       dueAt: paymentDueAt(input.soldAt),
       hoursLeft: null,
       outstandingCents: 0,

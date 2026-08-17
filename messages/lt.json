@@ -1696,6 +1696,7 @@
       "label": "Pulto skiltys",
       "overview": "Apžvalga",
       "orders": "Automobiliai",
+      "money": "Pinigai",
       "deposits": "Depozitai",
       "users": "Vartotojai",
       "settings": "Nustatymai",
@@ -1962,6 +1963,25 @@
         "other": "Kita"
       }
     }
+  },
+  "AdminMoney": {
+    "heading": "Pinigai",
+    "allClear": "Neapmokėtų nėra. Visi automobiliai apmokėti.",
+    "outstandingAcross": "neapmokėta už {count, plural, one {# automobilį} few {# automobilius} other {# automobilių}}",
+    "notInTotal": "{count, plural, one {# automobiliui suma dar nenustatyta} few {# automobiliams sumos dar nenustatytos} other {# automobilių sumos dar nenustatytos}}",
+    "truncated": "Rodomos tik seniausios bylos — jų yra daugiau, nei telpa šiame puslapyje.",
+    "notInvoicedHeading": "Sąskaita neišrašyta",
+    "notInvoicedHint": "Klientas negali sumokėti sumos, kurios jam niekas nenurodė, o jo terminas jau eina.",
+    "declaredHeading": "Klientas sako, kad pervedė",
+    "declaredHint": "Patikrinkite banke pagal nuorodą ir įrašykite mokėjimą byloje.",
+    "owedHeading": "Skolinga",
+    "noCosts": "Kaštai neįvesti",
+    "noRate": "Nenustatytas valiutos kursas",
+    "dueIn": "Terminas",
+    "overdueBy": "Terminas buvo",
+    "noDeadline": "Pardavimo data neįrašyta, todėl termino nėra.",
+    "saidSent": "Pranešė {when}",
+    "partPaid": "Sumokėta dalis"
   },
   "AdminOrders": {
     "heading": "Automobiliai",

@@ -1696,6 +1696,7 @@
       "label": "Console sections",
       "overview": "Overview",
       "orders": "Vehicles",
+      "money": "Money",
       "deposits": "Deposits",
       "users": "Users",
       "settings": "Settings",
@@ -1962,6 +1963,25 @@
         "other": "Other"
       }
     }
+  },
+  "AdminMoney": {
+    "heading": "Money",
+    "allClear": "Nothing outstanding. Every vehicle is paid up.",
+    "outstandingAcross": "outstanding across {count, plural, one {# vehicle} other {# vehicles}}",
+    "notInTotal": "{count, plural, one {# vehicle has no amount yet} other {# vehicles have no amount yet}}",
+    "truncated": "Only the oldest files are shown — there are more than this page can list.",
+    "notInvoicedHeading": "Not invoiced",
+    "notInvoicedHint": "The client cannot pay a figure nobody has sent them, and their deadline is already running.",
+    "declaredHeading": "Client says they have sent it",
+    "declaredHint": "Check the bank for the reference, then record the payment on the file.",
+    "owedHeading": "Owed",
+    "noCosts": "No costs entered",
+    "noRate": "No exchange rate set",
+    "dueIn": "Due",
+    "overdueBy": "Was due",
+    "noDeadline": "No sale date recorded, so no deadline.",
+    "saidSent": "Said sent {when}",
+    "partPaid": "Part paid"
   },
   "AdminOrders": {
     "heading": "Vehicles",

@@ -80,7 +80,12 @@ export default function PaymentInstructions({
 }) {
   // Nothing has been priced yet. Says so plainly rather than showing a $0
   // invoice or, worse, congratulating the client on paying in full.
-  if (status.state === "awaiting_costs") {
+  //
+  // `needs_rate` shares this panel deliberately: the costs are in and the
+  // exchange rate is not, which is our unfinished work and reads to the client
+  // as exactly the same sentence. The distinction between the two is real, but
+  // it is an admin's problem — see `PaymentState`.
+  if (status.state === "awaiting_costs" || status.state === "needs_rate") {
     return (
       <div className="rounded-2xl border border-char-200 bg-char-50/60 p-5">
         <p className="flex items-start gap-2.5 font-semibold text-char-900">

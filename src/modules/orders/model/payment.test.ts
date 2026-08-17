@@ -97,10 +97,24 @@ describe("paymentStatus", () => {
     expect(s.outstandingCents).toBe(0);
   });
 
-  it("treats an unknown balance as nothing owed rather than guessing", () => {
-    // `orderMoney` returns null when no rate reconciles the two currencies.
+  it("refuses to call an uncomputable balance settled", () => {
+    /**
+     * `orderMoney` returns null when the file holds both currencies and no
+     * rate reconciles them. This used to be read as "nothing owed", which is
+     * the worst available reading of "unknown": the client's page announced
+     * the car was paid for while an unpriced euro column sat beside it, and
+     * the admin money list — which exists to say who owes what — would have
+     * dropped the order for being settled.
+     */
     const s = paymentStatus({ soldAt: SOLD, balanceCents: null, paymentsMade: 0, costLineCount: 3 }, SOLD);
-    expect(s.state).toBe("settled");
+    expect(s.state).toBe("needs_rate");
+    expect(s.outstandingCents).toBe(0);
+  });
+
+  it("still shows the deadline while the rate is missing", () => {
+    // The money is unquantified; the moment it is wanted is not.
+    const s = paymentStatus({ soldAt: SOLD, balanceCents: null, paymentsMade: 0, costLineCount: 3 }, SOLD);
+    expect(s.dueAt).toEqual(new Date("2026-08-16T18:00:00Z"));
   });
 });
 

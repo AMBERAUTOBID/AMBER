@@ -23,6 +23,10 @@ export const ADMIN_SECTIONS: AdminSectionLink[] = [
   // Second, not last: once cars are moving this is the screen an operator
   // opens all day, and the deposit queue is the one they visit occasionally.
   { key: "orders", href: "/admin/orders" },
+  // Beside it, because they are the same files read with two different
+  // questions — "where is this car?" and "who owes us money?" — and the answer
+  // to the second decides whether the first is allowed to move.
+  { key: "money", href: "/admin/money" },
   { key: "deposits", href: "/admin/deposits" },
   { key: "users", href: "/admin/users" },
   { key: "settings", href: "/admin/settings" },

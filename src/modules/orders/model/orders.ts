@@ -205,6 +205,160 @@ export async function listOrders(stage?: OrderStage): Promise<OrderListRow[]> {
 }
 
 /**
+ * How many case files the money list reads at once.
+ *
+ * Bounded like every other list here, but the bound is generous on purpose:
+ * settlement cannot be decided in SQL — it needs the frozen rate, the
+ * per-currency reconciliation and the short-payment tolerance, all of which
+ * live in `orderMoney` and `paymentStatus` — so the filtering happens in
+ * memory and the query cannot ask for "only the unpaid ones".
+ *
+ * ⚠️ The caller is told when the bound was reached rather than being handed a
+ * silently short list. A money page that omits the oldest debt without saying
+ * so is worse than no money page.
+ */
+export const MONEY_QUEUE_LIMIT = 500;
+
+/**
+ * Every case file's money, aggregated, for the admin money list.
+ *
+ * **One query, not one per order.** The obvious shape — list the orders, then
+ * fetch cost lines and payments for each — is three round trips per row over
+ * Neon's HTTP driver, which is slow at ten orders and unusable at two hundred.
+ * The sums are grouped in Postgres and reconciled in `moneyQueue.ts`, which is
+ * sound because cost lines only ever add up within a currency.
+ *
+ * Ordered by sale date **ascending**: if the limit is ever reached, the rows
+ * that survive are the oldest, which are the ones most likely to be overdue.
+ * Truncating a money list from the wrong end would drop exactly the debts
+ * somebody needed to see.
+ */
+export async function listMoneyQueueRows(limit = MONEY_QUEUE_LIMIT) {
+  const costs = db()
+    .select({
+      orderId: schema.orderCostLines.orderId,
+      usd: sql<string>`coalesce(sum(${schema.orderCostLines.amountCents}) filter (where ${schema.orderCostLines.currency} = 'USD'), 0)`.as(
+        "cost_usd"
+      ),
+      eur: sql<string>`coalesce(sum(${schema.orderCostLines.amountCents}) filter (where ${schema.orderCostLines.currency} = 'EUR'), 0)`.as(
+        "cost_eur"
+      ),
+      lines: sql<string>`count(*)`.as("cost_lines"),
+    })
+    .from(schema.orderCostLines)
+    .groupBy(schema.orderCostLines.orderId)
+    .as("costs");
+
+  const paid = db()
+    .select({
+      orderId: schema.orderPayments.orderId,
+      usd: sql<string>`coalesce(sum(${schema.orderPayments.amountCents}) filter (where ${schema.orderPayments.currency} = 'USD'), 0)`.as(
+        "paid_usd"
+      ),
+      eur: sql<string>`coalesce(sum(${schema.orderPayments.amountCents}) filter (where ${schema.orderPayments.currency} = 'EUR'), 0)`.as(
+        "paid_eur"
+      ),
+      payments: sql<string>`count(*)`.as("paid_count"),
+      /**
+       * When we last RECORDED one, not the date it is said to have arrived.
+       * This is compared against the client's "I've sent it" to decide whether
+       * anyone has looked since, and a back-dated payment entered today would
+       * otherwise appear to predate a message it actually answers.
+       */
+      lastRecordedAt: sql<Date | null>`max(${schema.orderPayments.createdAt})`.as("paid_last"),
+    })
+    .from(schema.orderPayments)
+    .groupBy(schema.orderPayments.orderId)
+    .as("paid");
+
+  const rows = await db()
+    .select({
+      id: schema.vehicleOrders.id,
+      reference: schema.vehicleOrders.reference,
+      soldAt: schema.vehicleOrders.soldAt,
+      year: schema.vehicleOrders.year,
+      make: schema.vehicleOrders.make,
+      model: schema.vehicleOrders.model,
+      lotNumber: schema.vehicleOrders.lotNumber,
+      stage: schema.vehicleOrders.stage,
+      rateMicros: schema.vehicleOrders.usdToEurMicros,
+      clientName: schema.users.name,
+      clientEmail: schema.users.email,
+      costUsd: costs.usd,
+      costEur: costs.eur,
+      costLines: costs.lines,
+      paidUsd: paid.usd,
+      paidEur: paid.eur,
+      payments: paid.payments,
+      lastPaymentRecordedAt: paid.lastRecordedAt,
+    })
+    .from(schema.vehicleOrders)
+    .innerJoin(schema.users, eq(schema.users.id, schema.vehicleOrders.userId))
+    .leftJoin(costs, eq(costs.orderId, schema.vehicleOrders.id))
+    .leftJoin(paid, eq(paid.orderId, schema.vehicleOrders.id))
+    .orderBy(asc(schema.vehicleOrders.soldAt))
+    .limit(limit + 1);
+
+  // `sum()` and `count()` come back as numeric and bigint, which the driver
+  // hands over as strings. Coerced here rather than anywhere downstream, so
+  // nothing further on ever adds two figures with `+` and gets "01580000".
+  return {
+    truncated: rows.length > limit,
+    rows: rows.slice(0, limit).map((row) => ({
+      id: row.id,
+      reference: row.reference,
+      soldAt: row.soldAt,
+      year: row.year,
+      make: row.make,
+      model: row.model,
+      lotNumber: row.lotNumber,
+      stage: row.stage,
+      clientName: row.clientName,
+      clientEmail: row.clientEmail,
+      rateMicros: row.rateMicros,
+      costUsdCents: Number(row.costUsd ?? 0),
+      costEurCents: Number(row.costEur ?? 0),
+      costLineCount: Number(row.costLines ?? 0),
+      paidUsdCents: Number(row.paidUsd ?? 0),
+      paidEurCents: Number(row.paidEur ?? 0),
+      paymentCount: Number(row.payments ?? 0),
+      lastPaymentRecordedAt: row.lastPaymentRecordedAt ? new Date(row.lastPaymentRecordedAt) : null,
+    })),
+  };
+}
+
+/**
+ * When each client last said "I've sent the transfer", by order reference.
+ *
+ * Read separately rather than joined, because the join condition would be
+ * `subject_key = 'order:' || reference` — a text concatenation no index can
+ * serve. These rows are few (one per order anyone has ever declared on) and
+ * `recordActivity` already collapses repeats, so fetching them whole and
+ * matching in memory is cheaper than the join and much easier to read.
+ *
+ * ⚠️ Matched on the reference alone, not on the user. The reference is unique
+ * per order, and a file repointed to another account must not lose the signal.
+ */
+export async function paymentDeclarations(): Promise<Map<string, Date>> {
+  const rows = await db()
+    .select({
+      subjectKey: schema.activityEvents.subjectKey,
+      at: sql<Date>`max(${schema.activityEvents.lastSeenAt})`,
+    })
+    .from(schema.activityEvents)
+    .where(eq(schema.activityEvents.kind, "order.payment_declared"))
+    .groupBy(schema.activityEvents.subjectKey);
+
+  const byReference = new Map<string, Date>();
+  for (const row of rows) {
+    // Written as `order:SAB-2026-0007` by the declare-payment route.
+    const reference = row.subjectKey.startsWith("order:") ? row.subjectKey.slice(6) : null;
+    if (reference && row.at) byReference.set(reference, new Date(row.at));
+  }
+  return byReference;
+}
+
+/**
  * Files already open on this lot.
  *
  * The (platform, lot_number) index is deliberately NOT unique — Copart relists
