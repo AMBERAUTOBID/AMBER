@@ -122,7 +122,28 @@ export default function Header({ account, accountMobile }: HeaderProps) {
             and shortening the language button to its code (-59px) brings it
             to ~941px, which clears 960 with room for a scrollbar. Re-measure
             in Lithuanian before adding anything back. */}
-        <div className="hidden flex-1 items-center gap-0.5 xl:flex">
+        {/*
+          THREE ZONES, NOT ONE ROW — logo left, navigation centred, actions
+          right. This used to be a single flex box holding all eight items at a
+          2px gap, packed hard against the wordmark, which left **289px of empty
+          space on the right** and made the bar look as though it had slid
+          off-centre. Reported by the owner 2026-08-18 as "cramped and skewed
+          left"; measured before touching it, because the notes above rightly
+          warn that this row has run out of width before.
+
+          MEASURED AT 1920px, LITHUANIAN, SIGNED OUT: logo 224, links 399,
+          actions 304 — against 1216 of inner width. The slack is real, and this
+          change spends it on separation rather than on new items.
+
+          ⚠️ The narrowest case is still Lithuanian while SIGNED IN, where
+          `HeaderAccount` swaps a 98px button for a name up to 5rem wide.
+          Re-measure there before adding anything to the row.
+        */}
+        {/* `justify-between`, not `justify-center`: centring packed the five
+            links into a tight clump with the slack pushed to either side, which
+            reads as one long word rather than five destinations. Spreading them
+            across the zone gives equal gaps and lets each label breathe. */}
+        <nav className="hidden flex-1 items-center justify-between gap-1 px-6 xl:flex">
           {links.map((link) => {
             const active = pathname === link.href;
             return (
@@ -138,7 +159,11 @@ export default function Header({ account, accountMobile }: HeaderProps) {
                   "whitespace-nowrap rounded-full px-1 py-2 text-sm font-medium transition-colors",
                   active
                     ? "bg-amber-50 text-amber-700"
-                    : "text-char-600 hover:bg-char-100 hover:text-char-900"
+                    : // Amber on hover, not grey. Grey said only "this is a
+                      // control"; the brand colour says which control, and it
+                      // matches the amber pill the active page already wears —
+                      // so hovering previews where you are about to land.
+                      "text-char-600 hover:bg-amber-50 hover:text-amber-700"
                 )}
               >
                 {link.label}
@@ -161,6 +186,12 @@ export default function Header({ account, accountMobile }: HeaderProps) {
               WHAT THE ROOM IS FOR: the videos section, already agreed. Do not
               spend it on anything else without re-measuring in Lithuanian while
               signed in — that is the case with the least slack. */}
+        </nav>
+
+        {/* The actions, in their own zone on the right. A wider gap than the
+            navigation's, deliberately: these three are things you *do*, and
+            spacing is what separates them from the five places you *go*. */}
+        <div className="hidden shrink-0 items-center gap-1.5 xl:flex">
           <ContactMenu />
           <LanguageSwitcher compact />
           {/* This header is still static: the slot resolves the session on
@@ -253,7 +284,7 @@ export default function Header({ account, accountMobile }: HeaderProps) {
             </div>
             <Link
               href="/contact"
-              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full bg-amber-500 px-4 py-3 text-sm font-semibold text-white"
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full bg-amber-600 px-4 py-3 text-sm font-semibold text-white"
             >
               {t("cta")}
               <ArrowRight size={15} weight="bold" />

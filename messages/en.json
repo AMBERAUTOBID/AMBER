@@ -129,6 +129,14 @@
         "Personal bid management"
       ]
     },
+    "showcase": {
+      "eyebrow": "Auctions this week",
+      "title": "Sport and luxury, selling in the next few days",
+      "subtitle": "A selection of Porsche, Ferrari, Lamborghini, BMW M, Mercedes-AMG, Corvette and Audi RS lots whose auctions run within the week.",
+      "seeAll": "All vehicles",
+      "scrollPrevious": "Previous vehicles",
+      "scrollNext": "More vehicles"
+    },
     "trust": {
       "title": "Built around the two largest U.S. auction networks",
       "items": [
@@ -555,6 +563,8 @@
       "georgiaNote": "Georgia also charges a separate excise tax based on engine size and vehicle age, which isn't included above — ask us for the exact figure.",
       "grandTotal": "Estimated total, delivered",
       "ctaWhatsapp": "Send this lot to us on WhatsApp",
+      "ctaWhatsappShort": "Message us on WhatsApp",
+      "bidNeedsPlan": "Have an active plan? Sign in and you can ask us to bid for you right here.",
       "ctaContact": "Ask us to bid on this",
       "disclaimer": "An illustrative estimate, not a binding quote. Auction fees, freight rates and duty vary by lot and sale day.",
       "otherPorts": "Need a different port?",
@@ -1618,7 +1628,6 @@
     "metaDescription": "Choose how you work with SmartAutoBid.",
     "title": "Plans",
     "intro": "Every plan includes a personal consultant and our full buying, shipping and paperwork service. The deposit is refundable and returned when you finish working with us.",
-    "popular": "For one or two cars",
     "noDeposit": "Free",
     "noDepositLabel": "get started free",
     "refundableDeposit": "refundable deposit",
@@ -1632,6 +1641,8 @@
     "footnote": "Deposits are refunded within one working day of finishing your cooperation with us, provided no bids are active.",
     "features": {
       "bidLimit": "Bidding limit up to {amount}",
+      "bidFreeUpTo": "Bid up to {amount} — no deposit at all",
+      "bidDecidedTogether": "From {from} to {to} — we decide together whether a refundable hold is needed",
       "bidUnlimited": "Unlimited bidding power",
       "concurrent": "Up to {count, plural, one {# active bid} other {# active bids}} at once",
       "concurrentUnlimited": "Unlimited active bids",
@@ -1646,22 +1657,22 @@
       "bronze": {
         "name": "Bronze",
         "tagline": "For buying one car, or two. No deposit — we find it and bid alongside you, and you pay only when you buy.",
-        "terms": "The Bronze plan requires no deposit. We search the auctions together with you: we help you find the vehicle you are looking for, calculate the full landed cost including fees, shipping and customs, and give you our honest view of the car's condition and resale prospects before you commit. Every bid is placed by us on your behalf. Our service fee is {fee} per vehicle, payable only when you successfully buy — if you never buy, you owe us nothing."
+        "terms": "The Bronze plan requires no deposit. We search the auctions together with you: we help you find the vehicle you are looking for, calculate the full landed cost including fees, shipping and customs, and give you our honest view of the car's condition and resale prospects before you commit. Bids up to {depositFree} carry no security at all — you simply tell us your maximum. Above that, up to {maxBid}, we look at each case and agree with you whether a refundable hold is needed; if one is, you see the exact amount before you confirm the bid, not afterwards. Every bid is placed by us on your behalf. Our service fee is {fee} per vehicle, payable only when you successfully buy — if you never buy, you owe us nothing."
       },
       "silver": {
         "name": "Silver",
         "tagline": "For buying regularly. Your first deposit tier — one lot at a time, at the reduced per-car fee.",
-        "terms": "The Silver plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $10,000 with one active bid at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
+        "terms": "The Silver plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to {maxBid} with one active bid at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
       },
       "gold": {
         "name": "Gold",
         "tagline": "For regular buyers who need more room — more bidding power, two lots in play at once.",
-        "terms": "The Gold plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $25,000 with two active bids at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
+        "terms": "The Gold plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to {maxBid} with two active bids at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
       },
       "platinum": {
         "name": "Platinum",
         "tagline": "Our highest limits, for buying often and in volume.",
-        "terms": "The Platinum plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to $50,000 with five active bids at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
+        "terms": "The Platinum plan requires a {deposit} deposit, which is fully refundable once you finish working with us, provided no bids are active. It allows bids up to {maxBid} with five active bids at a time, and a service fee of {fee} per vehicle purchased. Every bid is placed by us on your behalf."
       }
     },
     "comingSoon": "Coming soon",
@@ -2265,5 +2276,13 @@
       "tooMany": "Too many attempts. Wait a few minutes.",
       "failed": "That didn't save. Try again."
     }
+  },
+  "ErrorPage": {
+    "title": "This page did not load",
+    "body": "Lot data comes from the auction aggregator, and this time it did not answer in time. Trying again usually works.",
+    "retry": "Try again",
+    "whatsapp": "Message us on WhatsApp",
+    "whatsappMessage": "Hello! A page on the SmartAutoBid site failed to load.",
+    "reference": "Error reference: {code}"
   }
 }

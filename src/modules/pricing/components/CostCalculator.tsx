@@ -75,6 +75,72 @@ const MORE_VEHICLE_KINDS: MoreVehicleKind[] = [
 // number, so the calculator withholds the estimate until a lead email is given.
 const EMAIL_REQUIRED_KINDS: VehicleKind[] = ["boat", "heavyEquipment"];
 
+/** The lot price the calculator opens on. An ordinary car, not a flattering
+ *  one — see the note on the price field. */
+const EXAMPLE_LOT_PRICE_USD = 15000;
+
+/**
+ * The estimate, as a pure function of the choices on screen.
+ *
+ * ⚠️ EXTRACTED FROM `handleCalculate` SO THE PANEL CAN OPEN ON A WORKED
+ * EXAMPLE. Seeding it from an effect was tried first and is wrong: setting
+ * state on mount costs a second render, and React's own lint rule
+ * (`react-hooks/set-state-in-effect`) says so. Computing it during the first
+ * render needs the maths to be callable without the component's state, which
+ * is what this is. The button and the opening example now run the same code,
+ * so they cannot drift.
+ */
+function estimateFor({
+  vehicleKind,
+  price,
+  pickup,
+  auction,
+  port,
+  usaMade,
+}: {
+  vehicleKind: VehicleKind;
+  price: string;
+  pickup: string;
+  auction: Auction;
+  port: string;
+  usaMade: boolean;
+}): Result {
+  const lotPrice = Number(price) || 0;
+  const auctionFees = auctionFeesUsd(lotPrice);
+  // The PUBLIC rate, deliberately. This calculator sits on the home page and
+  // /shipping, which are statically generated — reading a session to learn the
+  // reader's plan would make both pages dynamic for a $50 difference. A
+  // visitor with no deposit pays exactly this, so it is also the honest quote.
+  // The per-lot panel on a vehicle page is the one that knows who is looking.
+  const brokerageFee = brokerageFeeUsd(null);
+  // Real per-location rates only cover Car/SUV/Motorcycle; every other
+  // vehicle kind (ATV, boat, etc.) keeps the flat placeholder rate.
+  const trucking =
+    vehicleKind === "car" || vehicleKind === "suv" || vehicleKind === "motorcycle"
+      ? localTransportRateUsd(pickup, auction, vehicleKind, TRUCKING_FLAT_USD)
+      : TRUCKING_FLAT_USD;
+  const shipping = VEHICLE_BASE_SHIPPING[vehicleKind] * (PORT_MULTIPLIER[port] ?? 1);
+  const { dutyUsd: duty, vatUsd: vat } = customsBreakdown({
+    lotPriceUsd: lotPrice,
+    shippingUsd: shipping,
+    destinationPort: port,
+    usaMade,
+  });
+  const totalUsd = lotPrice + auctionFees + brokerageFee + trucking + shipping + duty + vat;
+
+  return {
+    lotPrice,
+    auctionFees,
+    brokerageFee,
+    trucking,
+    shipping,
+    duty,
+    vat,
+    isGeorgia: port === "Poti, Georgia",
+    totalEur: totalUsd * USD_TO_EUR,
+  };
+}
+
 const VEHICLE_ICONS: Record<VehicleKind, typeof Car> = {
   car: Car,
   suv: Jeep,
@@ -132,13 +198,45 @@ export default function CostCalculator() {
   const [vehicleKind, setVehicleKind] = useState<VehicleKind>("car");
   const [moreOpen, setMoreOpen] = useState(false);
   const [auction, setAuction] = useState<Auction>("copart");
-  const [price, setPrice] = useState("");
+  /**
+   * ⚠️ THE CALCULATOR USED TO OPEN EMPTY, and that was its whole problem.
+   *
+   * Every row read "–" and the headline read **0 €**. The strongest thing on
+   * this page — the one number a buyer actually wants, landed cost in their own
+   * port — greeted them with a zero, which reads as broken rather than as
+   * "waiting for input". Seen on the page rather than measured; nothing in the
+   * markup is wrong.
+   *
+   * So it opens on a worked example instead. $15,000 is an ordinary lot price,
+   * not a flattering one, and the figure is a starting point a visitor types
+   * over — the field is theirs from the first keystroke. The disclaimer beneath
+   * the total already says the estimate is illustrative.
+   */
+  const [price, setPrice] = useState(String(EXAMPLE_LOT_PRICE_USD));
   const [pickup, setPickup] = useState("");
   const [port, setPort] = useState(PORT_OPTIONS[0]);
   const [email, setEmail] = useState("");
   const [vin, setVin] = useState("");
   const [usaMade, setUsaMade] = useState(false);
-  const [result, setResult] = useState<Result | null>(null);
+  /**
+   * Opens on the worked example rather than on nothing.
+   *
+   * A lazy initialiser, not an effect: the table is filled on the very first
+   * paint, with no second render and no flash of dashes. The arguments are the
+   * same defaults the fields above are initialised with — Klaipeda is
+   * PORT_OPTIONS[0] and is never a quote-only port, so this never needs an
+   * email and never fires a contact request.
+   */
+  const [result, setResult] = useState<Result | null>(() =>
+    estimateFor({
+      vehicleKind: "car",
+      price: String(EXAMPLE_LOT_PRICE_USD),
+      pickup: "",
+      auction: "copart",
+      port: PORT_OPTIONS[0],
+      usaMade: false,
+    })
+  );
   const [submitting, setSubmitting] = useState(false);
   const [quoteRequested, setQuoteRequested] = useState(false);
 
@@ -186,40 +284,15 @@ export default function CostCalculator() {
       return;
     }
 
-    const lotPrice = Number(price) || 0;
-    const auctionFees = auctionFeesUsd(lotPrice);
-    // The PUBLIC rate, deliberately. This calculator sits on the home page and
-    // /shipping, which are statically generated — reading a session to learn the
-    // reader's plan would make both pages dynamic for a $50 difference. A
-    // visitor with no deposit pays exactly this, so it is also the honest quote.
-    // The per-lot panel on a vehicle page is the one that knows who is looking.
-    const brokerageFee = brokerageFeeUsd(null);
-    // Real per-location rates only cover Car/SUV/Motorcycle; every other
-    // vehicle kind (ATV, boat, etc.) keeps the flat placeholder rate.
-    const trucking =
-      vehicleKind === "car" || vehicleKind === "suv" || vehicleKind === "motorcycle"
-        ? localTransportRateUsd(pickup, auction, vehicleKind, TRUCKING_FLAT_USD)
-        : TRUCKING_FLAT_USD;
-    const shipping = VEHICLE_BASE_SHIPPING[vehicleKind] * (PORT_MULTIPLIER[port] ?? 1);
-    const { dutyUsd: duty, vatUsd: vat } = customsBreakdown({
-      lotPriceUsd: lotPrice,
-      shippingUsd: shipping,
-      destinationPort: port,
+    const estimate = estimateFor({
+      vehicleKind,
+      price,
+      pickup,
+      auction,
+      port,
       usaMade: effectiveUsaMade,
     });
-    const totalUsd = lotPrice + auctionFees + brokerageFee + trucking + shipping + duty + vat;
-
-    setResult({
-      lotPrice,
-      auctionFees,
-      brokerageFee,
-      trucking,
-      shipping,
-      duty,
-      vat,
-      isGeorgia: port === "Poti, Georgia",
-      totalEur: totalUsd * USD_TO_EUR,
-    });
+    setResult(estimate);
 
     if (email.trim()) {
       setSubmitting(true);
@@ -230,9 +303,9 @@ export default function CostCalculator() {
           name: "Price calculator lead",
           email: email.trim(),
           vehicle: `${vehicleKind} via ${auction}${pickup ? ` from ${pickup}` : ""}`,
-          message: `Calculator estimate — price: $${lotPrice}, port: ${port}, USA-made: ${effectiveUsaMade}${
+          message: `Calculator estimate — price: $${estimate.lotPrice}, port: ${port}, USA-made: ${effectiveUsaMade}${
             vin.trim() ? `, VIN: ${vin.trim()}` : ""
-          }, total: ~€${Math.round(totalUsd * USD_TO_EUR)}`,
+          }, total: ~€${Math.round(estimate.totalEur)}`,
         }),
       })
         .catch(() => {})
@@ -511,7 +584,7 @@ export default function CostCalculator() {
               <p className="mt-3 text-xs leading-relaxed text-amber-700">{t("results.georgiaNote")}</p>
             )}
 
-            <p className="mt-4 text-xs leading-relaxed text-char-400">{t("disclaimer")}</p>
+            <p className="mt-4 text-xs leading-relaxed text-char-500">{t("disclaimer")}</p>
           </div>
         </Reveal>
 

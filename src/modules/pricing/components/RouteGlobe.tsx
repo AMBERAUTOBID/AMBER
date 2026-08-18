@@ -22,6 +22,18 @@ type TimedArc = { arc: CobeArc; revealAt: number };
 // cobe can't vary line width or add a dash pattern per-arc — color is the
 // only lever available to tell the legs apart at a glance.
 const AMBER: Vec3 = [0.765, 0.4, 0.141]; // amber-500 #c36624 — ocean freight leg
+/**
+ * The domestic trucking leg.
+ *
+ * ⚠️ THIS COLOUR AND THE SPHERE'S ARE ONE DECISION, NOT TWO. It was briefly
+ * lightened to char-400 while the globe was dark, because char-900 on a
+ * charcoal sphere is a line drawn in the background colour. The globe went back
+ * to light, so this goes back to dark with it — and if the sphere is ever
+ * darkened again, this has to move in the same commit.
+ *
+ * ⚠️ **The legend swatch is a Tailwind class in CostCalculator, not this
+ * constant** — change one and the key stops describing the picture.
+ */
 const TRUCK: Vec3 = [0.102, 0.094, 0.09]; // char-900 #1a1817 — domestic trucking leg
 
 // CSS-ident-safe ids for cobe's anchor-name labels.
@@ -293,6 +305,22 @@ export default function RouteGlobe({
         phi: phiRef.current,
         theta: thetaRef.current,
         scale: scaleRef.current,
+        /*
+         * ⚠️ THESE NUMBERS WERE CHANGED TO A DARK SPHERE ON 2026-08-18 AND PUT
+         * BACK THE SAME DAY. The reasoning for darkening them was sound — a
+         * near-white globe under a near-white glow on a near-white page reads
+         * as a smudge — but the result was worse, not better: the owner's words
+         * were that it now looked like a hole in the section. Reverted rather
+         * than tuned further, because tuning needs eyes on the screen and this
+         * cannot be checked headlessly: a WebGL drawing buffer is cleared after
+         * compositing, so both screenshots and `readPixels` come back empty in
+         * a background tab and report a blank globe that is actually fine.
+         *
+         * **The colour question is still open and belongs to the owner.** What
+         * changed instead is the one thing that helps whatever colour wins: the
+         * sphere now has a defined edge (see the ring on the canvas below), so
+         * it reads as an object rather than dissolving into the page.
+         */
         dark: 0,
         diffuse: 1.8,
         mapSamples: 24000,
@@ -341,6 +369,26 @@ export default function RouteGlobe({
 
   return (
     <div className={clsx("relative aspect-square w-full select-none", className)}>
+      {/*
+        AN EDGE, SO THE SPHERE IS AN OBJECT RATHER THAN A STAIN.
+
+        Whatever colour the globe itself ends up, a pale sphere on a pale page
+        has no silhouette — the owner's report that the map "isn't clear" is
+        mostly this. A hairline ring and a soft ground shadow cost nothing, work
+        for a light globe and a dark one alike, and are the one part of this
+        that can be judged without the WebGL context being awake.
+
+        `aria-hidden` and `pointer-events: none` so it never intercepts the drag
+        that spins the globe.
+      */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-full"
+        style={{
+          boxShadow:
+            "inset 0 0 0 1px rgba(26,24,23,.10), 0 22px 55px -28px rgba(26,24,23,.55)",
+        }}
+      />
       <canvas
         ref={canvasRef}
         style={{
@@ -359,7 +407,7 @@ export default function RouteGlobe({
             className={clsx(
               "pointer-events-none absolute whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none shadow-sm",
               label.isPickup
-                ? "bg-amber-500 font-semibold text-white"
+                ? "bg-amber-600 font-semibold text-white"
                 : label.active
                   ? "border border-amber-300 bg-amber-50 text-amber-700"
                   : "border border-char-200 bg-white/95 text-char-600"
