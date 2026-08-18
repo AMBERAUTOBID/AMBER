@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense, cache } from "react";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import Container from "@/shared/ui/Container";
@@ -10,6 +11,9 @@ import LocalDateTime from "@/shared/time/LocalDateTime";
 import VehicleCostPanel from "@/modules/pricing/components/VehicleCostPanel";
 import PastSalesTable from "@/modules/inventory/components/PastSalesTable";
 import LotCard from "@/modules/inventory/components/LotCard";
+import MadeInUsaBadge from "@/modules/inventory/components/MadeInUsaBadge";
+import { formatOdometer } from "@/modules/inventory/model/formatOdometer";
+import { formatLotTitle } from "@/modules/inventory/model/modelTree";
 import SaveLotButton from "@/modules/favorites/components/SaveLotButton";
 import { auctionDisplayName, auctionLotUrl } from "@/modules/inventory/model/auctionLotUrl";
 import { isStillUpcoming } from "@/modules/inventory/model/relatedLots";
@@ -22,6 +26,7 @@ import { lotLabel, lotSubjectKey } from "@/modules/activity/model/subjects";
 import AuctionLinkTracker from "@/modules/activity/components/AuctionLinkTracker";
 import BidRequestButton from "@/modules/bids/components/BidRequestButton";
 import { bidWindow } from "@/modules/bids/model/bidWindow";
+import { heldForBiddingBy } from "@/modules/bids/model/bidRequests";
 import { PLANS, isPlanKey } from "@/modules/plans/model/plans";
 import {
   getAuctionSource,
@@ -48,6 +53,8 @@ import {
   Storefront,
   Archive,
   ArrowSquareOut,
+  Gauge,
+  Warning,
 } from "@phosphor-icons/react/dist/ssr";
 
 const DELIVERY_PORTS = ["Klaipėda, Lithuania", "Rotterdam, Netherlands", "Poti, Georgia"];
@@ -89,10 +96,43 @@ function Spec({
   );
 }
 
+/**
+ * The related-lots call, memoised for the length of one request.
+ *
+ * ⚠️ THIS ENDPOINT IS THE SLOWEST THING ON THE SITE, AND IT USED TO BLOCK THE
+ * WHOLE PAGE. Measured against the live API on 2026-08-17:
+ *
+ *     /vehicles/57443096            1.2 s      7 KB
+ *     /vehicles/57443096/related   12.5 s    191 KB   (16.5 s on a second try)
+ *     /vehicles/64738576/related    1.6 s    179 KB
+ *
+ * It was awaited at the top of the page component, so nothing rendered until
+ * it came back — 14 to 18 seconds of blank screen on a bad lot, reported by
+ * the owner as "Vercel is slow". Vercel was not slow. Worse than slow: a
+ * serverless function has a wall-clock limit in the low tens of seconds, so
+ * the long tail of this call was not merely a wait, it was a 504.
+ *
+ * And nothing it returns is the car. It feeds three supporting blocks — the
+ * comparable-price range, the past-sales table, and the similar-upcoming grid
+ * — each of which now awaits it inside its own <Suspense> and arrives when it
+ * arrives. The page itself is ready as soon as the 1.2-second detail call is.
+ *
+ * `cache()` and not a bare call: three components ask for the same data, and
+ * without this they would ask upstream three times. Next's fetch memoisation
+ * would cover the Apibara source alone; the postgres mirror source does not go
+ * through fetch, so the guarantee has to live here, above both.
+ */
+const relatedFor = cache((vinOrLot: string) =>
+  getAuctionSource()
+    .getRelatedVehicles(vinOrLot)
+    // Supporting context, not the record. If it fails the car still renders.
+    .catch(() => null)
+);
+
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-char-200 bg-white p-5">
-      <h2 className="text-sm font-bold uppercase tracking-wider text-char-400">{title}</h2>
+      <h2 className="text-sm font-bold uppercase tracking-wider text-char-500">{title}</h2>
       <div className="mt-2">{children}</div>
     </div>
   );
@@ -110,7 +150,7 @@ export async function generateMetadata({
   const robots = { index: false, follow: false };
   try {
     const { data } = await getAuctionSource().getVehicleDetail(vin);
-    return { title: `${data.title} — SmartAutoBid`, robots };
+    return { title: `${formatLotTitle(data.title)} — SmartAutoBid`, robots };
   } catch {
     return { title: "Vehicle — SmartAutoBid", robots };
   }
@@ -124,16 +164,9 @@ export default async function VehicleDetailPage({
   const { locale, vin } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("VehicleDetail");
-  /** The similar-lots grid is the same LotCard the search page renders, so it
-   *  borrows the one place that badge is worded rather than growing a second. */
+  /** For the "made in the USA" badge only — worded once, in the search
+   *  namespace, and borrowed everywhere it appears. */
   const tSearch = await getTranslations("Search");
-  const countdownLabels = {
-    dayShort: t("auction.dayShort"),
-    hourShort: t("auction.hourShort"),
-    minuteShort: t("auction.minuteShort"),
-    secondShort: t("auction.secondShort"),
-  };
-
   const source = getAuctionSource();
 
   let detail: VehicleDetailResponse["data"] | null = null;
@@ -145,8 +178,6 @@ export default async function VehicleDetailPage({
   }
   if (!detail) notFound();
 
-  const related = await source.getRelatedVehicles(vin).catch(() => null);
-  const soldStats = related ? computeSoldPriceStats(related.data.past) : null;
   const valuation = extractIaaiValuation(detail);
   const deepSpecs = extractLotDeepSpecs(detail);
   const { engineVideoUrl, view360Url } = extractMediaExtras(detail);
@@ -155,23 +186,6 @@ export default async function VehicleDetailPage({
     detail.media?.items
       ?.filter((i) => i.type === "image" && i.large && i.thumb)
       .map((i) => ({ thumb: i.thumb as string, large: i.large as string })) ?? [];
-
-  // Two filters, and the second is the one that matters.
-  //
-  // `upcoming` occasionally contains the lot being viewed; showing a card that
-  // links back to the current page would just be a dead end.
-  //
-  // It also contains lots that have already sold — measured 2026-08-12, ALL of
-  // them did: 36 of 36 entries across three seed lots were finished, sold, and
-  // dated February or March, under a heading that promises upcoming auctions.
-  // The owner reported it after seeing February cars there. `isStillUpcoming`
-  // checks the entry's own state, countdown and sale date, so the heading is
-  // true of every card left. When the source has nothing genuinely upcoming to
-  // say, the block does not render at all — an empty section is a smaller lie
-  // than a full one.
-  const upcoming = (related?.data.upcoming ?? [])
-    .filter((v) => v.vin !== detail.vin && isStillUpcoming(v))
-    .slice(0, 6);
 
   const saleDate = detail.auction?.full_date ?? detail.auction?.auction_at ?? null;
   /**
@@ -215,6 +229,26 @@ export default async function VehicleDetailPage({
     ? (await savedLotKeys(viewer.id)).has(lotKey(detail.platform, detail.lot_number))
     : false;
 
+  /**
+   * The security deposit we already hold for this client's bidding.
+   *
+   * Read here so the "bid for me" dialog can quote **the figure the server
+   * will actually charge** rather than the rule's. A client who lost an
+   * auction last month is still holding money with us, and the two numbers
+   * disagreeing is how a deposit stops reading as a deposit.
+   */
+  const heldForBidding = viewer ? await heldForBiddingBy(viewer.id) : 0;
+
+  /**
+   * The reader's plan, resolved once.
+   *
+   * It decides two separate things on this page and used to be re-derived
+   * inline at each: the brokerage line in the calculator (a deposit buys the
+   * reduced rate) and, now, whether "bid for me" is offered at all.
+   */
+  const viewerPlanKey =
+    viewer?.activePlanKey && isPlanKey(viewer.activePlanKey) ? viewer.activePlanKey : null;
+
   // Which cars a signed-in client actually opens — the baseline signal behind
   // the history on /admin/users/[id]. Recorded here rather than from the
   // browser because this page is already dynamic (it reads the session above),
@@ -247,15 +281,6 @@ export default async function VehicleDetailPage({
   const currentBid = detail.pricing?.current_bid_usd ?? null;
   const buyNow = detail.pricing?.buy_now_usd ?? null;
 
-  // Where the marker sits on the comparable-sales bar. Clamped so a bid well
-  // outside the comparable range still renders on the track instead of
-  // overflowing it.
-  const markerBid = buyNow ?? currentBid;
-  const markerPercent =
-    soldStats && markerBid && soldStats.max > soldStats.min
-      ? Math.min(100, Math.max(0, ((markerBid - soldStats.min) / (soldStats.max - soldStats.min)) * 100))
-      : null;
-
   return (
     <>
       {/* Only rendered when this lot came from our own copy because the upstream
@@ -286,7 +311,7 @@ export default async function VehicleDetailPage({
 
       <section className="border-b border-char-100 bg-gradient-to-b from-amber-50/50 to-background py-8 sm:py-10">
         <Container>
-          <Reveal className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wider text-char-400">
+          <Reveal className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wider text-char-500">
             {/* The platform badge doubles as a link to the lot on the auction's
                 own site, so a client can check this page against the source.
                 A trust feature, and the reason it is the badge rather than a
@@ -340,63 +365,94 @@ export default async function VehicleDetailPage({
                 {t("auction.timedBadge")}
               </span>
             )}
+            {/* ⚠️ `isUsaBuiltVin`, the SAME rule the result cards use — not the
+                source's country field, which would be a second answer to one
+                question. A card and the page it opens must never disagree about
+                whether a car clears customs at 0%, and the badge is how a buyer
+                spots that. The label is borrowed from the search namespace for
+                the same reason: one place decides the wording. */}
+            {isUsaBuiltVin(detail.vin) === true && (
+              <MadeInUsaBadge label={tSearch("results.madeInUsa")} variant="inline" />
+            )}
           </Reveal>
 
           {/*
-            TWO COLUMNS, NOT THREE — and that distinction is the entire fix.
+            THE HEADER IS IDENTITY ONLY. NOTHING ACTIONABLE LIVES HERE.
 
-            This row used to be `flex flex-wrap justify-between` with THREE
-            children: the title block, the bid button and the countdown card.
-            `justify-between` pushes a middle child to the centre, so the
-            "call instead" pill floated in the middle of empty space; and
-            because `flex-wrap` re-flows on width, the countdown sat top-right
-            on one lot and dropped below-left on the next. The layout was
-            therefore decided by how long a TRANSLATED STRING happened to be,
-            which is why it looked different in each language and on each car.
+            It used to carry a fixed-width right-hand panel stacking the
+            countdown, the bid button and the save button. That solved a real
+            earlier problem — a three-child `justify-between` row whose layout
+            was decided by how long a translated string happened to be, so the
+            page looked different in each language and on each car — but it
+            created a larger one. The panel stood roughly a screen tall beside a
+            title block two lines deep, so every lot opened with a big empty
+            rectangle and pushed the car's photograph below the fold. The owner
+            reported it on 2026-08-17: "didelis tarpas... ir jos nuotrauka
+            nesusižiūri".
 
-            Identity grows on the left; everything actionable lives in one
-            fixed-width panel on the right, stacked in the order a buyer needs
-            it — how long is left, what I can do, keep it for later. Fixed
-            width is the point: the panel cannot stretch to fill the row, so no
-            copy change can pull the layout out of shape again.
+            The three things went to where each is actually used:
+              · countdown  → a strip beside the title (AuctionDateCard)
+              · save       → onto the photo, as the search cards do
+              · bid for me → the foot of the cost calculator, directly under the
+                             field where the buyer types their maximum
+
+            The old fix survives in spirit: two children, not three, and the
+            right-hand one does not stretch. No copy change can pull it out of
+            shape again.
           */}
           <Reveal
             delay={0.05}
-            className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"
+            className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
           >
             <div className="min-w-0 lg:flex-1">
+              {/* Same treatment as the cards this page is opened from, so the
+                  car is not called one thing in the grid and another here. */}
               <h1 className="text-2xl font-extrabold tracking-tight text-char-900 sm:text-3xl">
-                {detail.title}
+                {formatLotTitle(detail.title)}
               </h1>
+              {/* The facts a buyer scans for before looking at anything else.
+                  Odometer and damage moved up from the spec tables: they decide
+                  whether a car is worth reading about at all, and they were two
+                  screens below the photograph. */}
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-char-600">
                 <span className="inline-flex items-center gap-1.5">
-                  <Barcode size={15} className="text-char-400" />
+                  <Barcode size={15} className="text-char-500" />
                   <span className="font-mono text-xs">{detail.vin}</span>
                 </span>
                 {detail.location?.display && (
                   <span className="inline-flex items-center gap-1.5">
-                    <MapPin size={15} className="text-char-400" /> {detail.location.display}
+                    <MapPin size={15} className="text-char-500" /> {detail.location.display}
+                  </span>
+                )}
+                {/* The same formatter the result cards use — miles with
+                    kilometres beside them, and a 0 printed rather than hidden. */}
+                {formatOdometer(detail.odometer) && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Gauge size={15} className="text-char-500" />
+                    {formatOdometer(detail.odometer)}
+                  </span>
+                )}
+                {detail.condition?.primary_damage && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Warning size={15} className="text-char-500" />
+                    {detail.condition.primary_damage}
                   </span>
                 )}
                 {detail.seller?.name && (
                   <span className="inline-flex items-center gap-1.5">
-                    <Storefront size={15} className="text-char-400" /> {detail.seller.name}
+                    <Storefront size={15} className="text-char-500" /> {detail.seller.name}
                   </span>
                 )}
                 {detail.sale_document?.name && (
                   <span className="inline-flex items-center gap-1.5">
-                    <Info size={15} className="text-char-400" /> {detail.sale_document.name}
+                    <Info size={15} className="text-char-500" /> {detail.sale_document.name}
                   </span>
                 )}
               </div>
-
             </div>
 
-            {/* The action panel. Fixed width on desktop, full width stacked on
-                a phone — so the three things a buyer acts on stay together and
-                in the same place on every lot. */}
-            <div className="w-full shrink-0 space-y-3 lg:w-[19rem]">
-              {saleDate && (
+            {saleDate && (
+              <div className="shrink-0">
                 <AuctionDateCard
                   isoDate={saleDate}
                   formatted={detail.auction?.formatted ?? null}
@@ -412,55 +468,8 @@ export default async function VehicleDetailPage({
                     secondShort: t("auction.secondShort"),
                   }}
                 />
-              )}
-
-              {/* "Bid for me". Offered only while the lot can still be bid on —
-                  a sold car has nothing to instruct us about, and the button
-                  would be the page contradicting itself two lines below the
-                  "sale closed" badge. */}
-              {!saleClosed && (
-                <BidRequestButton
-                  lotRef={detail.lot_number || detail.vin}
-                  // Computed here, on the server's clock, rather than in the
-                  // browser: a device with a wrong clock would otherwise be
-                  // offered a form for a lot that sold an hour ago.
-                  windowState={bidWindow(saleDate ? new Date(saleDate) : null, new Date()).state}
-                  signedIn={viewer !== null}
-                  activePlanKey={
-                    viewer?.activePlanKey && isPlanKey(viewer.activePlanKey)
-                      ? viewer.activePlanKey
-                      : null
-                  }
-                  feeUsdCents={
-                    viewer?.activePlanKey && isPlanKey(viewer.activePlanKey)
-                      ? (PLANS[viewer.activePlanKey].feesPerVehicleUsdCents[0] ?? 0)
-                      : 0
-                  }
-                  suggestedBidUsdCents={
-                    detail.pricing?.current_bid_usd
-                      ? Math.round(detail.pricing.current_bid_usd * 100)
-                      : null
-                  }
-                />
-              )}
-
-              {/* Offered on sold lots too, deliberately. Someone comparing what
-                  similar cars actually went for still wants to keep the
-                  reference, and the saved card is dated — so it never implies a
-                  closed lot is still available.
-
-                  The LOT is saved, not the VIN. This reference is what a later
-                  refresh re-fetches, so saving a VIN would quietly resolve to a
-                  different appearance of the same car and overwrite the snapshot
-                  with another sale's price — the same fault as the card links,
-                  only delayed. */}
-              <SaveLotButton
-                lot={detail.lot_number || detail.vin}
-                initiallySaved={alreadySaved}
-                signedIn={viewer !== null}
-                variant="detail"
-              />
-            </div>
+              </div>
+            )}
           </Reveal>
         </Container>
       </section>
@@ -472,84 +481,39 @@ export default async function VehicleDetailPage({
               <Reveal>
                 <InventoryGallery
                   photos={photos}
-                  title={detail.title}
+                  title={formatLotTitle(detail.title)}
                   engineVideoUrl={engineVideoUrl}
                   view360Url={view360Url}
+                  /* Offered on sold lots too, deliberately. Someone comparing
+                     what similar cars actually went for still wants to keep the
+                     reference, and the saved card is dated — so it never implies
+                     a closed lot is still available.
+
+                     The LOT is saved, not the VIN. This reference is what a
+                     later refresh re-fetches, so saving a VIN would quietly
+                     resolve to a different appearance of the same car and
+                     overwrite the snapshot with another sale's price — the same
+                     fault as the card links, only delayed. */
+                  saveSlot={
+                    <SaveLotButton
+                      lot={detail.lot_number || detail.vin}
+                      initiallySaved={alreadySaved}
+                      signedIn={viewer !== null}
+                      variant="card"
+                    />
+                  }
                 />
               </Reveal>
 
-              {/* Market context: real comparable sales, plus the source's own
-                  valuation numbers where it publishes them. */}
-              {(soldStats || valuation) && (
-                <Reveal delay={0.05}>
-                  <div className="rounded-2xl border border-char-200 bg-white p-5">
-                    <h2 className="text-sm font-bold uppercase tracking-wider text-char-400">
-                      {t("market.title")}
-                    </h2>
-
-                    {soldStats && (
-                      <>
-                        <div className="mt-4 flex items-end justify-between text-sm">
-                          <span>
-                            <span className="block text-lg font-bold text-char-900">
-                              {formatUsd(soldStats.min)}
-                            </span>
-                            <span className="text-xs text-char-500">{t("market.min")}</span>
-                          </span>
-                          <span className="text-center">
-                            <span className="block text-lg font-bold text-char-900">
-                              {formatUsd(soldStats.avg)}
-                            </span>
-                            <span className="text-xs text-char-500">{t("market.avg")}</span>
-                          </span>
-                          <span className="text-right">
-                            <span className="block text-lg font-bold text-char-900">
-                              {formatUsd(soldStats.max)}
-                            </span>
-                            <span className="text-xs text-char-500">{t("market.max")}</span>
-                          </span>
-                        </div>
-
-                        <div className="relative mt-3 h-2 rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-red-400">
-                          {markerPercent !== null && (
-                            <span
-                              className="absolute -top-1 h-4 w-1 -translate-x-1/2 rounded-full bg-char-900 ring-2 ring-white"
-                              style={{ left: `${markerPercent}%` }}
-                              aria-hidden
-                            />
-                          )}
-                        </div>
-                        <p className="mt-2.5 text-xs leading-relaxed text-char-500">
-                          {t("market.basis", { count: soldStats.sampleSize })}
-                        </p>
-                      </>
-                    )}
-
-                    {valuation && (
-                      <div className="mt-4 grid grid-cols-1 gap-3 border-t border-char-100 pt-4 sm:grid-cols-2">
-                        {valuation.actualCashValueUsd != null && (
-                          <div className="rounded-xl bg-char-50 p-3.5">
-                            <p className="text-lg font-bold text-char-900">
-                              {formatUsd(valuation.actualCashValueUsd)}
-                            </p>
-                            <p className="text-xs text-char-500">{t("market.actualCashValue")}</p>
-                          </div>
-                        )}
-                        {valuation.estimatedRepairCostUsd != null && (
-                          <div className="rounded-xl bg-char-50 p-3.5">
-                            <p className="text-lg font-bold text-char-900">
-                              {formatUsd(valuation.estimatedRepairCostUsd)}
-                            </p>
-                            <p className="text-xs text-char-500">
-                              {t("market.estimatedRepairCost")}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </Reveal>
-              )}
+              {/* Comparable sales — streamed, because it needs the slow call.
+                  See relatedFor at the top of this file. */}
+              <Suspense fallback={<BlockSkeleton lines={3} />}>
+                <MarketContext
+                  lotRef={vin}
+                  valuation={valuation}
+                  markerBid={buyNow ?? currentBid}
+                />
+              </Suspense>
 
               <Reveal delay={0.1} className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Card title={t("condition.title")}>
@@ -745,7 +709,7 @@ export default async function VehicleDetailPage({
                 ) : (
                   <>
                     <div className="rounded-2xl border border-char-200 bg-white p-5">
-                      <h2 className="text-sm font-bold uppercase tracking-wider text-char-400">
+                      <h2 className="text-sm font-bold uppercase tracking-wider text-char-500">
                         {t("pricing.title")}
                       </h2>
                       <div className="mt-3">
@@ -763,10 +727,46 @@ export default async function VehicleDetailPage({
                         // The deposit's whole point is the reduced per-vehicle
                         // fee, so the one page that knows who is reading must
                         // quote their rate rather than the public one.
-                        viewerPlanKey={
-                          viewer?.activePlanKey && isPlanKey(viewer.activePlanKey)
-                            ? viewer.activePlanKey
-                            : null
+                        viewerPlanKey={viewerPlanKey}
+                        /*
+                          "BID FOR ME", AND ONLY FOR SOMEBODY WHO CAN USE IT.
+                          Owner's rule, 2026-08-17: signed in AND holding an
+                          active plan. Note that even free Bronze is activated
+                          by an admin confirming it, so a client who registered
+                          five minutes ago does not see this yet — that is the
+                          instruction, not an oversight.
+
+                          Rendered here rather than in the header because this
+                          is where they have just typed what they are willing to
+                          pay. Everyone else keeps WhatsApp in this slot; see
+                          the panel's own note.
+                        */
+                        bidSlot={
+                          viewerPlanKey !== null ? (
+                            <BidRequestButton
+                              lotRef={detail.lot_number || detail.vin}
+                              // Computed on the server's clock, not the
+                              // browser's: a device with a wrong clock would
+                              // otherwise be offered a form for a lot that sold
+                              // an hour ago.
+                              windowState={
+                                bidWindow(saleDate ? new Date(saleDate) : null, new Date()).state
+                              }
+                              signedIn
+                              // ⚠️ Optional on the component and it must still
+                              // be passed: without it the dialog quotes the
+                              // rule's full deposit instead of the top-up, and
+                              // disagrees with what the server then charges.
+                              heldForBiddingCents={heldForBidding}
+                              activePlanKey={viewerPlanKey}
+                              feeUsdCents={PLANS[viewerPlanKey].feesPerVehicleUsdCents[0] ?? 0}
+                              suggestedBidUsdCents={
+                                detail.pricing?.current_bid_usd
+                                  ? Math.round(detail.pricing.current_bid_usd * 100)
+                                  : null
+                              }
+                            />
+                          ) : null
                         }
                         currentBidUsd={currentBid}
                         buyNowUsd={buyNow}
@@ -782,7 +782,7 @@ export default async function VehicleDetailPage({
                         detectedUsaMade={isUsaManufactured(detail)}
                         countryOfOrigin={deepSpecs?.countryOfOrigin ?? null}
                         bidIncrementUsd={deepSpecs?.bidIncrementUsd ?? null}
-                        lotTitle={detail.title}
+                        lotTitle={formatLotTitle(detail.title)}
                         vin={detail.vin}
                         lotNumber={detail.lot_number}
                       />
@@ -791,70 +791,24 @@ export default async function VehicleDetailPage({
                 )}
 
                 <div className="mt-5 flex items-start gap-3 rounded-2xl border border-char-200 bg-char-50 p-5 text-sm text-char-600">
-                  <Info size={18} className="mt-0.5 shrink-0 text-char-400" />
+                  <Info size={18} className="mt-0.5 shrink-0 text-char-500" />
                   <p>{saleClosed ? t("disclaimerArchived") : t("disclaimer")}</p>
                 </div>
               </div>
             </Reveal>
           </div>
 
-          {related && related.data.past.length > 0 && (
-            <Reveal delay={0.1} className="mt-8">
-              <PastSalesTable
-                past={related.data.past}
-                labels={{
-                  title: t("pastSales.title"),
-                  count: t("pastSales.count", {
-                    count: related.data.past.filter(
-                      (v) => (v.pricing?.last_sold_price_usd ?? 0) > 0
-                    ).length,
-                  }),
-                  vehicle: t("pastSales.vehicle"),
-                  sold: t("pastSales.sold"),
-                  odometer: t("pastSales.odometer"),
-                  damage: t("pastSales.damage"),
-                  price: t("pastSales.price"),
-                }}
-              />
-            </Reveal>
-          )}
+          {/* Both of these need the slow call too, and both are reference
+              material rather than the record — so they arrive when they
+              arrive. Their own boundaries, not one shared: whichever renders
+              first should not wait for the other. */}
+          <Suspense fallback={<BlockSkeleton className="mt-8" lines={4} />}>
+            <PastSales lotRef={vin} />
+          </Suspense>
 
-          {upcoming.length > 0 && (
-            <Reveal delay={0.15} className="mt-12">
-              <h2 className="text-xl font-extrabold tracking-tight text-char-900 sm:text-2xl">
-                {t("similar.title")}
-              </h2>
-              <p className="mt-1.5 text-sm text-char-600">{t("similar.subtitle")}</p>
-              <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {upcoming.map((v) => (
-                  <LotCard
-                    key={`${v.platform}-${v.vin}`}
-                    vehicle={v}
-                    labels={{
-                      noPhoto: t("similar.noPhoto"),
-                      priceNA: t("pricing.notAvailable"),
-                      damagePrefix: t("similar.damagePrefix"),
-                      // The page's own pricing labels, reused deliberately: a
-                      // card and the panel above it must not call the same
-                      // number two different things.
-                      currentBid: t("pricing.currentBid"),
-                      buyNow: t("pricing.buyNow"),
-                      madeInUsa: tSearch("results.madeInUsa"),
-                    }}
-                    usaMade={isUsaBuiltVin(v.vin)}
-                    countdownSlot={(() => {
-                      // Same rule as the search grid: a countdown only where
-                      // the sale instant is this lot's own. These rows have
-                      // already passed isStillUpcoming(), but that answers
-                      // "is it in the future", not "is this date per-lot".
-                      const at = ownSaleInstant(v);
-                      return at ? <LotCountdown iso={at} labels={countdownLabels} /> : null;
-                    })()}
-                  />
-                ))}
-              </div>
-            </Reveal>
-          )}
+          <Suspense fallback={<BlockSkeleton className="mt-12" lines={2} />}>
+            <SimilarUpcoming lotRef={vin} excludeVin={detail.vin} />
+          </Suspense>
         </Container>
       </section>
 
@@ -890,5 +844,241 @@ export default async function VehicleDetailPage({
         </Container>
       </section>
     </>
+  );
+}
+
+/**
+ * Placeholder for a block that is still loading.
+ *
+ * It reserves roughly the right height rather than collapsing to nothing,
+ * because the alternative is the page growing under the reader's cursor a few
+ * seconds after they started reading it — which is a worse experience than the
+ * wait it replaces.
+ */
+function BlockSkeleton({ lines, className = "" }: { lines: number; className?: string }) {
+  return (
+    <div
+      className={`rounded-2xl border border-char-200/70 bg-white p-5 ${className}`}
+      aria-hidden
+    >
+      <div className="h-3 w-32 rounded-full bg-char-100" />
+      <div className="mt-4 space-y-2.5">
+        {Array.from({ length: lines }, (_, i) => (
+          <div
+            key={i}
+            className="h-3 rounded-full bg-char-100"
+            // Uneven widths so it reads as text rather than as a broken table.
+            style={{ width: `${88 - i * 11}%` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Comparable sales, and the source's own valuation numbers where it has them.
+ *
+ * `valuation` comes from the detail call and is already in hand, so strictly
+ * it could render immediately — but it lives inside this card, and splitting
+ * one card across two boundaries so half of it could arrive a second earlier
+ * would cost more in layout jitter than it saves.
+ */
+async function MarketContext({
+  lotRef,
+  valuation,
+  markerBid,
+}: {
+  lotRef: string;
+  valuation: ReturnType<typeof extractIaaiValuation>;
+  /** Where to put the marker on the range bar: the price a buyer would pay. */
+  markerBid: number | null;
+}) {
+  const t = await getTranslations("VehicleDetail");
+  const related = await relatedFor(lotRef);
+  const soldStats = related ? computeSoldPriceStats(related.data.past) : null;
+  if (!soldStats && !valuation) return null;
+
+  // Clamped so a bid well outside the comparable range still lands on the
+  // track instead of overflowing it.
+  const markerPercent =
+    soldStats && markerBid && soldStats.max > soldStats.min
+      ? Math.min(
+          100,
+          Math.max(0, ((markerBid - soldStats.min) / (soldStats.max - soldStats.min)) * 100)
+        )
+      : null;
+
+  return (
+    <Reveal delay={0.05}>
+      <div className="rounded-2xl border border-char-200 bg-white p-5">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-char-500">
+          {t("market.title")}
+        </h2>
+
+        {soldStats && (
+          <>
+            <div className="mt-4 flex items-end justify-between text-sm">
+              <span>
+                <span className="block text-lg font-bold text-char-900">
+                  {formatUsd(soldStats.min)}
+                </span>
+                <span className="text-xs text-char-500">{t("market.min")}</span>
+              </span>
+              <span className="text-center">
+                <span className="block text-lg font-bold text-char-900">
+                  {formatUsd(soldStats.avg)}
+                </span>
+                <span className="text-xs text-char-500">{t("market.avg")}</span>
+              </span>
+              <span className="text-right">
+                <span className="block text-lg font-bold text-char-900">
+                  {formatUsd(soldStats.max)}
+                </span>
+                <span className="text-xs text-char-500">{t("market.max")}</span>
+              </span>
+            </div>
+
+            <div className="relative mt-3 h-2 rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-red-400">
+              {markerPercent !== null && (
+                <span
+                  className="absolute -top-1 h-4 w-1 -translate-x-1/2 rounded-full bg-char-900 ring-2 ring-white"
+                  style={{ left: `${markerPercent}%` }}
+                  aria-hidden
+                />
+              )}
+            </div>
+            <p className="mt-2.5 text-xs leading-relaxed text-char-500">
+              {t("market.basis", { count: soldStats.sampleSize })}
+            </p>
+          </>
+        )}
+
+        {valuation && (
+          <div className="mt-4 grid grid-cols-1 gap-3 border-t border-char-100 pt-4 sm:grid-cols-2">
+            {valuation.actualCashValueUsd != null && (
+              <div className="rounded-xl bg-char-50 p-3.5">
+                <p className="text-lg font-bold text-char-900">
+                  {formatUsd(valuation.actualCashValueUsd)}
+                </p>
+                <p className="text-xs text-char-500">{t("market.actualCashValue")}</p>
+              </div>
+            )}
+            {valuation.estimatedRepairCostUsd != null && (
+              <div className="rounded-xl bg-char-50 p-3.5">
+                <p className="text-lg font-bold text-char-900">
+                  {formatUsd(valuation.estimatedRepairCostUsd)}
+                </p>
+                <p className="text-xs text-char-500">{t("market.estimatedRepairCost")}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Reveal>
+  );
+}
+
+/** What this car, and cars like it, actually sold for. */
+async function PastSales({ lotRef }: { lotRef: string }) {
+  const t = await getTranslations("VehicleDetail");
+  const related = await relatedFor(lotRef);
+  const past = related?.data.past ?? [];
+  if (past.length === 0) return null;
+
+  return (
+    <Reveal delay={0.1} className="mt-8">
+      <PastSalesTable
+        past={past}
+        labels={{
+          title: t("pastSales.title"),
+          count: t("pastSales.count", {
+            count: past.filter((v) => (v.pricing?.last_sold_price_usd ?? 0) > 0).length,
+          }),
+          vehicle: t("pastSales.vehicle"),
+          sold: t("pastSales.sold"),
+          odometer: t("pastSales.odometer"),
+          damage: t("pastSales.damage"),
+          price: t("pastSales.price"),
+        }}
+      />
+    </Reveal>
+  );
+}
+
+/** Similar lots still coming up for sale. */
+async function SimilarUpcoming({
+  lotRef,
+  /** The car being viewed — a card linking back here is a dead end. */
+  excludeVin,
+}: {
+  lotRef: string;
+  excludeVin: string;
+}) {
+  const t = await getTranslations("VehicleDetail");
+  /** The similar-lots grid is the same LotCard the search page renders, so it
+   *  borrows the one place that badge is worded rather than growing a second. */
+  const tSearch = await getTranslations("Search");
+  const countdownLabels = {
+    dayShort: t("auction.dayShort"),
+    hourShort: t("auction.hourShort"),
+    minuteShort: t("auction.minuteShort"),
+    secondShort: t("auction.secondShort"),
+  };
+
+  const related = await relatedFor(lotRef);
+  // Two filters, and the second is the one that matters.
+  //
+  // `upcoming` occasionally contains the lot being viewed; showing a card that
+  // links back to the current page would just be a dead end.
+  //
+  // It also contains lots that have already sold — measured 2026-08-12, ALL of
+  // them did: 36 of 36 entries across three seed lots were finished, sold, and
+  // dated February or March, under a heading that promises upcoming auctions.
+  // The owner reported it after seeing February cars there. `isStillUpcoming`
+  // checks the entry's own state, countdown and sale date, so the heading is
+  // true of every card left. When the source has nothing genuinely upcoming to
+  // say, the block does not render at all — an empty section is a smaller lie
+  // than a full one.
+  const upcoming = (related?.data.upcoming ?? [])
+    .filter((v) => v.vin !== excludeVin && isStillUpcoming(v))
+    .slice(0, 6);
+  if (upcoming.length === 0) return null;
+
+  return (
+    <Reveal delay={0.15} className="mt-12">
+      <h2 className="text-xl font-extrabold tracking-tight text-char-900 sm:text-2xl">
+        {t("similar.title")}
+      </h2>
+      <p className="mt-1.5 text-sm text-char-600">{t("similar.subtitle")}</p>
+      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {upcoming.map((v) => (
+          <LotCard
+            key={`${v.platform}-${v.vin}`}
+            vehicle={v}
+            labels={{
+              noPhoto: t("similar.noPhoto"),
+              priceNA: t("pricing.notAvailable"),
+              damagePrefix: t("similar.damagePrefix"),
+              // The page's own pricing labels, reused deliberately: a card and
+              // the panel above it must not call the same number two different
+              // things.
+              currentBid: t("pricing.currentBid"),
+              buyNow: t("pricing.buyNow"),
+              madeInUsa: tSearch("results.madeInUsa"),
+            }}
+            usaMade={isUsaBuiltVin(v.vin)}
+            countdownSlot={(() => {
+              // Same rule as the search grid: a countdown only where the sale
+              // instant is this lot's own. These rows have already passed
+              // isStillUpcoming(), but that answers "is it in the future", not
+              // "is this date per-lot".
+              const at = ownSaleInstant(v);
+              return at ? <LotCountdown iso={at} labels={countdownLabels} /> : null;
+            })()}
+          />
+        ))}
+      </div>
+    </Reveal>
   );
 }

@@ -39,11 +39,11 @@ function Row({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 py-2 text-sm">
-      <span className={muted ? "text-char-400" : "text-char-600"}>{label}</span>
+      <span className={muted ? "text-char-500" : "text-char-600"}>{label}</span>
       <span
         className={clsx(
           "shrink-0 font-medium tabular-nums",
-          muted ? "text-char-400" : "text-char-900"
+          muted ? "text-char-500" : "text-char-900"
         )}
       >
         {value}
@@ -101,6 +101,7 @@ export default function VehicleCostPanel({
   vin,
   lotNumber,
   viewerPlanKey,
+  bidSlot,
 }: {
   currentBidUsd: number | null;
   buyNowUsd: number | null;
@@ -122,6 +123,20 @@ export default function VehicleCostPanel({
    * the one they are entitled to, on every car they looked at.
    */
   viewerPlanKey: PlanKey | null;
+  /**
+   * "Bid for me", for a client entitled to it. Absent for everyone else.
+   *
+   * ⚠️ IT LIVES HERE BECAUSE OF WHERE THE DECISION IS MADE, not to tidy the
+   * header. The button used to sit at the top of the page, three screens above
+   * the field where a buyer types the maximum they are willing to pay — so the
+   * page asked "how much?" in one place and "shall we bid?" in another. Now the
+   * instruction is offered directly beneath the number that answers it.
+   *
+   * A slot rather than the component: whether this reader may instruct a bid
+   * depends on their plan and on whether the sale is still open, and both are
+   * the server's to answer. See the vehicle page.
+   */
+  bidSlot?: React.ReactNode;
 }) {
   const t = useTranslations("VehicleDetail.calculator");
   const locale = useLocale();
@@ -201,7 +216,7 @@ export default function VehicleCostPanel({
 
   return (
     <div className="rounded-2xl border border-char-200 bg-white p-5">
-      <h2 className="text-sm font-bold uppercase tracking-wider text-char-400">{t("title")}</h2>
+      <h2 className="text-sm font-bold uppercase tracking-wider text-char-500">{t("title")}</h2>
 
       <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-char-500">
         {t("yourBid")}
@@ -233,7 +248,7 @@ export default function VehicleCostPanel({
           <Plus size={16} weight="bold" />
         </button>
       </div>
-      <p className="mt-1.5 text-xs text-char-400">
+      <p className="mt-1.5 text-xs text-char-500">
         {bidIncrementUsd ? t("bidStepKnown", { step: formatUsd(step) }) : t("bidStepHint")}
       </p>
 
@@ -345,7 +360,7 @@ export default function VehicleCostPanel({
         <span>
           {t("usaMade")}
           {originKnown && (
-            <span className="ml-1 block text-xs text-char-400 sm:ml-1.5 sm:inline">
+            <span className="ml-1 block text-xs text-char-500 sm:ml-1.5 sm:inline">
               {countryOfOrigin
                 ? t("usaMadeFromData", { country: countryOfOrigin })
                 : t("usaMadeDetected")}
@@ -368,25 +383,54 @@ export default function VehicleCostPanel({
         <p className="mt-0.5 text-sm text-white/70">≈ {formatEur(estimate.totalEur)}</p>
       </div>
 
+      {/*
+        WHOEVER CANNOT BID KEEPS EVERY ROUTE THEY HAD. The bid button replaces
+        WhatsApp as the *primary* action for a client who can actually use it,
+        and WhatsApp stays underneath as the quiet second option — nobody loses
+        a way to reach us, which was the risk in moving a contact button aside
+        for a button most visitors cannot press.
+      */}
       <div className="mt-4 flex flex-col gap-2">
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-3.5 text-sm font-semibold text-white shadow-sm shadow-amber-900/20 transition-colors hover:bg-amber-600"
-        >
-          <WhatsappLogo size={17} weight="fill" />
-          {t("ctaWhatsapp")}
-        </a>
-        <Link
-          href="/contact"
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-char-200 bg-white px-6 py-3.5 text-sm font-semibold text-char-800 transition-colors hover:border-amber-400 hover:text-amber-700"
-        >
-          {t("ctaContact")}
-        </Link>
+        {bidSlot ?? (
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm shadow-amber-900/20 transition-colors hover:bg-amber-700"
+          >
+            <WhatsappLogo size={17} weight="fill" />
+            {t("ctaWhatsapp")}
+          </a>
+        )}
+
+        {bidSlot ? (
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-char-200 bg-white px-6 py-3.5 text-sm font-semibold text-char-800 transition-colors hover:border-amber-400 hover:text-amber-700"
+          >
+            <WhatsappLogo size={17} weight="fill" />
+            {t("ctaWhatsappShort")}
+          </a>
+        ) : (
+          <>
+            <Link
+              href="/contact"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-char-200 bg-white px-6 py-3.5 text-sm font-semibold text-char-800 transition-colors hover:border-amber-400 hover:text-amber-700"
+            >
+              {t("ctaContact")}
+            </Link>
+            {/* Says what is on the other side of signing in, without naming a
+                limit — the plan table is the only thing allowed to do that. */}
+            <p className="mt-1 text-center text-xs leading-relaxed text-char-500">
+              {t("bidNeedsPlan")}
+            </p>
+          </>
+        )}
       </div>
 
-      <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-char-400">
+      <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-char-500">
         <Info size={14} className="mt-0.5 shrink-0" />
         <span>
           {t("disclaimer")}{" "}

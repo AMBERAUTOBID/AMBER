@@ -82,44 +82,61 @@ export default function AuctionDateCard({
   const closed = !isUpcoming || (remaining !== null && remaining <= 0);
 
   return (
+    /*
+     * ⚠️ A STRIP, NOT THE TALL RIGHT-HAND CARD IT USED TO BE.
+     *
+     * This sat at the top of a fixed-width column beside the title, above the
+     * bid button and the save button. Those three stacked into a panel roughly
+     * the height of a screen, and because the title block beside it is two
+     * short lines, the header opened with a large empty rectangle and pushed
+     * the car's photograph most of a screen down the page. The owner reported
+     * exactly that on 2026-08-17, and the panel was the whole of it.
+     *
+     * Left-aligned rather than right-, because it is no longer the top of a
+     * right-hand column — it is a chip that sits beside the heading.
+     */
     <div
       className={
         closed
-          ? "rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-right"
-          : "rounded-xl border border-char-200 bg-white px-4 py-2.5 text-right"
+          ? "inline-flex items-center gap-3 rounded-xl border border-red-300 bg-red-50 px-4 py-2.5"
+          : "inline-flex items-center gap-3 rounded-xl border border-char-200 bg-white px-4 py-2.5"
       }
     >
-      <p
-        className={`flex items-center justify-end gap-1.5 text-xs font-semibold uppercase tracking-wider ${
-          closed ? "text-red-700/70" : "text-char-400"
-        }`}
-      >
-        <CalendarBlank size={13} />
-        {closed ? labels.saleDate : labels.endsIn}
-      </p>
+      <CalendarBlank
+        size={17}
+        weight="duotone"
+        className={closed ? "shrink-0 text-red-600" : "shrink-0 text-amber-500"}
+      />
+      <div className="min-w-0">
+        <p
+          className={`text-[11px] font-semibold uppercase tracking-wider ${
+            closed ? "text-red-700/70" : "text-char-500"
+          }`}
+        >
+          {closed ? labels.saleDate : labels.endsIn}
+        </p>
 
-      <div className="mt-1">
         {closed ? (
-          <span className="inline-flex items-center gap-1.5 text-sm font-bold text-red-700">
+          <span className="flex items-center gap-1.5 text-sm font-bold text-red-700">
             <Clock size={15} weight="fill" className="text-red-600" />
             {labels.closed}
           </span>
         ) : remaining === null ? (
-          // Height reserved so the card does not jump when the clock starts.
-          <span className="inline-block h-5" aria-hidden />
+          // Height reserved so the strip does not jump when the clock starts.
+          <span className="block h-5" aria-hidden />
         ) : (
           <Countdown remaining={remaining} labels={labels} />
         )}
-      </div>
 
-      {when && (
-        <p className={`mt-0.5 text-xs ${closed ? "text-red-700/60" : "text-char-400"}`}>
-          {/* The machine-readable instant stays in the markup whatever the
-              rendered text says, so the page carries the one unambiguous form
-              of this fact. */}
-          <time dateTime={isoDate}>{when}</time>
-        </p>
-      )}
+        {when && (
+          <p className={`text-xs ${closed ? "text-red-700/60" : "text-char-500"}`}>
+            {/* The machine-readable instant stays in the markup whatever the
+                rendered text says, so the page carries the one unambiguous form
+                of this fact. */}
+            <time dateTime={isoDate}>{when}</time>
+          </p>
+        )}
+      </div>
     </div>
   );
 }

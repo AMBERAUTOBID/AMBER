@@ -134,7 +134,7 @@ export default function BidRequestButton({
       <button
         type="button"
         onClick={() => window.location.assign(locale === "en" ? "/register" : `/${locale}/register`)}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-600 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
       >
         <Gavel size={17} weight="bold" />
         {t("signedOut")}
@@ -172,7 +172,7 @@ export default function BidRequestButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-600 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
         >
           <Gavel size={17} weight="bold" />
           {t("open")}
@@ -318,7 +318,7 @@ export default function BidRequestButton({
           type="button"
           onClick={submit}
           disabled={!agreed || maxBidCents <= 0 || state === "sending"}
-          className="rounded-full bg-amber-500 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full bg-amber-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {state === "sending"
             ? t("sending")

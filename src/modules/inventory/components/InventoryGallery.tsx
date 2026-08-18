@@ -17,6 +17,7 @@ export default function InventoryGallery({
   title,
   engineVideoUrl = null,
   view360Url = null,
+  saveSlot,
 }: {
   photos: { thumb: string; large: string }[];
   title: string;
@@ -24,6 +25,19 @@ export default function InventoryGallery({
   engineVideoUrl?: string | null;
   /** External 360° walkaround viewer, when there is one. */
   view360Url?: string | null;
+  /**
+   * The save-to-favourites control, floated over the top-right of the photo.
+   *
+   * A slot rather than an import, for the same reason LotCard takes one: only
+   * the caller knows whether this lot is already saved, and it reads that for
+   * the whole page in a single query.
+   *
+   * It sits on the photo now because the tall action panel it used to live in
+   * was removed from the page header — that panel was most of the empty space
+   * the owner reported. On the photo is also where a visitor already looks for
+   * it, since that is where the search cards put it.
+   */
+  saveSlot?: React.ReactNode;
 }) {
   const [active, setActive] = useState(0);
   const [videoOpen, setVideoOpen] = useState(false);
@@ -50,9 +64,12 @@ export default function InventoryGallery({
   }, [step, videoOpen]);
 
   if (photos.length === 0) {
+    // The save control still belongs here — a lot with no photographs is
+    // exactly the kind somebody keeps to come back to.
     return (
-      <div className="flex aspect-[4/3] items-center justify-center rounded-2xl bg-char-100 text-sm text-char-400">
+      <div className="relative flex aspect-[4/3] items-center justify-center rounded-2xl bg-char-100 text-sm text-char-500">
         {t("noPhotos")}
+        {saveSlot && <div className="absolute right-3 top-3 z-10">{saveSlot}</div>}
       </div>
     );
   }
@@ -66,6 +83,11 @@ export default function InventoryGallery({
           alt={t("photoAlt", { title, index: active + 1, total: photos.length })}
           className="aspect-[4/3] w-full object-cover"
         />
+
+        {/* Top-right, opposite the auction-house badges, and above the arrows
+            in stacking order so a click near the corner saves rather than
+            advancing the photo. */}
+        {saveSlot && <div className="absolute right-3 top-3 z-20">{saveSlot}</div>}
 
         {/* Auction-house extras, mirrored from how the source sites badge them */}
         {(view360Url || engineVideoUrl) && (
