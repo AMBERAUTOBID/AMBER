@@ -25,12 +25,33 @@ import { formatUsd, type Plan } from "./plans";
  */
 type Translate = (key: string, values?: Record<string, string | number>) => string;
 
+/**
+ * How a tier states its bidding power — one line for a deposit tier, two for
+ * the free one.
+ *
+ * ⚠️ THE FREE TIER HAS TWO LIMITS, NOT ONE, AND COLLAPSING THEM MISSTATES THE
+ * OFFER. `maxBidUsd` is the hard ceiling above which no bid is accepted at
+ * all; `depositFreeUpToUsd` is where we stop asking for security. Between them
+ * sits a band where a person looks at the car and decides. Printing only the
+ * ceiling promised $10,000 with no mention of a hold; printing only the free
+ * line would read as a refusal above $5,000. Both are true, so both are said —
+ * and both come from the table `bidDepositFor()` actually enforces.
+ */
+function biddingPowerLines(plan: Plan, t: Translate): string[] {
+  if (plan.maxBidUsd === null) return [t("features.bidUnlimited")];
+  const ceiling = formatUsd(plan.maxBidUsd * 100);
+  if (plan.depositFreeUpToUsd === null) return [t("features.bidLimit", { amount: ceiling })];
+  const free = formatUsd(plan.depositFreeUpToUsd * 100);
+  return [
+    t("features.bidFreeUpTo", { amount: free }),
+    t("features.bidDecidedTogether", { from: free, to: ceiling }),
+  ];
+}
+
 /** What every plan says: bidding power, concurrency, human support. */
 export function planCoreLines(plan: Plan, t: Translate): string[] {
   return [
-    plan.maxBidUsd === null
-      ? t("features.bidUnlimited")
-      : t("features.bidLimit", { amount: formatUsd(plan.maxBidUsd * 100) }),
+    ...biddingPowerLines(plan, t),
     plan.maxConcurrentBids === null
       ? t("features.concurrentUnlimited")
       : plan.concurrencyThresholdUsd !== null

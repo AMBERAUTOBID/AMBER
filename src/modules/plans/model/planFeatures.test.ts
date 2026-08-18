@@ -28,9 +28,17 @@ function stubTranslator(key: string, values?: Record<string, string | number>): 
 
 describe("every plan produces a complete set of lines", () => {
   for (const key of PLAN_KEYS) {
+    /**
+     * Three lines on a deposit tier, four on the free one — because the free
+     * tier has two bidding limits and a deposit tier has one. See
+     * `biddingPowerLines`. The count is derived from the catalogue rather than
+     * written as `3 | 4`, so a tier that grows a second limit without meaning
+     * to still trips this.
+     */
     it(`${key}: core lines cover bidding power, concurrency and support`, () => {
-      const lines = planCoreLines(PLANS[key], stubTranslator);
-      expect(lines).toHaveLength(3);
+      const plan = PLANS[key];
+      const lines = planCoreLines(plan, stubTranslator);
+      expect(lines).toHaveLength(plan.depositFreeUpToUsd === null ? 3 : 4);
       expect(lines.every((l) => l.length > 0)).toBe(true);
     });
 
@@ -52,12 +60,51 @@ describe("every plan produces a complete set of lines", () => {
 });
 
 describe("lines carry the catalogue's actual numbers", () => {
-  it("a capped plan states its cap", () => {
-    const capped = PLAN_KEYS.map((k) => PLANS[k]).find((p) => p.maxBidUsd !== null);
-    expect(capped, "no capped plan in the catalogue — this suite proves nothing").toBeDefined();
+  it("a capped deposit tier states its cap", () => {
+    const capped = PLAN_KEYS.map((k) => PLANS[k]).find(
+      (p) => p.maxBidUsd !== null && p.depositFreeUpToUsd === null
+    );
+    expect(capped, "no capped deposit tier in the catalogue — this suite proves nothing").toBeDefined();
     expect(planCoreLines(capped!, stubTranslator)[0]).toBe(
       `features.bidLimit(amount=${formatUsd(capped!.maxBidUsd! * 100)})`
     );
+  });
+
+  /**
+   * ⚠️ THE FREE TIER MUST PUBLISH BOTH OF ITS NUMBERS, AND THIS IS WHY.
+   *
+   * It has two limits that mean different things: `depositFreeUpToUsd` is where
+   * we stop asking for security, `maxBidUsd` is where we stop accepting bids at
+   * all. Printing only the ceiling promises $10,000 with no hint that anything
+   * might be held; printing only the free line reads as a refusal above $5,000.
+   * Either alone misstates the offer, so the card says both — and the figures
+   * are the ones `bidDepositFor()` enforces, never prose.
+   */
+  it("the free tier states BOTH its deposit-free line and its ceiling", () => {
+    const free = PLAN_KEYS.map((k) => PLANS[k]).find((p) => p.depositFreeUpToUsd !== null);
+    expect(free, "no deposit-free tier in the catalogue — this suite proves nothing").toBeDefined();
+    const lines = planCoreLines(free!, stubTranslator);
+    expect(lines[0]).toBe(
+      `features.bidFreeUpTo(amount=${formatUsd(free!.depositFreeUpToUsd! * 100)})`
+    );
+    expect(lines[1]).toBe(
+      `features.bidDecidedTogether(from=${formatUsd(free!.depositFreeUpToUsd! * 100)}, ` +
+        `to=${formatUsd(free!.maxBidUsd! * 100)})`
+    );
+  });
+
+  /**
+   * The two numbers must stay in the order that makes them a sentence: no
+   * security below X, a conversation between X and Y. A free line above the
+   * ceiling would read as a limit of $5,000 with a mysterious second clause.
+   */
+  it("the deposit-free line sits below the ceiling it hands off to", () => {
+    for (const key of PLAN_KEYS) {
+      const plan = PLANS[key];
+      if (plan.depositFreeUpToUsd === null) continue;
+      expect(plan.maxBidUsd, `${key} is deposit-free up to a number but uncapped`).not.toBeNull();
+      expect(plan.depositFreeUpToUsd).toBeLessThan(plan.maxBidUsd!);
+    }
   });
 
   /**

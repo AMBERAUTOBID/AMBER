@@ -175,11 +175,25 @@ export default function PlanConfirmDialog({
               {t("dialog.termsHeading")}
             </h3>
             <p className="mt-3 text-sm leading-relaxed text-char-600">
+              {/* ⚠️ EVERY FIGURE IN THE TERMS COMES FROM THE PLAN TABLE, and
+                  `maxBid` is here because it did not used to. The bidding
+                  limits were typed straight into the translations — "$10,000"
+                  in all three locales — while the card above derived its own
+                  line from `plans.ts`. Raising Silver to $15,000 on 2026-08-17
+                  would therefore have produced a card promising $15,000 above
+                  a set of terms the client agrees to promising $10,000. A
+                  price that is only ALMOST generated is worse than one written
+                  out, because nobody re-reads the half that looks handled. */}
               {t(`tiers.${plan.key}.terms`, {
                 fee: plan.feesPerVehicleUsdCents.length
                   ? formatUsd(plan.feesPerVehicleUsdCents[0])
                   : "",
                 deposit: formatUsd(plan.depositUsdCents),
+                maxBid: plan.maxBidUsd === null ? "" : formatUsd(plan.maxBidUsd * 100),
+                depositFree:
+                  plan.depositFreeUpToUsd === null
+                    ? ""
+                    : formatUsd(plan.depositFreeUpToUsd * 100),
               })}
             </p>
 
@@ -224,7 +238,7 @@ export default function PlanConfirmDialog({
                 type="button"
                 onClick={submit}
                 disabled={!agreed || state === "sending"}
-                className="rounded-full bg-amber-500 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full bg-amber-600 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {state === "sending" ? t("dialog.submitting") : t("dialog.continue")}
               </button>

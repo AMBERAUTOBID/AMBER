@@ -69,11 +69,23 @@ describe("the ten percent band", () => {
 });
 
 describe("above $10,000 the answer is a plan, not a bigger hold", () => {
-  it("$15,000 is quoted Gold", () => {
+  /**
+   * ⚠️ THIS USED TO EXPECT GOLD, AND THE CHANGE IS THE POINT OF THE TEST.
+   *
+   * Silver's cap was $10,000, so a $15,000 bid fell past it and the cheapest
+   * tier that covered the client was Gold at $2,500. The owner raised Silver
+   * to $15,000 on 2026-08-17, so the same client is now covered by a $1,500
+   * deposit — a thousand dollars less frozen for exactly the same bid.
+   *
+   * Written against the catalogue rather than the word "silver" would have hid
+   * that: the assertion names the tier deliberately, so moving a cap has to be
+   * a decision somebody takes, not something a green suite absorbs quietly.
+   */
+  it("$15,000 is quoted Silver — the cheapest tier that now covers it", () => {
     expect(bidDepositFor(usd(15000))).toEqual({
       kind: "needs_plan",
-      planKey: "gold",
-      cents: PLANS.gold.depositUsdCents,
+      planKey: "silver",
+      cents: PLANS.silver.depositUsdCents,
     });
   });
 

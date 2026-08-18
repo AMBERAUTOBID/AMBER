@@ -72,6 +72,19 @@ export interface Plan {
   depositUsdCents: number;
   /** Max USD amount of a single bid. null = unlimited. */
   maxBidUsd: number | null;
+  /**
+   * Up to this single-bid amount we ask for no security at all; above it, and
+   * up to `maxBidUsd`, a person decides per car whether a refundable hold is
+   * needed. USD. `null` on every tier that already holds a deposit — they have
+   * posted their security once and the question does not arise again.
+   *
+   * ⚠️ THIS IS THE FIGURE THE FREE CARD PUBLISHES AS ITS LIMIT, and it is
+   * deliberately NOT `maxBidUsd`. The owner's rule, 2026-08-17: "bid limit up
+   * to $5,000, and from $5,000 our team decides whether a deposit is needed."
+   * Two different promises, so two different numbers — and `bidDepositFor()`
+   * reads this one, so the card cannot drift from what is enforced.
+   */
+  depositFreeUpToUsd: number | null;
   /** How many bids may be live at once. null = unlimited. */
   maxConcurrentBids: number | null;
   /**
@@ -108,14 +121,21 @@ export interface Plan {
   /** False = shown on /plans but not selectable. See AVAILABILITY above. */
   available: boolean;
   /**
-   * Carries the highlighted badge on the plans page. Presentation only.
+   * Draws the eye to one card in the row — amber border, filled button.
+   * Presentation only.
    *
-   * ⚠️ The badge used to read "Most popular", and that was a claim about a
-   * track record this company does not have — the same class of statement as
-   * an invented testimonial or a "10 years in business" line, both of which
-   * were scrubbed site-wide once already. It now names the AUDIENCE instead
-   * ("For one or two cars"), which is a description of who a tier suits and
-   * therefore true on the day it ships.
+   * ⚠️ IT NO LONGER PRINTS A BADGE, AND THAT HISTORY IS WORTH KEEPING. The
+   * badge first read "Most popular", which was a claim about a track record
+   * this company does not have — the same class of statement as an invented
+   * testimonial, scrubbed site-wide once already. It was rewritten to name the
+   * AUDIENCE instead ("For one or two cars"), which was at least true. The
+   * owner removed it outright on 2026-08-17 for looking wrong above the card,
+   * and nothing was lost: Bronze's tagline already says who it is for, in a
+   * full sentence, two lines below where the badge sat.
+   *
+   * The emphasis stays. Without it the row reads as four equal options with no
+   * suggested way in, which is worse for a first-time visitor than a quiet
+   * highlight on the free tier.
    */
   featured: boolean;
 }
@@ -148,13 +168,20 @@ export const PLANS: Record<PlanKey, Plan> = {
    * rebuild the same inversion one column to the left. The "one or two cars"
    * idea belongs in the card's audience copy, which claims no limit at all.
    *
-   * So Bronze and Silver share their caps deliberately. Silver is not more
-   * capacity — it is a cheaper fee ($350 against $400) and live-auction access.
+   * ⚠️ BRONZE AND SILVER USED TO SHARE THIS CAP, AND NO LONGER DO. Both sat at
+   * $10,000, so Silver's whole argument had to be the cheaper fee ($350 against
+   * $400) and live-auction access — it bought no extra room at all. The owner
+   * raised Silver to $15,000 on 2026-08-17, so the ladder now climbs on every
+   * rung: $10,000 → $15,000 → $25,000 → $50,000. Bronze keeps $10,000 as the
+   * hard ceiling, with $5,000 as the point below which we ask no security.
    */
   bronze: {
     key: "bronze",
     depositUsdCents: 0,
     maxBidUsd: 10000,
+    // The card's headline limit. $10,000 above stays the hard ceiling — see
+    // depositFreeUpToUsd on the interface for why the two differ.
+    depositFreeUpToUsd: 5000,
     maxConcurrentBids: 1,
     concurrencyThresholdUsd: null,
     nightReserveVisible: false,
@@ -165,11 +192,27 @@ export const PLANS: Record<PlanKey, Plan> = {
     featured: true,
   },
 
-  /** Silver — bidauto's "Basic": $10k bidding power, one lot at a time. */
+  /**
+   * Silver — the first deposit tier: one lot at a time, at the reduced fee.
+   *
+   * ⚠️ $15,000, RAISED FROM $10,000 BY THE OWNER 2026-08-17, and the change
+   * lands in two places worth knowing about.
+   *
+   * It puts Silver on the same ten-percent line as the tiers above it. At
+   * $10,000 a $1,500 deposit was 15%, the one tier that broke the pattern, and
+   * `bidDeposit.ts` carried a note calling it "the exception that proves the
+   * rule". At $15,000 it is exactly 10%, like Gold and Platinum — the note is
+   * gone because the exception is.
+   *
+   * It also changes what `tierCovering()` answers between $10,000 and $15,000:
+   * that band used to quote Gold at $2,500, and now quotes Silver at $1,500.
+   * Cheaper for the client, and it is the tier that genuinely covers them.
+   */
   silver: {
     key: "silver",
-    depositUsdCents: 150000, // $1,500
-    maxBidUsd: 10000,
+    depositUsdCents: 150000, // $1,500 — exactly 10% of the cap below
+    maxBidUsd: 15000,
+    depositFreeUpToUsd: null,
     maxConcurrentBids: 1,
     concurrencyThresholdUsd: null,
     nightReserveVisible: false,
@@ -185,6 +228,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     key: "gold",
     depositUsdCents: 250000, // $2,500
     maxBidUsd: 25000,
+    depositFreeUpToUsd: null,
     maxConcurrentBids: 2,
     concurrencyThresholdUsd: 10000,
     nightReserveVisible: false,
@@ -200,6 +244,7 @@ export const PLANS: Record<PlanKey, Plan> = {
     key: "platinum",
     depositUsdCents: 500000, // $5,000
     maxBidUsd: 50000,
+    depositFreeUpToUsd: null,
     maxConcurrentBids: 5,
     concurrencyThresholdUsd: 10000,
     nightReserveVisible: false,

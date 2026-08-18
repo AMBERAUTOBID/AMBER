@@ -62,19 +62,16 @@ export default function PlanCard({ plan, state }: { plan: Plan; state: CardState
             : "border-char-200/70 bg-white hover:shadow-md"
       )}
     >
-      {/* "Your plan" replaces "Most popular" on the tier they hold. One badge
-          slot, and which tier is theirs is worth more to them than which tier
-          is popular. */}
+      {/* The only badge left on an available card, and the one worth the slot:
+          which tier is theirs is a fact about the reader, not about us. */}
       {plan.available && state.kind === "current" && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-char-800 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
           {t("yourPlan")}
         </span>
       )}
-      {plan.available && plan.featured && state.kind !== "current" && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-          {t("popular")}
-        </span>
-      )}
+      {/* `featured` deliberately prints NO badge — see the field's note in
+          plans.ts. It survives as the amber border and filled button below,
+          which is the whole of the emphasis now. */}
       {!plan.available && (
         <span className="absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-char-700 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
           <Lock size={11} weight="fill" />
@@ -131,7 +128,7 @@ export default function PlanCard({ plan, state }: { plan: Plan; state: CardState
               weight="bold"
               className={clsx(
                 "mt-0.5 shrink-0",
-                plan.available ? "text-amber-600" : "text-char-400"
+                plan.available ? "text-amber-600" : "text-char-500"
               )}
             />
             <span>{f}</span>
@@ -148,7 +145,7 @@ export default function PlanCard({ plan, state }: { plan: Plan; state: CardState
               className={clsx(
                 "mt-7 inline-flex w-full items-center justify-center rounded-full px-6 py-3.5 text-sm font-semibold transition-colors",
                 plan.featured
-                  ? "bg-amber-500 text-white hover:bg-amber-600"
+                  ? "bg-amber-600 text-white hover:bg-amber-700"
                   : "border border-char-200 bg-white text-char-800 hover:border-amber-400 hover:text-amber-700"
               )}
             >

@@ -12,6 +12,7 @@
  * Above that the answer is a plan, not a bigger hold, and the plan table says
  * so itself:
  *
+ *     Silver    max bid $15,000   deposit $1,500   = exactly 10%
  *     Gold      max bid $25,000   deposit $2,500   = exactly 10%
  *     Platinum  max bid $50,000   deposit $5,000   = exactly 10%
  *
@@ -23,15 +24,24 @@
  * That also puts the upgrade conversation exactly where the owner said it
  * belongs: at the point where somebody stops being a one-car buyer.
  *
- * ⚠️ Silver is the exception that proves the rule: $1,500 on a $10,000 cap is
- * 15%, not 10%. That is why the percentage band stops at $10,000 rather than
- * running into Silver's territory — below the cap, per-car is genuinely
- * cheaper for the client, and it should be.
+ * ✅ Silver used to be the exception that proved the rule — $1,500 on a
+ * $10,000 cap is 15%, not 10% — and it stopped being one when the owner raised
+ * that cap to $15,000 on 2026-08-17. All three deposit tiers now sit on the
+ * same ten-percent line, so the band above genuinely is "a tier costs the same
+ * as the hold" rather than "the same, except for the cheapest tier".
  */
 import { PLANS, PLAN_KEYS, type PlanKey } from "@/modules/plans/model/plans";
 
-/** No deposit at or below this bid. USD cents. Owner's figure, 2026-08-14. */
-export const DEPOSIT_FREE_AT_OR_BELOW_CENTS = 500_000; // $5,000
+/**
+ * No deposit at or below this bid. USD cents. Owner's figure, 2026-08-14.
+ *
+ * ⚠️ READ FROM THE PLAN TABLE RATHER THAN WRITTEN OUT, and that is new as of
+ * 2026-08-17. The same $5,000 is now the headline limit on the free card, so
+ * the two had to become one number: a hand-written constant here and a card
+ * line over there is precisely how a pricing page starts promising something
+ * the code does not do. `plans.ts` is the single place; this reads it.
+ */
+export const DEPOSIT_FREE_AT_OR_BELOW_CENTS = (PLANS.bronze.depositFreeUpToUsd ?? 0) * 100;
 
 /** Above this, the answer is a plan rather than a bigger hold. USD cents. */
 export const PER_CAR_DEPOSIT_CEILING_CENTS = 1_000_000; // $10,000
