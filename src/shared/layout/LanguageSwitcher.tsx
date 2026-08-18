@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, localeNames, type AppLocale } from "@/i18n/routing";
-import { Globe, CaretDown } from "@phosphor-icons/react/dist/ssr";
+import { CaretDown } from "@phosphor-icons/react/dist/ssr";
+import LocaleFlag from "@/shared/ui/LocaleFlag";
 import { clsx } from "clsx";
 
 /**
@@ -55,7 +56,10 @@ export default function LanguageSwitcher({
             : "text-char-600 hover:bg-char-100 hover:text-char-900"
         )}
       >
-        <Globe size={18} weight="bold" aria-hidden />
+        {/* The flag replaces a generic globe icon, which looked identical in
+            every language — the one thing a language control must not do.
+            Drawn rather than an emoji flag; see LocaleFlag for why. */}
+        <LocaleFlag locale={locale} size={18} />
         <span>{compact ? locale.toUpperCase() : localeNames[locale]}</span>
         <CaretDown size={12} weight="bold" aria-hidden />
       </button>
@@ -75,10 +79,11 @@ export default function LanguageSwitcher({
                   router.replace(pathname, { locale: loc });
                 }}
                 className={clsx(
-                  "block w-full px-4 py-2 text-left text-sm transition-colors hover:bg-amber-50 hover:text-amber-700",
+                  "flex w-full items-center gap-2.5 px-4 py-2 text-left text-sm transition-colors hover:bg-amber-50 hover:text-amber-700",
                   loc === locale ? "font-semibold text-amber-600" : "text-char-700"
                 )}
               >
+                <LocaleFlag locale={loc} size={18} />
                 {localeNames[loc]}
               </button>
             </li>

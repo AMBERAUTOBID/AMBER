@@ -2,6 +2,8 @@ import { MapPin, Gauge } from "@phosphor-icons/react/dist/ssr";
 import { Link } from "@/i18n/navigation";
 import type { VehicleListItem } from "@/modules/inventory/api";
 import { formatOdometer } from "@/modules/inventory/model/formatOdometer";
+import { formatLotTitle } from "@/modules/inventory/model/modelTree";
+import MadeInUsaBadge from "@/modules/inventory/components/MadeInUsaBadge";
 
 /** Lots that haven't been bid on yet come back as 0, not null - printing
  * "$0" would read as a price rather than as "no bids yet". */
@@ -118,7 +120,7 @@ export default function LotCard({
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-char-400">
+          <div className="flex h-full items-center justify-center text-sm text-char-500">
             {labels.noPhoto}
           </div>
         )}
@@ -130,14 +132,14 @@ export default function LotCard({
               VIN could not answer — a pre-1981 format, or none recorded — and
               an absent flag is the honest rendering of "we don't know". */}
           {usaMade === true && labels.madeInUsa && (
-            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-char-800 backdrop-blur-sm">
-              🇺🇸 {labels.madeInUsa}
-            </span>
+            <MadeInUsaBadge label={labels.madeInUsa} />
           )}
         </div>
       </div>
       <div className="p-4">
-        <h3 className="line-clamp-1 font-bold text-char-900">{vehicle.title}</h3>
+        {/* Both sources shout the make and model in upper case, and both keep
+            the auctions catch-all buckets in it. See formatLotTitle. */}
+        <h3 className="line-clamp-1 font-bold text-char-900">{formatLotTitle(vehicle.title)}</h3>
         <div className="mt-1 flex items-baseline gap-2">
           <p className="text-lg font-bold text-amber-600">{headline ?? labels.priceNA}</p>
           {headlineKind && (

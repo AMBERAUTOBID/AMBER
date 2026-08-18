@@ -4,6 +4,7 @@ import {
   canonicalKey,
   modelsForLabel,
   prettifyModel,
+  formatLotTitle,
   type RawModelCount,
 } from "./modelTree";
 
@@ -229,5 +230,42 @@ describe("modelsForLabel", () => {
     // The caller must treat this as "match nothing" rather than "no filter" —
     // a mistyped URL should return no cars, not the whole catalogue.
     expect(modelsForLabel(buildModelTree(BMW), "Corvette")).toEqual([]);
+  });
+});
+
+describe("formatLotTitle — the headline on a card", () => {
+  it("stops the sources shouting", () => {
+    expect(formatLotTitle("2013 FERRARI 458 SPIDER")).toBe("2013 Ferrari 458 Spider");
+    expect(formatLotTitle("2024 CHEVROLET TAHOE 4WD V8")).toBe("2024 Chevrolet Tahoe 4WD V8");
+  });
+
+  /**
+   * The whole reason this exists rather than a bare `prettifyModel`: "ALL
+   * OTHER" is the auctions' dumping ground, and on a home page card it reads
+   * as broken data rather than as a car.
+   */
+  it("drops the auctions' catch-all buckets from the headline", () => {
+    expect(formatLotTitle("2023 FERRARI ALL OTHER")).toBe("2023 Ferrari");
+    expect(formatLotTitle("2015 E-ONE ALL MODELS")).toBe("2015 E-ONE");
+  });
+
+  it("keeps the names that are genuinely upper-case", () => {
+    expect(formatLotTitle("2015 BMW M3")).toBe("2015 BMW M3");
+    expect(formatLotTitle("2016 NISSAN GT-R")).toBe("2016 Nissan GT-R");
+    expect(formatLotTitle("2019 AUDI S5/RS5")).toBe("2019 Audi S5/RS5");
+    expect(formatLotTitle("2018 GMC SIERRA")).toBe("2018 GMC Sierra");
+  });
+
+  it("lowers the makes that are written in mixed case everywhere", () => {
+    expect(formatLotTitle("2020 KIA SORENTO")).toBe("2020 Kia Sorento");
+    expect(formatLotTitle("2021 RAM 2500")).toBe("2021 Ram 2500");
+  });
+
+  it("never returns an empty headline", () => {
+    expect(formatLotTitle("ALL OTHER")).toBe("All Other");
+  });
+
+  it("leaves a real model that merely contains the words alone", () => {
+    expect(formatLotTitle("2020 FORD ALL OTHER VAN")).toBe("2020 Ford All Other Van");
   });
 });

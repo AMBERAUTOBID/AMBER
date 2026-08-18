@@ -92,7 +92,10 @@ export function canonicalKey(model: string): string {
  * Toyota's own `ALL OTHER` bucket as "ALL Other". Kept deliberately tiny: every
  * entry is a word observed in the catalogue, not a guess at what might appear.
  */
-const SHORT_WORDS = new Set(["ALL", "AND", "BUS", "CAB", "FOR", "NEW", "THE", "VAN"]);
+// Three letters or fewer normally stay upper-case (X5, GLE, CR-V), so anything
+// that is a real word — or a make written in mixed case everywhere, like Kia
+// and Ram — has to be named here or it shouts.
+const SHORT_WORDS = new Set(["ALL", "AND", "BUS", "CAB", "FOR", "KIA", "NEW", "RAM", "THE", "VAN"]);
 
 /**
  * Readable casing without losing the names that are genuinely upper-case.
@@ -308,4 +311,28 @@ export function modelsForLabel(tree: ModelGroup[], label: string): string[] {
     }
   }
   return [];
+}
+
+/**
+ * A lot's headline, as a person would write it.
+ *
+ * ⚠️ THE SOURCES SHOUT. Both the aggregator and our own mirror carry make and
+ * model in upper case, so a card read "2023 FERRARI ALL OTHER" where the
+ * competitor reads "2023 Ferrari". Two separate faults in one string:
+ *
+ *  - **Case.** `prettifyModel` already solved this for the model picker and is
+ *    reused rather than reinvented — it knows that `X5`, `GT-R` and `4WD` are
+ *    written that way on the car itself, and only `SILVERADO` needs lowering.
+ *  - **The catch-all buckets.** `ALL OTHER` and `ALL MODELS` are the auctions'
+ *    own dumping grounds, not model names — 113 Toyotas sit in one of them.
+ *    They are worth keeping in a filter list, where they are a real choice, and
+ *    worth dropping from a headline, where they read as broken data. Anchored
+ *    at the end so a genuine model that happens to contain the words survives.
+ */
+export function formatLotTitle(raw: string): string {
+  const pretty = prettifyModel(raw);
+  const trimmed = pretty.replace(/\s+All (?:Other|Models)$/i, "").trim();
+  // Never return an empty headline: a lot whose whole title is a catch-all
+  // keeps it, because "" on a card is worse than a vague label.
+  return trimmed || pretty;
 }
