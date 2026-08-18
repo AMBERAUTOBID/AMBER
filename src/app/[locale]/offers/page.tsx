@@ -77,7 +77,7 @@ export default async function OffersPage({
             <div className="mt-2 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/search"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-amber-900/20 transition-colors hover:bg-amber-600"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-600 px-6 py-3 text-sm font-semibold text-white shadow-sm shadow-amber-900/20 transition-colors hover:bg-amber-700"
               >
                 <MagnifyingGlass size={16} weight="bold" />
                 {t("empty.searchCta")}

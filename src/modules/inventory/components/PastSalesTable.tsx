@@ -32,7 +32,7 @@ export default function PastSalesTable({
     <details className="group rounded-2xl border border-char-200 bg-white">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5">
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-char-400">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-char-500">
             {labels.title}
           </h2>
           <p className="mt-0.5 text-sm text-char-600">{labels.count}</p>
@@ -40,14 +40,14 @@ export default function PastSalesTable({
         <CaretDown
           size={18}
           weight="bold"
-          className="shrink-0 text-char-400 transition-transform group-open:rotate-180"
+          className="shrink-0 text-char-500 transition-transform group-open:rotate-180"
         />
       </summary>
 
       <div className="overflow-x-auto border-t border-char-100">
         <table className="w-full min-w-[34rem] text-left text-sm">
           <thead>
-            <tr className="text-xs font-semibold uppercase tracking-wider text-char-400">
+            <tr className="text-xs font-semibold uppercase tracking-wider text-char-500">
               <th className="px-5 py-3 font-semibold">{labels.vehicle}</th>
               <th className="px-3 py-3 font-semibold">{labels.sold}</th>
               <th className="px-3 py-3 font-semibold">{labels.odometer}</th>

@@ -479,7 +479,7 @@ export default async function SearchPage({
             delay={0.2}
             className="mt-6 flex items-start gap-3 rounded-2xl border border-char-200 bg-char-50 p-6 text-sm text-char-600"
           >
-            <Info size={20} className="mt-0.5 shrink-0 text-char-400" />
+            <Info size={20} className="mt-0.5 shrink-0 text-char-500" />
             <p>{t("note")}</p>
           </Reveal>
         </Container>

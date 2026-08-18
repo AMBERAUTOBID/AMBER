@@ -119,7 +119,7 @@ export default function FavoriteCard({
             className="h-full w-full object-cover"
           />
         ) : (
-          <span className="flex h-full items-center justify-center text-xs text-char-400">
+          <span className="flex h-full items-center justify-center text-xs text-char-500">
             {t("noPhoto")}
           </span>
         )}
@@ -140,7 +140,7 @@ export default function FavoriteCard({
             // Absent, not zero — a lot with no bid yet has no price to show.
             <span className="text-char-500">{t("noPrice")}</span>
           )}
-          <span className="ml-2 text-xs uppercase tracking-wider text-char-400">
+          <span className="ml-2 text-xs uppercase tracking-wider text-char-500">
             {favorite.platform}
           </span>
         </p>

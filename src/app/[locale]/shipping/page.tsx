@@ -59,7 +59,7 @@ export default async function ShippingPage({
                 delay={i * 0.06}
                 className="rounded-2xl border border-char-200 bg-white p-6"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 font-[family-name:var(--font-heading)] text-sm font-extrabold text-white">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-600 font-[family-name:var(--font-heading)] text-sm font-extrabold text-white">
                   {i + 1}
                 </span>
                 <h3 className="mt-4 font-bold text-char-900">{step.title}</h3>
@@ -99,7 +99,7 @@ export default async function ShippingPage({
             delay={0.1}
             className="mt-6 max-w-2xl rounded-2xl border border-char-200 bg-white p-6 sm:p-7"
           >
-            <p className="text-xs font-semibold uppercase tracking-wider text-char-400">
+            <p className="text-xs font-semibold uppercase tracking-wider text-char-500">
               {t("tracking.routeLabel")}
             </p>
             <div className="relative mt-6 h-3.5">
@@ -178,7 +178,7 @@ export default async function ShippingPage({
               ))}
             </div>
 
-            <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-char-400">
+            <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-char-500">
               {t("ports.requestLabel")}
             </p>
             <div className="mt-2.5 flex flex-wrap gap-2.5">

@@ -133,7 +133,7 @@ export default function StageEditor({
         type="button"
         onClick={() => void save()}
         disabled={saving}
-        className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+        className="rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
       >
         {saving ? t("saving") : t("save")}
       </button>

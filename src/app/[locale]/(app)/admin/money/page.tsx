@@ -232,7 +232,7 @@ function Row({
             <span>
               {overdue ? t("overdueBy") : t("dueIn")} {format.relativeTime(row.status.dueAt, now)}
             </span>
-            <span className="font-normal text-char-400">
+            <span className="font-normal text-char-500">
               <LocalDateTime
                 iso={row.status.dueAt.toISOString()}
                 locale={locale}

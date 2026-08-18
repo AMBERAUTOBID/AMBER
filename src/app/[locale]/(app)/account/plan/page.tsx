@@ -105,7 +105,7 @@ export default async function AccountPlanPage({
               {status.upgrades.length > 0 && !status.pending && (
                 <Link
                   href="/plans"
-                  className="inline-flex items-center rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+                  className="inline-flex items-center rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
                 >
                   {t("upgrade")}
                 </Link>
@@ -247,7 +247,7 @@ export default async function AccountPlanPage({
           <p className="mt-2 text-sm leading-relaxed text-char-600">{t("noneHint")}</p>
           <Link
             href="/plans"
-            className="mt-4 inline-flex items-center rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+            className="mt-4 inline-flex items-center rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
           >
             {t("choosePlan")}
           </Link>

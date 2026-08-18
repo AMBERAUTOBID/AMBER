@@ -190,7 +190,7 @@ export default async function AdminOrderPage({
                       </span>
                     )}
                     {!reached && (
-                      <span className="font-normal text-xs text-char-400">
+                      <span className="font-normal text-xs text-char-500">
                         {tOrders("stagePending")}
                       </span>
                     )}

@@ -60,7 +60,7 @@ function AuctionToggle({
       onClick={() => onChange(!checked)}
       className={clsx(
         "inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors select-none",
-        checked ? activeClass : "border-char-200 bg-white text-char-400 hover:border-char-300"
+        checked ? activeClass : "border-char-200 bg-white text-char-500 hover:border-char-300"
       )}
     >
       {checked ? (
@@ -299,7 +299,7 @@ export default function SearchWidget({
         <div className="relative flex-1">
           <MagnifyingGlass
             size={18}
-            className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-char-400"
+            className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-char-500"
           />
           <input
             type="text"
@@ -316,13 +316,13 @@ export default function SearchWidget({
         <button
           type="submit"
           disabled={!copartOn && !iaaiOn}
-          className="shrink-0 rounded-xl bg-amber-500 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-40"
+          className="shrink-0 rounded-xl bg-amber-600 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {labels.searchButton}
         </button>
       </form>
 
-      <p className="mt-4 text-center text-xs font-semibold uppercase tracking-wider text-char-400">
+      <p className="mt-4 text-center text-xs font-semibold uppercase tracking-wider text-char-500">
         {labels.browsePrompt}
       </p>
 
@@ -340,7 +340,7 @@ export default function SearchWidget({
               className={clsx(
                 "flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3.5 text-sm font-semibold transition-all",
                 active
-                  ? "border-amber-500 bg-amber-500 text-white shadow-md shadow-amber-900/20"
+                  ? "border-amber-500 bg-amber-600 text-white shadow-md shadow-amber-900/20"
                   : "border-char-200 bg-white text-char-600 hover:border-amber-300 hover:bg-amber-50"
               )}
             >
@@ -438,7 +438,7 @@ export default function SearchWidget({
                   className={clsx(
                     "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold whitespace-nowrap transition-colors sm:text-sm",
                     buyNowOnly
-                      ? "border-amber-500 bg-amber-500 text-white"
+                      ? "border-amber-500 bg-amber-600 text-white"
                       : "border-char-200 bg-white text-char-500 hover:border-char-300"
                   )}
                 >
@@ -464,7 +464,7 @@ export default function SearchWidget({
           checked={copartOn}
           onChange={setCopartOn}
           label={labels.copartToggle}
-          activeClass="border-amber-500 bg-amber-500 text-white"
+          activeClass="border-amber-500 bg-amber-600 text-white"
         />
         <AuctionToggle
           checked={iaaiOn}

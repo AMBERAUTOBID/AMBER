@@ -44,7 +44,7 @@ export default async function TermsPage({
             <p className="mt-5 text-lg leading-relaxed text-char-600">
               {t("hero.subtitle")}
             </p>
-            <p className="mt-3 text-sm text-char-400">{t("updated")}</p>
+            <p className="mt-3 text-sm text-char-500">{t("updated")}</p>
           </Reveal>
         </Container>
       </section>

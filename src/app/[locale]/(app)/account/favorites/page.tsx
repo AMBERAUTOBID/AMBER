@@ -75,7 +75,7 @@ export default async function AccountFavoritesPage({
           <p className="mt-2 text-sm leading-relaxed text-char-600">{t("emptyHint")}</p>
           <Link
             href="/search"
-            className="mt-5 inline-flex items-center rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+            className="mt-5 inline-flex items-center rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
           >
             {t("browse")}
           </Link>

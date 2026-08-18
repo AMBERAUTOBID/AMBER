@@ -92,7 +92,7 @@ export default function PaymentInstructions({
     return (
       <div className="rounded-2xl border border-char-200 bg-char-50/60 p-5">
         <p className="flex items-start gap-2.5 font-semibold text-char-900">
-          <Info size={19} weight="fill" className="mt-0.5 shrink-0 text-char-400" />
+          <Info size={19} weight="fill" className="mt-0.5 shrink-0 text-char-500" />
           {labels.awaitingTitle}
         </p>
         <p className="mt-1.5 text-sm leading-relaxed text-char-600">{labels.awaitingBody}</p>
@@ -124,7 +124,7 @@ export default function PaymentInstructions({
         overdue ? "border-red-300 bg-red-50/60" : "border-char-200 bg-white"
       }`}
     >
-      <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-char-400">
+      <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-char-500">
         <Bank size={16} weight="bold" />
         {labels.title}
       </h2>

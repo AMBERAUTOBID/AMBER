@@ -177,7 +177,7 @@ export default function NewOrderForm() {
             }}
             placeholder={t("lookup.placeholder")}
             aria-label={t("lookup.placeholder")}
-            className="w-full rounded-xl border border-char-200 bg-char-50 px-4 py-3 text-sm text-char-900 outline-none transition-colors placeholder:text-char-400 focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
+            className="w-full rounded-xl border border-char-200 bg-char-50 px-4 py-3 text-sm text-char-900 outline-none transition-colors placeholder:text-char-500 focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
           />
           <button
             type="button"
@@ -291,7 +291,7 @@ export default function NewOrderForm() {
             }}
             placeholder={t("client.placeholder")}
             aria-label={t("client.placeholder")}
-            className="w-full rounded-xl border border-char-200 bg-char-50 px-4 py-3 text-sm text-char-900 outline-none transition-colors placeholder:text-char-400 focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
+            className="w-full rounded-xl border border-char-200 bg-char-50 px-4 py-3 text-sm text-char-900 outline-none transition-colors placeholder:text-char-500 focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
           />
           <button
             type="button"
@@ -342,7 +342,7 @@ export default function NewOrderForm() {
           type="button"
           onClick={() => void submit(duplicates.length > 0)}
           disabled={!canSubmit || saving}
-          className="rounded-full bg-amber-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+          className="rounded-full bg-amber-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
         >
           {saving ? t("submitting") : duplicates.length > 0 ? t("duplicate.continue") : t("submit")}
         </button>

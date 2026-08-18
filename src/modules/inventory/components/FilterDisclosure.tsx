@@ -57,7 +57,7 @@ export default function FilterDisclosure({
               at all, and "why are there only 40 results" becomes unanswerable
               without opening it. */}
           {activeCount > 0 && (
-            <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white tabular-nums">
+            <span className="rounded-full bg-amber-600 px-2 py-0.5 text-xs font-bold text-white tabular-nums">
               {activeCount}
             </span>
           )}
@@ -67,7 +67,7 @@ export default function FilterDisclosure({
           weight="bold"
           aria-hidden
           className={clsx(
-            "shrink-0 text-char-400 transition-transform duration-200",
+            "shrink-0 text-char-500 transition-transform duration-200",
             open && "rotate-180"
           )}
         />

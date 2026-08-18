@@ -109,7 +109,7 @@ function Chip({
       href={href}
       className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-char-200 bg-white py-1.5 pl-3 pr-2 text-sm text-char-700 shadow-sm transition-colors hover:border-amber-300 hover:bg-amber-50/60"
     >
-      {group && <span className="shrink-0 text-xs text-char-400">{group}</span>}
+      {group && <span className="shrink-0 text-xs text-char-500">{group}</span>}
       <span className="truncate font-medium">{value}</span>
       <X
         size={14}

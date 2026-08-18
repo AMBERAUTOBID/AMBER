@@ -79,7 +79,7 @@ export default function ScrollableSelect({
             <div className="relative border-b border-char-100 p-2">
               <MagnifyingGlass
                 size={14}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-char-400"
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-char-500"
               />
               <input
                 autoFocus
@@ -93,7 +93,7 @@ export default function ScrollableSelect({
           )}
           <ul role="listbox" className="max-h-56 overflow-y-auto py-1">
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-sm text-char-400">—</li>
+              <li className="px-3 py-2 text-sm text-char-500">—</li>
             )}
             {filtered.map((opt) => (
               <li key={opt} role="option" aria-selected={opt === value}>

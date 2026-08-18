@@ -62,7 +62,7 @@ export default function MaintenancePanel({ initiallyOn }: { initiallyOn: boolean
       }`}
     >
       <p className="flex items-center gap-2 font-semibold text-char-900">
-        <Wrench size={18} weight="fill" className={on ? "text-amber-600" : "text-char-400"} />
+        <Wrench size={18} weight="fill" className={on ? "text-amber-600" : "text-char-500"} />
         {on ? t("statusOn") : t("statusOff")}
       </p>
       <p className="mt-2 text-sm leading-relaxed text-char-600">
@@ -75,7 +75,7 @@ export default function MaintenancePanel({ initiallyOn }: { initiallyOn: boolean
           onClick={() => setState("confirming")}
           className={`mt-4 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
             on
-              ? "bg-amber-500 text-white hover:bg-amber-600"
+              ? "bg-amber-600 text-white hover:bg-amber-700"
               : "border border-char-200 bg-white text-char-800 hover:border-amber-400 hover:text-amber-700"
           }`}
         >

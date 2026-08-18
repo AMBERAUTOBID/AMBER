@@ -137,10 +137,10 @@ export default function BidDepositOverride({
           {/* Large, tabular, and the two figures side by side. A number this
               size is read; a number in a sentence is skimmed. */}
           <p className="mt-3 flex flex-wrap items-baseline gap-3 font-[family-name:var(--font-heading)] tabular-nums">
-            <span className="text-2xl font-bold text-char-400 line-through">
+            <span className="text-2xl font-bold text-char-500 line-through">
               {currentCents > 0 ? formatUsd(currentCents) : t("none")}
             </span>
-            <span className="text-char-400">→</span>
+            <span className="text-char-500">→</span>
             <span
               className={
                 needsPassword
@@ -188,7 +188,7 @@ export default function BidDepositOverride({
               className={
                 needsPassword
                   ? "rounded-full bg-red-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  : "rounded-full bg-amber-500 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  : "rounded-full bg-amber-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
               }
             >
               {/* The figure is IN the label. A button that says "Save" is

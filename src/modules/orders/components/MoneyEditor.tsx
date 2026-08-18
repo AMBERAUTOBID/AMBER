@@ -116,7 +116,7 @@ export default function MoneyEditor({
                   <td className="py-2 text-char-700">
                     {line.label || tk(line.kind)}
                     {!line.visibleToClient && (
-                      <EyeSlash size={13} className="ml-1.5 inline text-char-400" />
+                      <EyeSlash size={13} className="ml-1.5 inline text-char-500" />
                     )}
                   </td>
                   <td className="py-2 text-right font-medium text-char-900">
@@ -128,7 +128,7 @@ export default function MoneyEditor({
                       disabled={busy}
                       onClick={() => void send({ action: "deleteCost", rowId: line.id })}
                       aria-label={t("delete")}
-                      className="text-char-400 transition-colors hover:text-red-600 disabled:opacity-50"
+                      className="text-char-500 transition-colors hover:text-red-600 disabled:opacity-50"
                     >
                       <Trash size={14} />
                     </button>
@@ -210,7 +210,7 @@ export default function MoneyEditor({
                     disabled={busy}
                     onClick={() => void send({ action: "deletePayment", rowId: p.id })}
                     aria-label={tp("delete")}
-                    className="text-char-400 transition-colors hover:text-red-600 disabled:opacity-50"
+                    className="text-char-500 transition-colors hover:text-red-600 disabled:opacity-50"
                   >
                     <Trash size={14} />
                   </button>
@@ -400,7 +400,7 @@ function AmountForm({
             setLabel("");
           }
         }}
-        className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
       >
         <Plus size={14} weight="bold" />
         {labels.add}
@@ -517,7 +517,7 @@ function PaymentForm({
             setReference("");
           }
         }}
-        className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
       >
         <Plus size={14} weight="bold" />
         {labels.add}

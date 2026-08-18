@@ -125,7 +125,7 @@ export default function BidStatusActions({
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-60 ${
                   to === "lost"
                     ? "border border-char-300 text-char-700 hover:border-char-400"
-                    : "bg-amber-500 text-white hover:bg-amber-600"
+                    : "bg-amber-600 text-white hover:bg-amber-700"
                 }`}
               >
                 {busy ? t("saving") : t(`to.${to}`)}

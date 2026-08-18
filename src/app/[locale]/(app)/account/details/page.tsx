@@ -84,7 +84,7 @@ export default async function AccountDetailsPage({
         <ul className="mt-5 divide-y divide-char-200/70">
           {devices.map((device) => (
             <li key={device.id} className="flex items-start gap-3 py-3">
-              <DeviceMobile size={18} weight="fill" className="mt-0.5 shrink-0 text-char-400" />
+              <DeviceMobile size={18} weight="fill" className="mt-0.5 shrink-0 text-char-500" />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-char-900">
                   {device.label || t("deviceUnknown")}

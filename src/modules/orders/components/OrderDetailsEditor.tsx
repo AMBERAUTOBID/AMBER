@@ -171,7 +171,7 @@ function TitlePanel({
           type="button"
           disabled={busy}
           onClick={() => onSet(new Date(`${date}T12:00:00Z`).toISOString())}
-          className="rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+          className="rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
         >
           {t("mark")}
         </button>

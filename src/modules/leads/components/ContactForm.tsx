@@ -95,7 +95,7 @@ export default function ContactForm() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-char-200 bg-char-50 px-4 py-3 text-sm text-char-900 outline-none transition-colors placeholder:text-char-400 focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100";
+    "w-full rounded-xl border border-char-200 bg-char-50 px-4 py-3 text-sm text-char-900 outline-none transition-colors placeholder:text-char-500 focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100";
   const labelClass = "block text-sm font-medium text-char-800";
 
   return (
@@ -174,7 +174,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={status === "submitting"}
-        className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-600 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {status === "submitting" ? t("submitting") : t("submit")}
       </button>

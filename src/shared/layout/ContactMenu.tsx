@@ -98,11 +98,11 @@ export default function ContactMenu() {
           onClick={() => setOpen(false)}
         >
           <a role="menuitem" href={CONTACT_HREF.email} className={itemClass}>
-            <Envelope size={17} className="shrink-0 text-char-400" />
+            <Envelope size={17} className="shrink-0 text-char-500" />
             <span className="truncate">{SITE.email}</span>
           </a>
           <a role="menuitem" href={CONTACT_HREF.tel} className={itemClass}>
-            <Phone size={17} className="shrink-0 text-char-400" />
+            <Phone size={17} className="shrink-0 text-char-500" />
             {SITE.phone.display}
           </a>
           {whatsapp && (
@@ -124,7 +124,7 @@ export default function ContactMenu() {
             rel="noopener noreferrer"
             className={itemClass}
           >
-            <TelegramLogo size={17} className="shrink-0 text-char-400" />
+            <TelegramLogo size={17} className="shrink-0 text-char-500" />
             {SITE.telegram.display}
           </a>
 
@@ -142,7 +142,7 @@ export default function ContactMenu() {
                 rel="noopener noreferrer"
                 className={itemClass}
               >
-                <Icon size={17} weight="fill" className="shrink-0 text-char-400" />
+                <Icon size={17} weight="fill" className="shrink-0 text-char-500" />
                 {SOCIAL_LABEL[network]}
               </a>
             );
@@ -171,5 +171,5 @@ export default function ContactMenu() {
  * map while sitting outside the social section. */
 function WhatsappIcon() {
   const Icon = SOCIAL_ICON.whatsapp;
-  return <Icon size={17} weight="fill" className="shrink-0 text-char-400" />;
+  return <Icon size={17} weight="fill" className="shrink-0 text-char-500" />;
 }

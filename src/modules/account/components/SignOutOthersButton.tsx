@@ -48,7 +48,7 @@ export default function SignOutOthersButton({ otherCount }: { otherCount: number
       type="button"
       onClick={signOutOthers}
       disabled={state === "busy" || otherCount === 0}
-      className="text-sm font-semibold text-char-600 underline-offset-4 transition-colors hover:text-red-700 hover:underline disabled:cursor-not-allowed disabled:text-char-400 disabled:no-underline"
+      className="text-sm font-semibold text-char-600 underline-offset-4 transition-colors hover:text-red-700 hover:underline disabled:cursor-not-allowed disabled:text-char-500 disabled:no-underline"
     >
       {t("signOutOthers", { count: otherCount })}
     </button>

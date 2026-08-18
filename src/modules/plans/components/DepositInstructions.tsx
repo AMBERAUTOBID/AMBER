@@ -50,7 +50,7 @@ export default function DepositInstructions({
 
   return (
     <div className="mt-5 rounded-2xl border border-char-200 bg-white p-5">
-      <h3 className="text-sm font-bold uppercase tracking-wider text-char-400">{labels.title}</h3>
+      <h3 className="text-sm font-bold uppercase tracking-wider text-char-500">{labels.title}</h3>
 
       <p className="mt-3 text-3xl font-extrabold tabular-nums tracking-tight text-char-900">
         {amountLabel}

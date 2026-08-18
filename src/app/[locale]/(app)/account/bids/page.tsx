@@ -115,7 +115,7 @@ export default async function AccountBidsPage({
             <div className="mt-4 flex flex-wrap items-center justify-center gap-3 border-t border-char-100 pt-4">
               <Link
                 href="/search"
-                className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+                className="inline-flex items-center gap-2 rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
               >
                 <Gavel size={17} weight="fill" />
                 {t("findCar")}
@@ -316,6 +316,6 @@ function Icon({ status }: { status: BidRequestRow["status"] }) {
   if (status === "won")
     return <CheckCircle size={17} weight="fill" className={`${shared} text-green-600`} />;
   if (status === "cancelled" || status === "lost")
-    return <ClockCounterClockwise size={17} className={`${shared} text-char-400`} />;
+    return <ClockCounterClockwise size={17} className={`${shared} text-char-500`} />;
   return <Hourglass size={17} weight="fill" className={`${shared} text-amber-500`} />;
 }

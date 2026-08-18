@@ -131,7 +131,7 @@ export default function FileStrip({
                 }
                 className={`transition-colors disabled:opacity-50 ${
                   file.visibleToClient
-                    ? "text-char-400 hover:text-char-700"
+                    ? "text-char-500 hover:text-char-700"
                     : "text-amber-600 hover:text-amber-700"
                 }`}
               >
@@ -151,7 +151,7 @@ export default function FileStrip({
                   if (!window.confirm(t("deleteConfirm"))) return;
                   void send(file.id, { action: "delete" });
                 }}
-                className="text-char-400 transition-colors hover:text-red-600 disabled:opacity-50"
+                className="text-char-500 transition-colors hover:text-red-600 disabled:opacity-50"
               >
                 <Trash size={14} />
               </button>

@@ -96,7 +96,7 @@ export default function DepositQueue({
             type="button"
             onClick={() => act(row.id, "confirm")}
             disabled={busy === row.id}
-            className="shrink-0 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600 disabled:opacity-60"
+            className="shrink-0 rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-60"
           >
             {busy === row.id ? t("confirming") : t("confirmDeposit")}
           </button>

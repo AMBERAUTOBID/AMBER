@@ -106,7 +106,7 @@ export default function DepositStatusActions({
               disabled={busy}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-60 ${
                 to === "received"
-                  ? "bg-amber-500 text-white hover:bg-amber-600"
+                  ? "bg-amber-600 text-white hover:bg-amber-700"
                   : "border border-char-300 text-char-700 hover:border-char-400"
               }`}
             >

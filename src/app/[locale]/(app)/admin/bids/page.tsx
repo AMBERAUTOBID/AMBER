@@ -196,7 +196,7 @@ function Row({
               className={`mt-1 text-sm font-semibold ${past ? "text-red-700" : "text-char-600"}`}
             >
               {past ? t("saleWas") : t("saleAt")} {format.relativeTime(row.auctionAt, now)}{" "}
-              <span className="font-normal text-char-400">
+              <span className="font-normal text-char-500">
                 <LocalDateTime
                   iso={row.auctionAt.toISOString()}
                   locale={locale}

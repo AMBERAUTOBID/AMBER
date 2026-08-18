@@ -131,7 +131,7 @@ export default function ModelSelect({
           <div className="relative border-b border-char-100 p-2">
             <MagnifyingGlass
               size={14}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-char-400"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-char-500"
             />
             <input
               autoFocus
@@ -144,9 +144,9 @@ export default function ModelSelect({
           </div>
 
           <ul role="listbox" className="max-h-72 overflow-y-auto py-1">
-            {loading && <li className="px-3 py-2 text-sm text-char-400">…</li>}
+            {loading && <li className="px-3 py-2 text-sm text-char-500">…</li>}
             {!loading && visible.length === 0 && (
-              <li className="px-3 py-2 text-sm text-char-400">—</li>
+              <li className="px-3 py-2 text-sm text-char-500">—</li>
             )}
 
             {visible.map((group) => {
@@ -163,7 +163,7 @@ export default function ModelSelect({
                         onClick={() => toggle(group.label)}
                         aria-label={group.label}
                         aria-expanded={openHere}
-                        className="flex w-7 shrink-0 items-center justify-center text-char-400 hover:text-amber-600"
+                        className="flex w-7 shrink-0 items-center justify-center text-char-500 hover:text-amber-600"
                       >
                         <CaretRight
                           size={12}
@@ -183,7 +183,7 @@ export default function ModelSelect({
                       )}
                     >
                       <span className="truncate">{group.label}</span>
-                      <span className="shrink-0 text-xs tabular-nums text-char-400">
+                      <span className="shrink-0 text-xs tabular-nums text-char-500">
                         ({group.count.toLocaleString()})
                       </span>
                     </button>

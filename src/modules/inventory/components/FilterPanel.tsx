@@ -179,7 +179,7 @@ function Option({
         )}
         <span className="truncate">{label}</span>
       </span>
-      <span className="shrink-0 tabular-nums text-xs text-char-400">
+      <span className="shrink-0 tabular-nums text-xs text-char-500">
         {count.toLocaleString()}
       </span>
     </Link>

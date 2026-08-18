@@ -69,7 +69,7 @@ export default async function AdminUsersPage({
           defaultValue={query}
           placeholder={t("users.searchPlaceholder")}
           aria-label={t("users.searchPlaceholder")}
-          className="w-full rounded-xl border border-char-200 bg-char-50 px-4 py-3 text-sm text-char-900 outline-none transition-colors placeholder:text-char-400 focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
+          className="w-full rounded-xl border border-char-200 bg-char-50 px-4 py-3 text-sm text-char-900 outline-none transition-colors placeholder:text-char-500 focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
         />
         <button
           type="submit"

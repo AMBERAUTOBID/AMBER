@@ -38,7 +38,7 @@ export default function ScrollingPlaceholder({
     >
       <span
         ref={textRef}
-        className="whitespace-nowrap text-char-400"
+        className="whitespace-nowrap text-char-500"
         style={
           scrollDistance > 0
             ? ({

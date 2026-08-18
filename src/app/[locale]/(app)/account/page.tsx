@@ -81,7 +81,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
             <p className="text-sm leading-relaxed text-char-600">{t("noPlanHint")}</p>
             <Link
               href="/plans"
-              className="inline-flex items-center rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+              className="inline-flex items-center rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
             >
               {t("viewPlans")}
             </Link>

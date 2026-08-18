@@ -56,7 +56,7 @@ export default async function AdminOrdersPage({
         </h1>
         <Link
           href="/admin/orders/new"
-          className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+          className="rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
         >
           {t("create")}
         </Link>
