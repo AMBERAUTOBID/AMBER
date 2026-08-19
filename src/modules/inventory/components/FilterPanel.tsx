@@ -1,7 +1,10 @@
 import { Link } from "@/i18n/navigation";
+import { CaretDown } from "@phosphor-icons/react/dist/ssr";
 import type { SearchFacets } from "@/modules/inventory/api";
 import { parseSelected, toggleHref } from "@/modules/inventory/model/filterQuery";
-import { ODOMETER_BANDS, activeOdometerBand, bandOdoMax } from "@/modules/inventory/model/odometerBands";
+import FilterControls, {
+  type FilterControlsLabels,
+} from "@/modules/inventory/components/FilterControls";
 
 /**
  * The filter sidebar, with a live count beside every option.
@@ -54,16 +57,25 @@ export const DIMENSIONS = [
  * DIMENSIONS is the list it has to agree with, and a copy elsewhere would
  * drift the first time a dimension is added.
  *
- * Counts what this panel renders, which now includes the odometer band — it
- * moved here from the search widget, so a mileage filter is one the badge has
- * to admit to. Engine size and retail value are gone from the UI entirely; a
- * hand-typed URL can still set them and they are deliberately not counted,
- * because opening the panel would not show them.
+ * Counts what this panel renders, which is now the make, the model and the
+ * mileage range as well as the facets — all three are set from inside the
+ * panel, so a collapsed panel on a phone has to admit to them. Engine size and
+ * retail value are gone from the UI entirely; a hand-typed URL can still set
+ * them and they are deliberately not counted, because opening the panel would
+ * not show them.
  */
 export function countActiveFilters(query: Record<string, string>): number {
   const facetCount = DIMENSIONS.reduce((n, d) => n + parseSelected(query[d.param]).size, 0);
-  // One, not two: min and max are a single choice to the person who made it.
-  return facetCount + (query.odoMin || query.odoMax ? 1 : 0);
+  return (
+    facetCount +
+    // One, not two: min and max are a single choice to the person who made it,
+    // and the chip above the results shows each range as one chip for the same
+    // reason.
+    (query.odoMin || query.odoMax ? 1 : 0) +
+    (query.yearFrom || query.yearTo ? 1 : 0) +
+    (query.make ? 1 : 0) +
+    (query.model ? 1 : 0)
+  );
 }
 
 /**
@@ -101,10 +113,52 @@ const COLOR_SWATCH: Record<string, string> = {
  * it is more than one rather than picking a winner. */
 const MULTI_SWATCH = "conic-gradient(#DC2626, #F5C518, #16A34A, #2563EB, #DC2626)";
 
+/**
+ * The params the controls at the top of the panel own, beyond the facets.
+ *
+ * ONE LIST, THREE READERS — the reset link, the "is anything on" test and the
+ * badge count. Written out separately, they drifted the moment year was added:
+ * the reset link kept clearing mileage and quietly left the year behind, which
+ * is the kind of half-clear that reads as a broken button rather than as a bug.
+ *
+ * `q` and `category` are deliberately NOT here. They are where the visitor
+ * browsed to rather than what they narrowed by, and the panel's reset means
+ * "clear the filters", not "start again" — the chips above the results carry
+ * "clear all" for that.
+ */
+const PANEL_RANGE_PARAMS = ["odoMin", "odoMax", "yearFrom", "yearTo", "make", "model"] as const;
+
 /** How many options to show before folding the rest into a `<details>`. Six
  * covers the common choices in every dimension we measured while keeping the
  * whole panel scannable; colour and damage have 17 and 25. */
 const VISIBLE_OPTIONS = 6;
+
+/**
+ * The dimensions that arrive folded shut — the owner's list, 2026-08-19.
+ *
+ * The panel had grown to twelve groups stacked open, which is a very long
+ * scroll before the first car, and most of it is detail a visitor consults
+ * rather than reads. Folded, the sidebar becomes a menu of what CAN be narrowed
+ * instead of a wall of everything that could be.
+ *
+ * ⚠️ EVERY GROUP IS COLLAPSIBLE — this set only decides the STARTING state.
+ * The three absent from it (auction, condition, gearbox) arrive open because
+ * they have 2–3 options each and are what a buyer narrows on first, but the
+ * owner's follow-up call on 2026-08-19 was that open-by-default must not mean
+ * pinned-open: a visitor who does not care about them can fold them away. One
+ * mechanism, one look, two starting positions.
+ */
+const COLLAPSED_BY_DEFAULT = new Set<string>([
+  "vehicle_class",
+  "title",
+  "damage",
+  "body_type",
+  "fuel",
+  "drive",
+  "cylinders",
+  "secondary_damage",
+  "color",
+]);
 
 export interface FilterPanelLabels {
   heading: string;
@@ -123,6 +177,14 @@ export interface FilterPanelLabels {
    * bug: the site builds, and nobody can run it locally.
    */
   options: Record<string, Record<string, string>>;
+  /**
+   * The make/model/mileage island's own labels.
+   *
+   * Optional so `ActiveFilters`, which extends this interface for the chips and
+   * has no controls to label, does not have to carry them — and so the panel's
+   * own test fixtures stay about facets.
+   */
+  controls?: FilterControlsLabels;
 }
 
 /**
@@ -155,6 +217,12 @@ function Option({
   return (
     <Link
       href={href}
+      // ⚠️ scroll={false} on every filter action, panel and chips alike. A tick
+      // is a refinement of the page the visitor is already reading, and the
+      // default jump-to-top threw them back to the hero and made them scroll
+      // down to see what their own click did. Pagination keeps the default —
+      // "next page" genuinely means "start of the next list".
+      scroll={false}
       className={`flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
         active
           ? "bg-amber-50 font-semibold text-amber-700"
@@ -196,8 +264,10 @@ export default function FilterPanel({
   query: Record<string, string>;
   labels: FilterPanelLabels;
 }) {
-  const anyActive = DIMENSIONS.some((d) => query[d.param]) || Boolean(query.odoMin || query.odoMax);
-  const activeBand = activeOdometerBand(query.odoMin, query.odoMax);
+  const anyActive =
+    DIMENSIONS.some((d) => query[d.param]) ||
+    // Everything the controls below can set — see the reset link's own note.
+    PANEL_RANGE_PARAMS.some((k) => query[k]);
 
   return (
     <aside className="rounded-2xl border border-char-200 bg-white p-4">
@@ -220,14 +290,11 @@ export default function FilterPanel({
                   ([k]) =>
                     !DIMENSIONS.some((d) => d.param === k) &&
                     k !== "cursor" &&
-                    // The odometer band is one of this panel's filters now, so
-                    // "clear the filters" has to include it. Leaving it behind
-                    // was the kind of half-clear that reads as a broken button.
-                    k !== "odoMin" &&
-                    k !== "odoMax"
+                    !PANEL_RANGE_PARAMS.includes(k as (typeof PANEL_RANGE_PARAMS)[number])
                 )
               ),
             }}
+            scroll={false}
             className="text-xs font-semibold text-amber-600 hover:text-amber-700"
           >
             {labels.reset}
@@ -235,40 +302,27 @@ export default function FilterPanel({
         )}
       </div>
 
-      {/* Odometer is a range wearing a facet's clothes, so it is rendered here
-          rather than folded into DIMENSIONS: the options are bands, only one
-          can be active, and each link writes odoMin/odoMax rather than toggling
-          a comma-separated value. Clicking the active band clears it, which is
-          what every other option in this panel does. First, because mileage is
-          what buyers narrow on before anything else. */}
-      {(facets.odometer?.length ?? 0) > 0 && (
+      {/* FIRST, and it is the order buyers actually narrow in: which car, then
+          which version of it, then how far it has been driven. Everything below
+          is a property of a lot; these three are the lot itself.
+
+          ⚠️ THE MILEAGE BANDS THAT USED TO BE HERE ARE GONE. They were five
+          links — "50,000–100,000 mi" and so on — measured so that each carried
+          real inventory, and the owner rejected the shape outright: a buyer
+          knows the mileage they will accept and wants to say it, not to pick
+          the nearest box. `ODOMETER_BAND_SQL` still counts them for the facet
+          query and nothing renders them; the counts are cheap and a histogram
+          behind the track is the obvious next use for them.
+
+          Rendered only when the labels are supplied — see FilterPanelLabels. */}
+      {labels.controls && (
         <div className="mt-3 border-t border-char-100 pt-3">
-          <h3 className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-char-500">
-            {labels.groups.odometer ?? "Odometer"}
-          </h3>
-          {facets.odometer!.map((o) => {
-            const band = ODOMETER_BANDS.find((b) => b.value === o.value);
-            const active = activeBand === o.value;
-            const next: Record<string, string> = { ...query };
-            delete next.cursor;
-            delete next.odoMin;
-            delete next.odoMax;
-            if (!active && band) {
-              if (band.min !== undefined) next.odoMin = String(band.min);
-              // One less than the band's exclusive bound — see bandOdoMax.
-              const hi = bandOdoMax(band);
-              if (hi !== undefined) next.odoMax = hi;
-            }
-            return (
-              <Option
-                key={o.value}
-                label={optionLabel(labels, "odometer", o.value)}
-                count={o.count}
-                active={active}
-                href={{ pathname: "/search", query: next }}
-              />
-            );
-          })}
+          <FilterControls
+            query={query}
+            makes={facets.make ?? []}
+            models={facets.model}
+            labels={labels.controls}
+          />
         </div>
       )}
 
@@ -279,11 +333,18 @@ export default function FilterPanel({
         const head = options.slice(0, VISIBLE_OPTIONS);
         const tail = options.slice(VISIBLE_OPTIONS);
 
-        return (
-          <div key={d.key} className="mt-4 border-t border-char-100 pt-3 first:mt-3">
-            <h3 className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-char-500">
-              {labels.groups[d.key] ?? d.key}
-            </h3>
+        /**
+         * ⚠️ TWO THINGS FORCE A GROUP OPEN ON ARRIVAL, and only on arrival:
+         * not being in the folded-by-default set, or holding a ticked value.
+         * The second matters most on a shared link or the back button — a
+         * closed row with no sign it is doing anything makes the result count
+         * unexplainable without opening every group in turn. The chips above
+         * the results say what is on; this says WHERE it is. After first
+         * paint the triangle is the visitor's, for every group alike.
+         */
+        const startOpen = !COLLAPSED_BY_DEFAULT.has(d.key) || selected.size > 0;
+        const body = (
+          <>
             {head.map((o) => (
               <Option
                 key={o.value}
@@ -313,6 +374,40 @@ export default function FilterPanel({
                 ))}
               </details>
             )}
+          </>
+        );
+
+        const heading = labels.groups[d.key] ?? d.key;
+
+        return (
+          <div key={d.key} className="mt-4 border-t border-char-100 pt-3 first:mt-3">
+            {/* Native `<details>` for EVERY group, like the "show more" tail
+                below it: the panel stays a server component, the fold costs no
+                JavaScript, and it keeps working with scripting off. The set
+                only decides who starts open — one mechanism, two positions,
+                and a visitor can fold anything out of their way. */}
+            <details open={startOpen} className="group/dim">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-char-500 transition-colors hover:text-amber-700">
+                <span className="flex items-center gap-1.5">
+                  {heading}
+                  {/* How many are ticked in a group you cannot see into.
+                      Without it a closed group is indistinguishable from an
+                      untouched one. */}
+                  {selected.size > 0 && (
+                    <span className="rounded-full bg-amber-600 px-1.5 text-[10px] font-bold text-white tabular-nums">
+                      {selected.size}
+                    </span>
+                  )}
+                </span>
+                <CaretDown
+                  size={12}
+                  weight="bold"
+                  aria-hidden
+                  className="shrink-0 transition-transform group-open/dim:rotate-180"
+                />
+              </summary>
+              <div className="mt-1.5">{body}</div>
+            </details>
           </div>
         );
       })}

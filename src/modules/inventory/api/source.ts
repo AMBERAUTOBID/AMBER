@@ -69,13 +69,38 @@ export interface AuctionSource {
 }
 
 /**
+ * One option in one dimension.
+ *
+ * `parent` carries the ONE piece of shape a flat list cannot: which family a
+ * model belongs under, so `328i` renders inside `3 Series`. It is optional and
+ * absent on every other dimension, which is why the tree is encoded here rather
+ * than by widening `SearchFacets` into a record of two different things — the
+ * panel, the chips and their tests all keep reading the same `{ value, count }`
+ * they always did.
+ *
+ * A parent always appears in the same array as its children and never has a
+ * parent itself: the tree is exactly two levels deep — see `buildModelTree`.
+ */
+export interface FacetOption {
+  value: string;
+  count: number;
+  /** The family this sits under, on the `model` dimension only. */
+  parent?: string;
+}
+
+/**
  * Counts per option, keyed by filter dimension:
  * `{ fuel: [{ value: "gasoline", count: 93854 }, ...], ... }`.
  *
  * Values are the normalised class strings the filters accept, so a UI can feed
  * one straight back as `fuel=<value>` without a translation table.
+ *
+ * `make` and `model` are the two exceptions to "normalised class string": they
+ * carry the readable LABEL a marque is merged under — `Mercedes-Benz`, `F-150` —
+ * because that is what the URL has always carried and what the server resolves
+ * back into every raw spelling. See `resolveMakes` and `modelsForLabel`.
  */
-export type SearchFacets = Record<string, Array<{ value: string; count: number }>>;
+export type SearchFacets = Record<string, FacetOption[]>;
 
 export type AuctionSourceName = "apibara" | "postgres";
 

@@ -226,6 +226,36 @@ describe("modelsForLabel", () => {
     expect(modelsForLabel(tree, "3 series")).toEqual(modelsForLabel(tree, "3 Series"));
   });
 
+  /**
+   * ⚠️ THE FAILURE THIS PREVENTS IS SILENT AND TOTAL.
+   *
+   * A label is the commonest spelling IN THE TREE IT CAME FROM, and there are
+   * two trees now: the filter panel builds one from the FILTERED result set,
+   * while `resolveModels` resolves against the whole catalogue. Narrow a search
+   * far enough and the minority spelling wins the label in one and not the
+   * other — 1,543 lots say `F-150` and 1,342 say `F150`. On a plain string
+   * compare the lookup then returns nothing, `resolveModels` returns undefined,
+   * and the model filter is dropped from the query while the chip above the
+   * results still claims it is on.
+   */
+  it("resolves a label spelled the other way round", () => {
+    const tree = buildModelTree([
+      { model: "F-150", count: 1543 },
+      { model: "F150", count: 1342 },
+    ]);
+    const both = ["F-150", "F150"];
+    expect(modelsForLabel(tree, "F-150")).toEqual(expect.arrayContaining(both));
+    // The same car as a tight filter would have made the panel label it.
+    expect(modelsForLabel(tree, "F150")).toEqual(expect.arrayContaining(both));
+    expect(modelsForLabel(tree, "f 150")).toEqual(expect.arrayContaining(both));
+  });
+
+  it("still refuses a label that is only punctuation", () => {
+    // `canonicalKey("--")` is empty, and an empty key must not be treated as a
+    // match for anything.
+    expect(modelsForLabel(buildModelTree(BMW), "--")).toEqual([]);
+  });
+
   it("returns nothing for a label that is not in the tree", () => {
     // The caller must treat this as "match nothing" rather than "no filter" —
     // a mistyped URL should return no cars, not the whole catalogue.

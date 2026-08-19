@@ -66,10 +66,46 @@ import {
   modelsForLabel,
   type ModelGroup,
 } from "../model/modelTree";
-import { ODOMETER_BAND_SQL, ODOMETER_BAND_ORDER } from "../model/odometerBands";
+
+import { flattenModelTree } from "../model/modelFacets";
 
 const DEFAULT_PER_PAGE = 20;
 const MAX_PER_PAGE = 100;
+
+/**
+ * The explicit sort orders a visitor can pick, keyed by the URL's `sort` value.
+ *
+ * ⚠️ AN EXPLICIT SORT REPLACES THE THREE-SEGMENT ORDERING, deliberately. The
+ * segments exist to put biddable lots ahead of imminent and relisted ones when
+ * nobody has expressed a preference; somebody who asked for "cheapest first"
+ * means cheapest across everything, and a $250 relisted lot hidden behind three
+ * segments of dearer biddable ones would read as the sort being broken.
+ *
+ * ⚠️ `nullif(..., 0)` ON PRICE, NOT JUST NULLS LAST. Lots with no bids yet
+ * arrive as 0 rather than null — `formatPrice` treats them the same way — so
+ * "cheapest first" without it would open with pages of $0 cars that are not
+ * actually offers. Zero and null both mean "bidding has not started" and both
+ * belong at the end, whichever direction the sort runs.
+ *
+ * `asc(t.id)` everywhere as the tie-break: dozens of lots share a year or a
+ * price, and without a unique key the offset pagination can repeat or skip rows
+ * across page boundaries.
+ *
+ * An unknown value falls through to the default ordering rather than erroring —
+ * a hand-edited URL should degrade, not break.
+ */
+const EXPLICIT_SORTS: Record<string, (t: typeof schema.auctionLots) => ReturnType<typeof sql>[]> = {
+  price_asc: (t) => [sql`nullif(${t.currentBidCents}, 0) asc nulls last`, sql`${t.id} asc`],
+  price_desc: (t) => [sql`nullif(${t.currentBidCents}, 0) desc nulls last`, sql`${t.id} asc`],
+  year_desc: (t) => [sql`${t.year} desc nulls last`, sql`${t.id} asc`],
+  year_asc: (t) => [sql`${t.year} asc nulls last`, sql`${t.id} asc`],
+  // `nullif` here too, found by running the sort rather than reading the
+  // column: the first page of "lowest mileage" was entirely 0-mile lots, and a
+  // 1997 Porsche does not have 0 miles — the auctions write 0 where the reading
+  // was not taken. A real digital odometer can read 0 on a new car, but a
+  // visitor asking for the lowest mileage means the lowest READ mileage.
+  odo_asc: (t) => [sql`nullif(${t.odometer}, 0) asc nulls last`, sql`${t.id} asc`],
+};
 
 /**
  * Cursor is an opaque offset, base64'd only so callers cannot come to depend on
@@ -567,13 +603,19 @@ async function facetCounts(
 ): Promise<SearchFacets> {
   const columns = sql.raw(dimensions.map((d) => `"${d.column}"`).join(", "));
   const sets = sql.raw(dimensions.map((d) => `("${d.column}")`).join(", "));
-  const bandExpr = sql.raw(ODOMETER_BAND_SQL);
 
+  // ⚠️ NO ODOMETER BAND SET ANY MORE. A `case` expression counting five mileage
+  // bands rode along in these grouping sets for as long as the panel had fixed
+  // bands to render; the bands became a slider on 2026-08-18 and the histogram
+  // drawn from the counts was cut on the owner's call the day after — at which
+  // point this query was computing a CASE over every matching row for a value
+  // nothing read. The definitions live on in `odometerBands.ts` should a chart
+  // ever return.
   const result = await auctionDb().execute(sql`
-    select ${columns}, ${bandExpr} as odometer_band, count(*)::int as n
+    select ${columns}, count(*)::int as n
     from auction_lots
     where ${where}
-    group by grouping sets (${sets}, (${bandExpr}))
+    group by grouping sets (${sets})
   `);
   const rows = (Array.isArray(result) ? result : ((result as { rows?: unknown[] }).rows ?? [])) as Array<
     Record<string, unknown>
@@ -581,15 +623,7 @@ async function facetCounts(
 
   const out: SearchFacets = {};
   for (const d of dimensions) out[d.key] = [];
-  out.odometer = [];
   for (const row of rows) {
-    // The odometer band is checked first and separately: it is an expression,
-    // not one of the `dimensions` columns, so the loop below would never see it.
-    const band = row.odometer_band;
-    if (band !== null && band !== undefined) {
-      out.odometer.push({ value: String(band), count: Number(row.n) });
-      continue;
-    }
     for (const d of dimensions) {
       const v = row[d.column];
       if (v === null || v === undefined) continue;
@@ -598,9 +632,6 @@ async function facetCounts(
     }
   }
   for (const d of dimensions) out[d.key].sort((a, b) => b.count - a.count);
-  out.odometer.sort(
-    (a, b) => (ODOMETER_BAND_ORDER.get(a.value) ?? 0) - (ODOMETER_BAND_ORDER.get(b.value) ?? 0)
-  );
   return out;
 }
 
@@ -630,16 +661,129 @@ async function resolveModels(params: VehicleSearchParams): Promise<string[] | un
   return models.length > 0 ? models : undefined;
 }
 
+/**
+ * One grouped scan over a RAW column — `make` or `model`.
+ *
+ * Separate from `facetCounts` and its GROUPING SETS because these two are the
+ * only dimensions whose raw values need merging before they can be shown, and
+ * the merge is different for each: makes go through `mergeMakeSpellings`, models
+ * through `buildModelTree`. Folding them into that query would mean the parsing
+ * loop there — which relies on "exactly one column is non-null per row" — had to
+ * grow a special case for each, and the sort at the end would be wrong for both.
+ */
+async function rawColumnCounts(
+  where: ReturnType<typeof buildWhere>,
+  column: "make" | "model"
+): Promise<Array<{ value: string; count: number }>> {
+  const t = schema.auctionLots;
+  const col = column === "make" ? t.make : t.model;
+  const rows = await auctionDb()
+    .select({ value: col, count: count() })
+    .from(t)
+    .where(and(where, isNotNull(col)))
+    .groupBy(col);
+  return rows
+    .filter((r): r is { value: string; count: number } => r.value !== null)
+    .map((r) => ({ value: r.value, count: Number(r.count) }));
+}
+
+/**
+ * The make list, and — once a make is chosen — that make's models, both counted
+ * under everything else the visitor has narrowed by.
+ *
+ * COUNTED HERE RATHER THAN READ FROM `/api/catalog`, which already serves the
+ * same two lists to the search widget. The widget is a place to START a search
+ * and its counts describe the whole catalogue, which is right for it. This panel
+ * promises something stricter — every number beside an option is what clicking
+ * it returns — and a visitor who has already ticked "front damage" is owed the
+ * 300 front-damaged BMWs, not the 4,120 BMWs. Reading the catalogue route here
+ * would put a number on screen that disagrees with the page it leads to, which
+ * is the one thing this panel has never done.
+ *
+ * MAKES ARE COUNTED WITH THE MAKE **AND MODEL** FILTERS LIFTED. Left in, the
+ * list holds exactly one entry — the make already chosen — and there is no way
+ * to switch marque without clearing first. Models are counted with only the
+ * model filter lifted, since a model list is meaningless outside its make.
+ *
+ * Costs one extra scan, or two once a make is picked. Run alongside the main
+ * facet query rather than after it, so the wall clock is the slowest of them
+ * rather than the sum.
+ */
+async function makeModelFacets(
+  params: VehicleSearchParams,
+  typeValues: string[] | undefined,
+  active: Awaited<ReturnType<typeof activeSet>>,
+  makes: string[] | undefined
+): Promise<SearchFacets> {
+  const out: SearchFacets = {};
+
+  const makeRows = await rawColumnCounts(
+    buildWhere({ ...params, make: undefined, model: undefined }, typeValues, active, false),
+    "make"
+  );
+  out.make = mergeMakeSpellings(
+    makeRows.map((r) => ({ make: r.value, count: r.count }))
+  ).map((m) => ({ value: m.label, count: m.count }));
+
+  if (!params.make) return out;
+
+  const modelRows = await rawColumnCounts(
+    buildWhere({ ...params, model: undefined }, typeValues, active, false, undefined, makes),
+    "model"
+  );
+  out.model = flattenModelTree(
+    buildModelTree(modelRows.map((r) => ({ model: r.value, count: r.count })))
+  );
+  return out;
+}
+
+/**
+ * Sixty seconds of memory for one search's facet counts.
+ *
+ * ⚠️ WHY THIS IS SAFE WHERE A LONGER CACHE WOULD NOT BE. The counts are
+ * promises about what clicking an option returns, and the underlying rows move
+ * once a night when a sweep lands — not between two page views of the same
+ * search. What actually varies second-to-second is the VISITOR's activity:
+ * paging, toggling a filter off and back, pressing the back button — every one
+ * of which re-ran three-to-five GROUPING SETS scans over 134k rows to
+ * recompute numbers that had not changed. Sixty seconds is long enough to make
+ * that whole loop free and short enough that even a mid-day partial ingest is
+ * only ever a minute stale.
+ *
+ * The key deliberately drops `cursor`, `per_page` and `sort`: facets describe
+ * the filtered SET, and none of those change what is in it — without this,
+ * every page of the same search would be its own cache miss, which is the
+ * commonest case the cache exists for.
+ */
+const FACET_TTL_MS = 60_000;
+const FACET_CACHE_MAX = 200;
+const facetCache = new Map<string, { value: SearchFacets; at: number }>();
+
+function facetCacheKey(params: VehicleSearchParams, typeValues?: string[]): string {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured away on purpose
+  const { cursor: _c, per_page: _p, sort: _s, ...rest } = params;
+  // Sorted keys so `{make,fuel}` and `{fuel,make}` are one entry.
+  const entries = Object.entries(rest)
+    .filter(([, v]) => v !== undefined && v !== "")
+    .sort(([a], [b]) => (a < b ? -1 : 1));
+  return JSON.stringify([entries, typeValues ?? null]);
+}
+
 async function getFacets(
   params: VehicleSearchParams,
   typeValues?: string[]
 ): Promise<SearchFacets> {
+  const key = facetCacheKey(params, typeValues);
+  const hit = facetCache.get(key);
+  if (hit && Date.now() - hit.at < FACET_TTL_MS) return hit.value;
+
   const active = await activeSet();
   const [models, makes] = await Promise.all([resolveModels(params), resolveMakes(params.make)]);
-  const facets = await facetCounts(
-    buildWhere(params, typeValues, active, false, models, makes),
-    FACET_DIMENSIONS
-  );
+  const [facets, makeModel] = await Promise.all([
+    facetCounts(buildWhere(params, typeValues, active, false, models, makes), FACET_DIMENSIONS),
+    makeModelFacets(params, typeValues, active, makes),
+  ]);
+  Object.assign(facets, makeModel);
 
   const filtered = FACET_DIMENSIONS.filter(
     (d) => params[d.param] !== undefined && params[d.param] !== ""
@@ -654,6 +798,15 @@ async function getFacets(
       facets[d.key] = recounted[d.key];
     })
   );
+
+  // A bound, not an LRU: 200 distinct searches a minute is already far beyond
+  // this site's traffic, and evicting the oldest insertion is one line where a
+  // recency list is a data structure. Map iteration order is insertion order.
+  if (facetCache.size >= FACET_CACHE_MAX) {
+    const oldest = facetCache.keys().next().value;
+    if (oldest !== undefined) facetCache.delete(oldest);
+  }
+  facetCache.set(key, { value: facets, at: Date.now() });
 
   return facets;
 }
@@ -773,13 +926,25 @@ async function runSearch(
       return rows;
     };
 
+    // An explicit sort is one ordered scan over the whole filtered set — see
+    // EXPLICIT_SORTS for why it bypasses the segments on purpose.
+    const explicitSort = params.sort ? EXPLICIT_SORTS[params.sort] : undefined;
+
     // Independent questions, so they go together rather than one after the
     // other. The count spans ALL THREE segments — it is the number the page
     // prints, and the aggregator's API structurally cannot provide it: its
     // `meta` carries no total, which is why "Search Results (256,934)" was
     // impossible before owning the rows.
     const [pageRows, [{ total: n }]] = await Promise.all([
-      collect([biddable, imminent, relisted]),
+      explicitSort
+        ? auctionDb()
+            .select()
+            .from(t)
+            .where(where)
+            .orderBy(...explicitSort(t))
+            .limit(perPage)
+            .offset(offset)
+        : collect([biddable, imminent, relisted]),
       auctionDb().select({ total: count() }).from(t).where(where),
     ]);
 
@@ -876,6 +1041,9 @@ async function cached<T>(key: string, load: () => Promise<T>): Promise<T> {
 /** Exposed so a test or the ingest tooling can force the next read to re-query. */
 export function resetCatalogueCache(): void {
   catalogueCache.clear();
+  // The facet counts describe the same rows, so a caller invalidating one
+  // after an ingest means both.
+  facetCache.clear();
 }
 
 export interface MakeCount {

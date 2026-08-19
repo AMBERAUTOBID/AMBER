@@ -301,13 +301,25 @@ export function buildModelTree(rows: RawModelCount[]): ModelGroup[] {
  * the server turns it back into every spelling it covers. Matching the label
  * against the column directly would be wrong twice over: it would miss `F150`
  * when the label says `F-150`, and it would miss every trim under a family.
+ *
+ * MATCHED ON THE CANONICAL KEY, not on lower-cased text, because a label is not
+ * as stable as it looks: it is the commonest spelling IN THE TREE IT CAME FROM,
+ * and the filter panel now builds a tree from the FILTERED result set while
+ * this resolves against the whole catalogue. Those two can disagree — 1,543
+ * lots say `F-150` and 1,342 say `F150`, so a narrow enough filter flips which
+ * one wins the label. On a string compare the disagreement is silent and total:
+ * `modelsForLabel` returns nothing, `resolveModels` returns undefined, and the
+ * model filter is dropped from the query while the chip still claims it is on.
+ * `canonicalKey` is exactly the equivalence the spellings were merged under in
+ * the first place, so matching on it cannot have that failure.
  */
 export function modelsForLabel(tree: ModelGroup[], label: string): string[] {
-  const wanted = label.trim().toLowerCase();
+  const wanted = canonicalKey(label);
+  if (wanted.length === 0) return [];
   for (const group of tree) {
-    if (group.label.toLowerCase() === wanted) return group.models;
+    if (canonicalKey(group.label) === wanted) return group.models;
     for (const child of group.children) {
-      if (child.label.toLowerCase() === wanted) return child.models;
+      if (canonicalKey(child.label) === wanted) return child.models;
     }
   }
   return [];

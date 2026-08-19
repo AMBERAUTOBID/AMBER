@@ -26,7 +26,11 @@ import { DIMENSIONS, optionLabel, type FilterPanelLabels } from "./FilterPanel";
 
 /** A range shown as one chip, since "min" and "max" are one thought. */
 const RANGES = [
-  { from: "yearFrom", to: "yearTo", label: "year" },
+  // `plain` because a year is a NAME, not a quantity. Grouped as a number it
+  // rendered "≥ 2,015", which is not a year anybody has heard of — and the more
+  // separators a locale uses, the worse it reads. Caught on the page, not by a
+  // test: every assertion about this chip was about which params it covers.
+  { from: "yearFrom", to: "yearTo", label: "year", plain: true },
   { from: "odoMin", to: "odoMax", label: "odometer", unit: "mi" },
   { from: "engineFrom", to: "engineTo", label: "engine", unit: "L", divisor: 1000, decimals: 1 },
   { from: "retailMin", to: "retailMax", label: "retail", currency: true },
@@ -53,6 +57,7 @@ export interface ActiveFilterLabels extends FilterPanelLabels {
 function formatBound(value: string, r: (typeof RANGES)[number]): string {
   const n = Number(value);
   if (!Number.isFinite(n)) return value;
+  if ("plain" in r && r.plain) return String(n);
   if ("currency" in r && r.currency) return `$${n.toLocaleString("en-US")}`;
   if ("divisor" in r && r.divisor) return (n / r.divisor).toFixed(r.decimals ?? 0);
   return n.toLocaleString("en-US");
@@ -107,6 +112,8 @@ function Chip({
   return (
     <Link
       href={href}
+      // Same rule as the panel: removing a chip refines the page in place.
+      scroll={false}
       className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-char-200 bg-white py-1.5 pl-3 pr-2 text-sm text-char-700 shadow-sm transition-colors hover:border-amber-300 hover:bg-amber-50/60"
     >
       {group && <span className="shrink-0 text-xs text-char-500">{group}</span>}
@@ -132,14 +139,13 @@ export default function ActiveFilters({
 
   // Order matches how a visitor built the search, top of the page downwards:
   // what they typed, what they browsed to, then what they narrowed by.
-  const term = query.q ?? query.make ?? query.model;
-  if (term) {
+  if (query.q) {
     chips.push(
       <Chip
         key="q"
         group={labels.searchTerm}
-        value={term}
-        href={{ pathname: "/search", query: without(query, "q", "make", "model") }}
+        value={query.q}
+        href={{ pathname: "/search", query: without(query, "q") }}
       />
     );
   }
@@ -156,6 +162,43 @@ export default function ActiveFilters({
         group={labels.browseType}
         value={labels.vehicleTypes[query.category] ?? query.category}
         href={{ pathname: "/search", query: without(query, "category") }}
+      />
+    );
+  }
+
+  /**
+   * Make and model are two chips, not one.
+   *
+   * They shared the search-term chip — `query.q ?? query.make ?? query.model` —
+   * which was defensible while nothing on this page could set them
+   * independently: they arrived together from the widget above and were dropped
+   * together. The filter panel changed that. A visitor who picks BMW and then
+   * 3 Series has made two choices and has to be able to undo the second without
+   * losing the first; one chip reading "3 Series" that silently cleared BMW as
+   * well is the sort of control that teaches people not to trust the chips.
+   *
+   * ⚠️ REMOVING THE MAKE REMOVES THE MODEL WITH IT. A model without its make is
+   * not a wider search but a broken one: `resolveModels` needs the make to know
+   * which tree the label came from, and without it the server falls back to
+   * `model ILIKE %3 Series%` across all 1,316 marques.
+   */
+  if (query.make) {
+    chips.push(
+      <Chip
+        key="make"
+        group={labels.groups.make}
+        value={query.make}
+        href={{ pathname: "/search", query: without(query, "make", "model") }}
+      />
+    );
+  }
+  if (query.model) {
+    chips.push(
+      <Chip
+        key="model"
+        group={labels.groups.model}
+        value={query.model}
+        href={{ pathname: "/search", query: without(query, "model") }}
       />
     );
   }
@@ -206,6 +249,7 @@ export default function ActiveFilters({
         // so leaving it behind would contradict the chips beside it.
         <Link
           href="/search"
+          scroll={false}
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-700"
         >
           <ArrowCounterClockwise size={14} weight="bold" aria-hidden />

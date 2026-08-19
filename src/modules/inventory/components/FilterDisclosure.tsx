@@ -31,11 +31,24 @@ import { FunnelSimple, CaretDown } from "@phosphor-icons/react/dist/ssr";
 export default function FilterDisclosure({
   label,
   activeCount,
+  showResults,
   children,
 }: {
   /** Reuses the panel's own heading, so no new message key is needed. */
   label: string;
   activeCount: number;
+  /**
+   * "Show 4,812 cars", already formatted by the server, or absent when the
+   * total is unknown (Apibara carries none).
+   *
+   * ⚠️ THE POINT IS FEEDBACK, NOT NAVIGATION. On a phone the results live BELOW
+   * an open panel, so every filter tick changes a number the visitor cannot
+   * see. This pins the fresh count to the bottom of the screen while the panel
+   * is open — each tick visibly moves it — and pressing it folds the panel to
+   * reveal the list it was promising. The pattern every mobile commerce filter
+   * sheet uses, for this reason.
+   */
+  showResults?: string;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -75,6 +88,21 @@ export default function FilterDisclosure({
 
       <div id="filter-panel" className={clsx(!open && "hidden", "lg:block")}>
         {children}
+        {/* Only while the disclosure is open, and never on desktop — there the
+            panel is a sidebar and the count sits beside the results already.
+            `sticky bottom-0` keeps it on screen however deep the panel scrolls;
+            the gradient stops list rows appearing to slide through it. */}
+        {open && showResults && (
+          <div className="sticky bottom-0 -mx-1 mt-3 bg-gradient-to-t from-background via-background to-transparent px-1 pb-3 pt-4 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="w-full rounded-xl bg-amber-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-amber-700"
+            >
+              {showResults}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Without JavaScript the button above cannot toggle anything, so the

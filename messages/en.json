@@ -12,6 +12,7 @@
     "contact": "Contact",
     "cta": "Get a Free Quote",
     "login": "Log in",
+    "register": "Sign up",
     "plans": "Plans"
   },
   "Offers": {
@@ -144,7 +145,8 @@
         "Daily bidding at IAAI auctions nationwide",
         "Export documentation & title handling",
         "Ocean freight to Europe, the Caucasus & the Middle East"
-      ]
+      ],
+      "makeItem": "{make} · {count} lots"
     },
     "services": {
       "eyebrow": "What we do",
@@ -276,16 +278,30 @@
       "buyNow": "Buy now",
       "madeInUsa": "Made in USA",
       "empty": "No matching vehicles right now — try widening your filters.",
+      "emptyHint": "Try removing some filters, or tell us what you are looking for — we will find it at the auctions ourselves.",
+      "emptyContact": "Ask us to find it",
       "error": "Search is temporarily unavailable ({error}). Please try again shortly.",
       "previous": "Previous",
       "next": "Next",
       "count": "{count} results"
     },
+    "sort": {
+      "label": "Sort by",
+      "saleDate": "Auction date",
+      "priceAsc": "Cheapest first",
+      "priceDesc": "Most expensive first",
+      "yearDesc": "Newest year",
+      "yearAsc": "Oldest year",
+      "odoAsc": "Lowest mileage"
+    },
     "filters": {
       "heading": "Filters",
+      "showResults": "Show {count} cars",
       "reset": "Clear",
       "showMore": "Show {count} more",
       "groups": {
+        "make": "Make",
+        "model": "Model",
         "vehicle_class": "Category",
         "platform": "Auction",
         "title": "Document",
@@ -432,6 +448,8 @@
       "clearAll": "Clear all",
       "searchTerm": "Search",
       "rangeYear": "Year",
+      "yearFrom": "From",
+      "yearTo": "To",
       "browseType": "Type"
     }
   },

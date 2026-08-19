@@ -194,7 +194,20 @@ describe("FilterPanel rendering", () => {
 describe("countActiveFilters", () => {
   it("counts nothing on an unfiltered search", () => {
     expect(countActiveFilters({})).toBe(0);
+    // `q` and `category` are where the visitor browsed to, not what they
+    // narrowed by — and neither is set from inside the panel.
     expect(countActiveFilters({ q: "bmw", category: "automobile" })).toBe(0);
+  });
+
+  it("counts the make and the model, which the panel now owns", () => {
+    // They used to be set only by the widget above the results, where the badge
+    // on a collapsed panel had no business claiming them. They are pickers
+    // inside the panel now, so a phone showing "Filters" with nothing beside it
+    // while a BMW filter is on would be lying about its own contents.
+    expect(countActiveFilters({ make: "BMW" })).toBe(1);
+    // Two choices, two counts: they are removed separately from the chips.
+    expect(countActiveFilters({ make: "BMW", model: "3 Series" })).toBe(2);
+    expect(countActiveFilters({ make: "BMW", model: "3 Series", color: "red" })).toBe(3);
   });
 
   it("counts values rather than dimensions", () => {
@@ -205,13 +218,21 @@ describe("countActiveFilters", () => {
     ).toBe(3);
   });
 
-  it("counts an odometer band, because the panel now owns it", () => {
-    // Mileage moved out of the search widget and into the panel as bands, so
-    // the badge has to admit to it — a collapsed panel hiding a mileage filter
-    // is the exact confusion the badge exists to prevent.
+  it("counts a mileage range, because the panel owns it", () => {
+    // Mileage moved out of the search widget and into the panel — as fixed
+    // bands at first and as a typed range since — so the badge has to admit to
+    // it. A collapsed panel hiding a mileage filter is the exact confusion the
+    // badge exists to prevent.
     expect(countActiveFilters({ odoMin: "50000", odoMax: "100000" })).toBe(1);
     // One, not two: min and max are a single choice to whoever made it.
     expect(countActiveFilters({ odoMax: "50000" })).toBe(1);
+  });
+
+  it("counts a year range, and counts it once", () => {
+    expect(countActiveFilters({ yearFrom: "2015", yearTo: "2020" })).toBe(1);
+    expect(countActiveFilters({ yearFrom: "2015" })).toBe(1);
+    // Year and mileage are two separate choices, so two.
+    expect(countActiveFilters({ yearFrom: "2015", odoMax: "100000" })).toBe(2);
   });
 
   it("still ignores ranges no control can set", () => {

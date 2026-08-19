@@ -229,6 +229,14 @@ export interface VehicleSearchParams {
   enhanced?: boolean;
 
   lot_status?: LotStatus;
+  /**
+   * An explicit result order — one of `EXPLICIT_SORTS` in `postgresSource`, or
+   * absent for the default (soonest sale first, biddable lots ahead).
+   *
+   * Only the postgres source honours it: Apibara's API accepts no ordering, so
+   * there the page simply never offers the control — same contract as facets.
+   */
+  sort?: string;
   cursor?: string;
   per_page?: number;
   [key: string]: string | number | boolean | undefined;

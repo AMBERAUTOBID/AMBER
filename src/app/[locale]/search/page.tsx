@@ -12,6 +12,7 @@ import { Link } from "@/i18n/navigation";
 import FilterPanel, { countActiveFilters } from "@/modules/inventory/components/FilterPanel";
 import FilterDisclosure from "@/modules/inventory/components/FilterDisclosure";
 import ActiveFilters from "@/modules/inventory/components/ActiveFilters";
+import SortSelect from "@/modules/inventory/components/SortSelect";
 import {
   getAuctionSource,
   type AuctionPlatform,
@@ -86,6 +87,7 @@ export default async function SearchPage({
   const category = str(sp.category) as "automobile" | "truck" | "motorcycle" | undefined;
   const platform = str(sp.platform) as AuctionPlatform | undefined;
   const cursor = str(sp.cursor);
+  const sort = str(sp.sort);
 
   // Structured filters from the category picker take priority; a plain
   // typed query only gets the make/model-guessing treatment when nothing
@@ -155,6 +157,7 @@ export default async function SearchPage({
     enhanced: sp.enhanced === "1" ? true : undefined,
     lot_status: sp.buyNow === "1" ? ("Buy Now" as const) : undefined,
     ...facetFilters,
+    sort,
     cursor,
     per_page: 20,
   };
@@ -248,6 +251,9 @@ export default async function SearchPage({
     if (value) basePageQuery[key] = value;
   }
   if (sp.buyNow === "1") basePageQuery.buyNow = "1";
+  // The chosen order must survive paging and every filter toggle — losing it on
+  // "next" is how a visitor's cheapest-first list silently reshuffles.
+  if (sort) basePageQuery.sort = sort;
   if (sp.enhanced === "1") basePageQuery.enhanced = "1";
   // Facet selections belong in every link the page emits — paging, and each
   // option's own toggle. Leaving them out is how a visitor loses their filters
@@ -316,6 +322,13 @@ export default async function SearchPage({
                 <FilterDisclosure
                   label={t("filters.heading")}
                   activeCount={countActiveFilters(basePageQuery)}
+                  showResults={
+                    typeof results?.meta.total === "number"
+                      ? t("filters.showResults", {
+                          count: results.meta.total.toLocaleString(locale),
+                        })
+                      : undefined
+                  }
                 >
                   <FilterPanel
                     facets={facets}
@@ -332,6 +345,34 @@ export default async function SearchPage({
                       showMore: t.raw("filters.showMore") as string,
                       groups: t.raw("filters.groups") as Record<string, string>,
                       options: t.raw("filters.options") as Record<string, Record<string, string>>,
+                      // The make/model/mileage island. Every one of these
+                      // already existed for the search widget at the top of
+                      // this page — the two controls do the same job in two
+                      // places and must not call it by two different names.
+                      controls: {
+                        make: t("filters.groups.make"),
+                        model: t("filters.groups.model"),
+                        makePlaceholder: t("widget.makePlaceholder"),
+                        modelPlaceholder: t("widget.modelPlaceholder"),
+                        searchFilterPlaceholder: t("widget.searchFilterPlaceholder"),
+                        // `.raw` for the same reason as showMore above: it
+                        // carries a literal {count} substituted in the client.
+                        showAllMakes: t.raw("widget.showAllMakes") as string,
+                        // The same name the chip above the results uses, so a
+                        // year filter cannot be called two things on one page.
+                        year: t("filters.rangeYear"),
+                        // ⚠️ "From" / "To", NOT the widget's "Year from" /
+                        // "Year to". The panel prints YEAR as the group heading
+                        // directly above these two, so the widget's wording
+                        // repeated the word — and in a 108px column it did not
+                        // repeat it so much as truncate it: "Metai ..." and
+                        // "Year fr...". The widget keeps its own longer labels,
+                        // where there is no heading to inherit the noun from.
+                        yearFrom: t("filters.yearFrom"),
+                        yearTo: t("filters.yearTo"),
+                        odometer: t("widget.odometer"),
+                        odometerReset: t("widget.odometerReset"),
+                      },
                     }}
                   />
                 </FilterDisclosure>
@@ -374,20 +415,68 @@ export default async function SearchPage({
             </Reveal>
           )}
 
+          {/*
+            AN EMPTY RESULT WITH A WAY OUT. This was an icon and one sentence —
+            a dead end, and a visitor at a dead end closes the tab. Every exit
+            is ranked by how much of their work it keeps: drop the filters but
+            keep the search; then hand the search to us, since a person who can
+            describe a car they cannot find is exactly who "bid for me" exists
+            for. The wording is the panel's own, so the buttons cannot call
+            things by names the visitor has not already seen.
+          */}
           {results && results.data.length === 0 && (
-            <Reveal className="flex flex-col items-center gap-3 rounded-2xl border border-char-200 bg-char-50 py-16 text-center">
+            <Reveal className="flex flex-col items-center gap-3 rounded-2xl border border-char-200 bg-char-50 px-6 py-16 text-center">
               <MagnifyingGlass size={28} className="text-char-300" />
-              <p className="text-char-600">{t("results.empty")}</p>
+              <p className="font-semibold text-char-800">{t("results.empty")}</p>
+              <p className="max-w-md text-sm leading-relaxed text-char-500">
+                {t("results.emptyHint")}
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-3">
+                {countActiveFilters(basePageQuery) > 0 && (
+                  <Link
+                    // The same promise as the chips' "clear all": everything
+                    // narrowing goes, the visit itself survives.
+                    href="/search"
+                    className="inline-flex items-center rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
+                  >
+                    {t("filters.clearAll")}
+                  </Link>
+                )}
+                <Button href="/contact" variant="secondary">
+                  {t("results.emptyContact")}
+                </Button>
+              </div>
             </Reveal>
           )}
 
           {/* The result count the aggregator structurally cannot provide — its
               `meta` carries no total at all. Rendered only when there is one, so
-              the Apibara path is unchanged. */}
+              the Apibara path is unchanged. The sort control shares the row:
+              the count says how many, the select says in what order, and both
+              exist only on the postgres source — Apibara accepts no ordering,
+              so there the row simply never renders (facets are also absent,
+              which is the same condition). */}
           {results && typeof results.meta.total === "number" && (
-            <p className="mb-4 text-sm text-char-500">
-              {t("results.count", { count: results.meta.total.toLocaleString() })}
-            </p>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-char-500">
+                {t("results.count", { count: results.meta.total.toLocaleString() })}
+              </p>
+              {facets && results.data.length > 0 && (
+                <SortSelect
+                  query={basePageQuery}
+                  value={sort ?? ""}
+                  label={t("sort.label")}
+                  options={[
+                    { value: "", label: t("sort.saleDate") },
+                    { value: "price_asc", label: t("sort.priceAsc") },
+                    { value: "price_desc", label: t("sort.priceDesc") },
+                    { value: "year_desc", label: t("sort.yearDesc") },
+                    { value: "year_asc", label: t("sort.yearAsc") },
+                    { value: "odo_asc", label: t("sort.odoAsc") },
+                  ]}
+                />
+              )}
+            </div>
           )}
 
           {results && results.data.length > 0 && (

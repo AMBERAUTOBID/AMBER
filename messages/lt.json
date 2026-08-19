@@ -12,6 +12,7 @@
     "contact": "Kontaktai",
     "cta": "Gauti nemokamą pasiūlymą",
     "login": "Prisijungti",
+    "register": "Registruotis",
     "plans": "Planai"
   },
   "Offers": {
@@ -144,7 +145,8 @@
         "Kasdienis dalyvavimas IAAI aukcionuose visoje JAV",
         "Eksporto dokumentų ir nuosavybės teisės tvarkymas",
         "Jūrų gabenimas į Europą, Kaukazą ir Artimuosius Rytus"
-      ]
+      ],
+      "makeItem": "{make} · {count} lotų"
     },
     "services": {
       "eyebrow": "Mūsų Paslaugos",
@@ -276,16 +278,30 @@
       "buyNow": "Pirkti dabar",
       "madeInUsa": "Pagaminta JAV",
       "empty": "Šiuo metu atitinkančių automobilių nėra — pabandykite išplėsti filtrus.",
+      "emptyHint": "Pabandykite nuimti dalį filtrų arba parašykite, ko ieškote — patys surasime aukcionuose.",
+      "emptyContact": "Paprašyti mūsų surasti",
       "error": "Paieška laikinai nepasiekiama ({error}). Bandykite vėliau.",
       "previous": "Atgal",
       "next": "Toliau",
       "count": "{count} rezultatų"
     },
+    "sort": {
+      "label": "Rūšiuoti",
+      "saleDate": "Aukciono data",
+      "priceAsc": "Pigiausi viršuje",
+      "priceDesc": "Brangiausi viršuje",
+      "yearDesc": "Naujausi metai",
+      "yearAsc": "Seniausi metai",
+      "odoAsc": "Mažiausia rida"
+    },
     "filters": {
       "heading": "Filtrai",
+      "showResults": "Rodyti {count} automobilių",
       "reset": "Išvalyti",
       "showMore": "Rodyti dar {count}",
       "groups": {
+        "make": "Markė",
+        "model": "Modelis",
         "vehicle_class": "Kategorija",
         "platform": "Aukcionas",
         "title": "Dokumentas",
@@ -432,6 +448,8 @@
       "clearAll": "Išvalyti viską",
       "searchTerm": "Paieška",
       "rangeYear": "Metai",
+      "yearFrom": "Nuo",
+      "yearTo": "Iki",
       "browseType": "Tipas"
     }
   },

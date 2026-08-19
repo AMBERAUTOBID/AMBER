@@ -1,28 +1,19 @@
 "use client";
 
 import RangeSlider from "./RangeSlider";
+import { ODO_MIN, ODO_MAX, ODO_STEP, formatMiles } from "../model/odometerRange";
 
-export const ODO_MIN = 0;
 /**
- * Raised from 250,000 to match bidauto.online, which paces the same catalogue at
- * 0–500,000.
+ * The mileage slider as the search widget uses it — bounded, stepped and
+ * captioned, with nothing to decide at the call site.
  *
- * It was not a cosmetic mismatch: **5,825 searchable lots read above 250,000 mi
- * and were unreachable through this control at any setting** — the top of the
- * slider was a wall, not a range. 5,358 of them fall inside the new range; the
- * remaining 467 are covered by the `+` on the top stop, which is why
- * `formatMiles` renders the maximum as "500,000+ mi" rather than a hard figure.
- *
- * The true maximum in the data is 2,437,131 — a Toyota Sienna, which is not a
- * real reading. Sizing the slider to the data's maximum would make the whole
- * useful range occupy the first tenth of the track.
+ * The numbers moved to `model/odometerRange.ts` when the filter panel needed
+ * the same range: a server-rendered panel cannot import a `"use client"` module
+ * for three constants, and two copies of a ceiling that the URL depends on is
+ * exactly the kind of pair that drifts. Re-exported here so the widget's
+ * existing imports keep resolving.
  */
-export const ODO_MAX = 500000;
-const ODO_STEP = 5000;
-
-function formatMiles(value: number, atCeiling: boolean) {
-  return `${value.toLocaleString()}${atCeiling ? "+" : ""} mi`;
-}
+export { ODO_MIN, ODO_MAX };
 
 export default function OdometerRange({
   min,

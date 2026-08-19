@@ -13,6 +13,7 @@ export default function ScrollableSelect({
   disabled = false,
   getLabel,
   footer,
+  menuWidth = "wide",
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -24,6 +25,19 @@ export default function ScrollableSelect({
   /** Pinned under the list — used by the make picker for "show all makes",
    *  which has to sit where the list runs out rather than above it. */
   footer?: React.ReactNode;
+  /**
+   * How wide the open list is.
+   *
+   * `wide` (16rem) is right for makes and body styles, whose names are long and
+   * unpredictable, and which are picked from a box that is usually wide too.
+   *
+   * ⚠️ `trigger` matches the button instead, and exists because the fixed 16rem
+   * was measured spilling out of the filter panel and over the car results — two
+   * year pickers in a 108px column each opening a 256px list, half of it on top
+   * of the grid. Options that are short and uniform (years) do not need the
+   * room, and a list wider than the control it drops from reads as a mistake.
+   */
+  menuWidth?: "wide" | "trigger";
 }) {
   const label = (opt: string) => (getLabel ? getLabel(opt) : opt);
   const [open, setOpen] = useState(false);
@@ -74,20 +88,34 @@ export default function ScrollableSelect({
       </button>
 
       {open && !disabled && (
-        <div className="absolute left-0 top-full z-30 mt-1.5 w-64 max-w-[80vw] overflow-hidden rounded-xl border border-char-200 bg-white shadow-xl shadow-char-900/10">
+        <div
+          className={clsx(
+            "absolute left-0 top-full z-30 mt-1.5 overflow-hidden rounded-xl border border-char-200 bg-white shadow-xl shadow-char-900/10",
+            menuWidth === "trigger" ? "w-full min-w-20" : "w-64 max-w-[80vw]"
+          )}
+        >
           {options.length > 8 && (
             <div className="relative border-b border-char-100 p-2">
-              <MagnifyingGlass
-                size={14}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-char-500"
-              />
+              {/* No magnifier in a trigger-width menu. At 107px the box has
+                  ~91px of room, and the icon plus its 32px indent leaves under
+                  60px for the placeholder — which then renders clipped, so the
+                  decoration costs the label that explains the box. */}
+              {menuWidth !== "trigger" && (
+                <MagnifyingGlass
+                  size={14}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-char-500"
+                />
+              )}
               <input
                 autoFocus
                 type="text"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full rounded-lg bg-char-50 py-1.5 pl-8 pr-2 text-sm outline-none"
+                className={clsx(
+                  "w-full rounded-lg bg-char-50 py-1.5 pr-2 text-sm outline-none",
+                  menuWidth === "trigger" ? "pl-2" : "pl-8"
+                )}
               />
             </div>
           )}
