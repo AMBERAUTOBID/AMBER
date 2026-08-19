@@ -37,6 +37,26 @@ const STYLES = {
 } as const;
 
 /**
+ * "Sign up", filled amber, beside the outlined "Log in".
+ *
+ * ⚠️ SIGN UP IS THE PRIMARY OF THE TWO HERE, WHICH IS THE OPPOSITE OF THE
+ * COMPETITOR. bidauto.online fills "Log in" and outlines "Sign up" — the right
+ * emphasis for a business whose visitors are mostly returning. Ours is not one
+ * yet: production holds three users. The button that matters to us is the one
+ * that turns a stranger into an account. Worth revisiting when returning
+ * traffic outweighs new.
+ *
+ * Rendered only to a signed-OUT visitor, so it costs a signed-in client nothing
+ * and never competes with their own name in the same slot.
+ */
+const REGISTER_STYLES = {
+  desktop:
+    "whitespace-nowrap rounded-full bg-amber-600 px-3.5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700",
+  mobile:
+    "inline-flex items-center gap-1.5 rounded-full bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white",
+} as const;
+
+/**
  * The header's one session-aware element (ARCHITECTURE.md §6a).
  *
  * `Header.tsx` is static on purpose and lives in `shared/`, which may not
@@ -72,9 +92,17 @@ export default function HeaderAccount({ variant }: { variant: "desktop" | "mobil
 
   if (!state.me) {
     return (
-      <Link href="/login" className={STYLES[variant]}>
-        {t("login")}
-      </Link>
+      // Log in first, sign up second, reading order left to right — but the
+      // amber fill is on sign up. Order is where the eye starts; weight is what
+      // it lands on, and a returning client already knows where log in lives.
+      <span className="flex items-center gap-2">
+        <Link href="/login" className={STYLES[variant]}>
+          {t("login")}
+        </Link>
+        <Link href="/register" className={REGISTER_STYLES[variant]}>
+          {t("register")}
+        </Link>
+      </span>
     );
   }
 

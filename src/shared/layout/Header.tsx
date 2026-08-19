@@ -77,6 +77,45 @@ export default function Header({ account, accountMobile }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-char-200/70 bg-background/90 backdrop-blur-md">
+      {/*
+        ⚠️ TWO ROWS, AND THE SECOND ONE IS WHAT PAYS FOR THE NAVIGATION.
+
+        The owner asked on 2026-08-19 for larger, clearer navigation labels. The
+        obstacle was never taste — it was width, and every note above this one
+        says so. MEASURED AT 1280px, LITHUANIAN, SIGNED OUT, before touching
+        anything: logo 224 + navigation 633 + actions 311 = 1,169 against 1,201
+        of inner width. **32px spare.** Taking the labels from 14px to 15px costs
+        the navigation ~45px, so the honest answer to "just make them bigger" was
+        that the row would break and drop to the burger menu on every 1280px
+        laptop.
+
+        So the 311px of actions — contact menu, language, sign in — moved up here
+        into a strip of their own. They are things you DO and they are consulted
+        rarely; the five links are where you GO. That hands the navigation
+        977px instead of 633, which buys 16px type at weight 600 with real gaps
+        between the labels and still leaves well over 100px spare.
+
+        WHAT IT COSTS: the header goes from 73px to about 116px. That is the
+        trade, and it was the owner's call.
+
+        ⚠️ THE STRIP IS `xl` ONLY, exactly like the actions it holds. Below that
+        breakpoint nothing here changes: those three items were already hidden
+        and live in the burger menu, so a phone sees the same single row it saw
+        before. Re-measure in Lithuanian, SIGNED IN — where `HeaderAccount` swaps
+        a 98px button for a name up to 5rem — before adding anything to either
+        row.
+      */}
+      <div className="hidden border-b border-char-200/60 bg-char-50/50 xl:block">
+        <div className="mx-auto flex max-w-7xl items-center justify-end gap-1.5 px-5 sm:px-8">
+          <ContactMenu />
+          <LanguageSwitcher compact />
+          {/* This header is still static: the slot resolves the session on the
+              client after hydration, so every marketing page keeps its
+              pre-rendered HTML. See HeaderAccount. */}
+          {account}
+        </div>
+      </div>
+
       {/* gap-4, not gap-8: the wordmark-to-nav gap was 32px of a row that at
           1280px in Lithuanian had exactly zero left over. Halving it is the
           cheapest 16px on the bar — nothing about it is load-bearing. */}
@@ -139,11 +178,27 @@ export default function Header({ account, accountMobile }: HeaderProps) {
           `HeaderAccount` swaps a 98px button for a name up to 5rem wide.
           Re-measure there before adding anything to the row.
         */}
-        {/* `justify-between`, not `justify-center`: centring packed the five
-            links into a tight clump with the slack pushed to either side, which
-            reads as one long word rather than five destinations. Spreading them
-            across the zone gives equal gaps and lets each label breathe. */}
-        <nav className="hidden flex-1 items-center justify-between gap-1 px-6 xl:flex">
+        {/*
+          ⚠️ `justify-center` WITH A REAL GAP, and the history matters because
+          both of the obvious answers have already been tried and rejected here.
+
+          It was `justify-center gap-1` once, and the owner called it a clump —
+          rightly: five labels 4px apart read as one long word. It became
+          `justify-between`, which was correct while the row also held 311px of
+          actions and the navigation had 633px to spread over. Those actions are
+          in the strip above now, so the same rule spreads five labels across
+          961px — measured, the gaps came out at ~118px each, which is not five
+          destinations either, it is five islands.
+
+          A fixed 2rem gap is what actually reads as a menu: 487px of labels plus
+          128px of gaps = 615px, centred, with ~170px spare on each side at the
+          narrowest screen this row is shown on.
+
+          `self-stretch` and `items-stretch` so each link fills the row's full
+          height — that is what lets the active underline sit ON the header's own
+          bottom border rather than floating above it.
+        */}
+        <nav className="hidden flex-1 items-stretch justify-center gap-8 self-stretch px-6 xl:flex">
           {links.map((link) => {
             const active = pathname === link.href;
             return (
@@ -151,19 +206,22 @@ export default function Header({ account, accountMobile }: HeaderProps) {
                 key={link.href}
                 href={link.href}
                 className={clsx(
-                  // px-1.5 not px-2.5: Lithuanian labels are long enough that
-                  // the row kept clearing its container by single digits, and
-                  // a scrollbar swallows that. Each step of tightening buys
-                  // ~20px across the five links — see the measurement note
-                  // above the list.
-                  "whitespace-nowrap rounded-full px-1 py-2 text-sm font-medium transition-colors",
+                  // 16px at weight 600, up from 14px at 500 — the owner's ask,
+                  // affordable only because the actions moved to the strip
+                  // above. `px-2` is back too; it was squeezed to `px-1` when
+                  // this row was fighting for single digits of width.
+                  "relative flex items-center whitespace-nowrap px-2 text-base font-semibold transition-colors",
                   active
-                    ? "bg-amber-50 text-amber-700"
+                    ? // AN UNDERLINE, NOT A PILL. The amber pill was legible but
+                      // it read as a button among five links, and at 16px it
+                      // grew into a slab. A rule under the label is the plainer
+                      // convention and leaves the type itself to do the work.
+                      "text-amber-700 after:absolute after:inset-x-2 after:-bottom-px after:h-[3px] after:rounded-t-full after:bg-amber-500"
                     : // Amber on hover, not grey. Grey said only "this is a
                       // control"; the brand colour says which control, and it
-                      // matches the amber pill the active page already wears —
+                      // matches the underline the active page already wears —
                       // so hovering previews where you are about to land.
-                      "text-char-600 hover:bg-amber-50 hover:text-amber-700"
+                      "text-char-800 hover:text-amber-700"
                 )}
               >
                 {link.label}
@@ -188,24 +246,29 @@ export default function Header({ account, accountMobile }: HeaderProps) {
               signed in — that is the case with the least slack. */}
         </nav>
 
-        {/* The actions, in their own zone on the right. A wider gap than the
-            navigation's, deliberately: these three are things you *do*, and
-            spacing is what separates them from the five places you *go*. */}
-        <div className="hidden shrink-0 items-center gap-1.5 xl:flex">
-          <ContactMenu />
-          <LanguageSwitcher compact />
-          {/* This header is still static: the slot resolves the session on
-              the client after hydration, so every marketing page keeps its
-              pre-rendered HTML. See HeaderAccount. */}
-          {account}
-        </div>
+        {/* The actions used to sit here, in a third zone on the right. They are
+            in the strip above now — see the note at the top of this file for the
+            width measurement that forced the move.
+
+            ⚠️ THIS EMPTY BOX IS LOAD-BEARING, and deleting it as dead markup
+            would visibly shift the navigation. `flex-1` centres the nav within
+            what is LEFT of the row, and with the actions gone that is everything
+            to the right of the wordmark — so "centred" landed 112px right of the
+            page's true centre. Matching the wordmark's width on the other side
+            makes the two flanks equal, which is the only thing that puts the
+            menu under the middle of the page. Sized in `rem` to track the
+            wordmark: 14rem is its measured 224px at this breakpoint. */}
+        <div className="hidden w-56 shrink-0 xl:block" aria-hidden />
 
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-char-700 hover:bg-char-100 xl:hidden"
+          // `ml-auto` because this button used to be the last of three items in
+          // a row that ended on the right; with the actions gone it would sit
+          // against the wordmark instead.
+          className="ml-auto flex h-11 w-11 items-center justify-center rounded-full text-char-700 hover:bg-char-100 xl:hidden"
         >
           {open ? <X size={22} /> : <List size={22} />}
         </button>
