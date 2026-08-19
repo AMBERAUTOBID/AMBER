@@ -9,6 +9,7 @@ import InventoryGallery from "@/modules/inventory/components/InventoryGallery";
 import AuctionDateCard from "@/modules/inventory/components/AuctionDateCard";
 import LocalDateTime from "@/shared/time/LocalDateTime";
 import VehicleCostPanel from "@/modules/pricing/components/VehicleCostPanel";
+import StickyLotBar from "@/modules/inventory/components/StickyLotBar";
 import PastSalesTable from "@/modules/inventory/components/PastSalesTable";
 import LotCard from "@/modules/inventory/components/LotCard";
 import MadeInUsaBadge from "@/modules/inventory/components/MadeInUsaBadge";
@@ -58,6 +59,16 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 const DELIVERY_PORTS = ["Klaipėda, Lithuania", "Rotterdam, Netherlands", "Poti, Georgia"];
+
+/**
+ * The action column's anchor, named once because two things depend on it: the
+ * column carries it, and the phone's sticky bar scrolls to it.
+ *
+ * A bare string in both places would break silently — the bar's observer simply
+ * never fires, the bar never hides, and its button does nothing. Nothing throws
+ * and no test fails, which is exactly the kind of link worth naming.
+ */
+const LOT_ACTIONS_ID = "lot-actions";
 
 /** Null-tolerant wrapper over the shared money formatter: a missing value
  * renders as nothing at all rather than as a zero that would read as a real
@@ -167,6 +178,9 @@ export default async function VehicleDetailPage({
   /** For the "made in the USA" badge only — worded once, in the search
    *  namespace, and borrowed everywhere it appears. */
   const tSearch = await getTranslations("Search");
+  // Only for the sticky bar's label, which has to read exactly as the button
+  // it scrolls to — see StickyLotBar.
+  const tBids = await getTranslations("Bids.request");
   const source = getAuctionSource();
 
   let detail: VehicleDetailResponse["data"] | null = null;
@@ -653,8 +667,13 @@ export default async function VehicleDetailPage({
 
             {/* Sticky so the running total stays visible while the buyer reads
                 down the spec columns - the whole point of the panel is to
-                answer "what does this actually cost me" at any scroll depth. */}
-            <Reveal delay={0.1} className="lg:col-span-2">
+                answer "what does this actually cost me" at any scroll depth.
+
+                ⚠️ `lg:sticky` MEANS DESKTOP ONLY, and on a phone this column is
+                simply the bottom of a very long page. `StickyLotBar` below is
+                the phone half of the same idea, and `id` here is what it scrolls
+                to — renaming it silently breaks that bar's only action. */}
+            <Reveal delay={0.1} className="lg:col-span-2" id={LOT_ACTIONS_ID}>
               <div className="lg:sticky lg:top-24">
                 {saleClosed ? (
                   /* Archived record: the sale has already run, so this shows
@@ -811,6 +830,31 @@ export default async function VehicleDetailPage({
           </Suspense>
         </Container>
       </section>
+
+      {/*
+        THE PHONE'S HALF OF THE STICKY COST PANEL — see the note on the action
+        column above, and `StickyLotBar` itself for why it scrolls to the real
+        button rather than being a second one.
+
+        NOT RENDERED FOR A SALE THAT HAS ALREADY RUN. An archived lot's column
+        offers no action at all, so a bar pinned over the page would point at
+        nothing. It also carries no price worth pinning — the final figure is
+        already the loudest thing in that column.
+      */}
+      {!saleClosed && (
+        <StickyLotBar
+          priceLabel={t("pricing.currentBid")}
+          priceValue={formatPrice(currentBid) ?? t("pricing.notAvailable")}
+          secondaryLabel={t("pricing.buyNow")}
+          secondaryValue={formatPrice(buyNow) ?? undefined}
+          // Whatever the reader's own situation earns them at the foot of the
+          // cost panel: the bid dialog for a plan holder, WhatsApp otherwise.
+          // Naming it after the bid is honest for both — that is what they are
+          // going down there to arrange.
+          ctaLabel={tBids("open")}
+          targetId={LOT_ACTIONS_ID}
+        />
+      )}
 
       <section className="bg-char-900 py-16 text-white sm:py-20">
         <Container>

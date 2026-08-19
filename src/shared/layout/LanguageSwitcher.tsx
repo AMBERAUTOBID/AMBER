@@ -49,7 +49,10 @@ export default function LanguageSwitcher({
         aria-expanded={open}
         aria-label={compact ? localeNames[locale] : undefined}
         className={clsx(
-          "flex items-center gap-1.5 rounded-full py-2 text-sm font-medium transition-colors",
+          // `min-h-11` is 44px — the size a thumb needs. It measured 36, which
+          // is fine for a mouse and not for the one control a visitor reaches
+          // for when the site opened in a language they do not read.
+          "flex min-h-11 items-center gap-1.5 rounded-full py-2 text-sm font-medium transition-colors",
           compact ? "px-2.5" : "px-3",
           dark
             ? "text-char-200 hover:bg-white/10 hover:text-white"

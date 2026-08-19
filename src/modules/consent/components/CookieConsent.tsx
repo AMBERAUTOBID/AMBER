@@ -65,7 +65,7 @@ export default function CookieConsent() {
               {t("message")}{" "}
               <Link
                 href="/privacy"
-                className="font-semibold text-amber-600 underline underline-offset-2 hover:text-amber-700"
+                className="inline-block py-1.5 font-semibold text-amber-600 underline underline-offset-2 hover:text-amber-700"
               >
                 {t("privacyLink")}
               </Link>
@@ -74,14 +74,14 @@ export default function CookieConsent() {
               <button
                 type="button"
                 onClick={() => choose("denied")}
-                className="rounded-full border border-char-200 px-4 py-2 text-sm font-semibold text-char-700 transition-colors hover:bg-char-50"
+                className="inline-flex min-h-11 items-center rounded-full border border-char-200 px-4 py-2 text-sm font-semibold text-char-700 transition-colors hover:bg-char-50"
               >
                 {t("decline")}
               </button>
               <button
                 type="button"
                 onClick={() => choose("granted")}
-                className="rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
+                className="inline-flex min-h-11 items-center rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
               >
                 {t("accept")}
               </button>

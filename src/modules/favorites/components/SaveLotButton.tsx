@@ -88,7 +88,7 @@ export default function SaveLotButton({
       className={clsx(
         "inline-flex items-center gap-1.5 rounded-full font-semibold transition-colors",
         variant === "card"
-          ? "px-3 py-1.5 text-xs"
+          ? "min-h-9 px-3 py-1.5 text-xs"
           : "border px-5 py-2.5 text-sm",
         saved
           ? "cursor-default bg-amber-50 text-amber-800 " +

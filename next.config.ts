@@ -84,7 +84,22 @@ const CSP = [
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
-  "upgrade-insecure-requests",
+  /**
+   * ⚠️ PRODUCTION ONLY, and the exception is what makes phone-testing possible.
+   *
+   * `upgrade-insecure-requests` rewrites every `http://` subresource to
+   * `https://` — the right belt-and-braces on the real site, which is always
+   * behind TLS. But the dev server speaks plain http, and when a phone on the
+   * LAN opens `http://192.168.x.x:3215` the browser upgrades every stylesheet
+   * and script request to an https origin nothing answers on. The page arrives
+   * (the document itself is never upgraded) and everything else silently dies:
+   * Times-New-Roman HTML with blue links, identically in Chrome and Safari.
+   *
+   * It never bit on the PC because browsers treat `localhost` as a trustworthy
+   * origin and skip the upgrade there — which is exactly why this survived
+   * every desktop check and only surfaced the day a phone joined in.
+   */
+  ...(process.env.NODE_ENV === "production" ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
 const SECURITY_HEADERS = [
@@ -101,6 +116,20 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  /**
+   * DEV ONLY — lets a phone on the same Wi-Fi load the dev server's assets.
+   *
+   * ⚠️ WITHOUT THIS THE PHONE GETS RAW HTML WITH NO CSS AND DIAGNOSES ITSELF
+   * WRONGLY. Next 16 blocks cross-origin requests to `/_next/*` in development,
+   * so opening `http://192.168.x.x:3215` served the page but refused every
+   * stylesheet and script — Times New Roman, blue links, nothing interactive.
+   * It looks like the site is broken; it is the dev server being strict.
+   * Production is untouched: the option only affects `next dev`.
+   *
+   * The private 192.168.* range rather than one address, because DHCP reassigns
+   * the machine's IP and a one-address allowance would break on the next lease.
+   */
+  allowedDevOrigins: ["192.168.*.*"],
   images: {
     formats: ["image/avif", "image/webp"],
   },

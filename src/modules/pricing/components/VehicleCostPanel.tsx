@@ -63,13 +63,31 @@ function Toggle({
   label: string;
   price: string;
 }) {
+  /**
+   * ⚠️ THE WHOLE ROW IS THE SWITCH NOW, and it was not before.
+   *
+   * This was a `<label>` wrapping a `<button role="switch">`. A label activates
+   * a FORM CONTROL; it does nothing for a button. So the row carried
+   * `cursor-pointer` and a hover border while the only thing that actually
+   * toggled anything was the 20×36px slider — a target under half the size a
+   * thumb needs, sitting inside a 48px row that looked like the target and was
+   * not. That is the worst shape this fault takes: a miss lands on something
+   * that visibly invited the tap, so it reads as the site ignoring you.
+   *
+   * The button IS the row now, and the slider became a `<span>` — it is
+   * decoration for a state `aria-checked` already announces, and a button
+   * nested inside a button would have been invalid markup anyway.
+   */
   return (
-    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-char-200 bg-white px-3.5 py-3 transition-colors hover:border-char-300">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-char-200 bg-white px-3.5 py-3 text-left transition-colors hover:border-char-300"
+    >
+      <span
+        aria-hidden
         className={clsx(
           "relative h-5 w-9 shrink-0 rounded-full transition-colors",
           checked ? "bg-amber-500" : "bg-char-200"
@@ -81,10 +99,10 @@ function Toggle({
             checked ? "translate-x-4.5" : "translate-x-0.5"
           )}
         />
-      </button>
+      </span>
       <span className="text-sm leading-snug text-char-700">{label}</span>
       <span className="ml-auto shrink-0 text-sm font-semibold text-char-900">{price}</span>
-    </label>
+    </button>
   );
 }
 
@@ -434,7 +452,7 @@ export default function VehicleCostPanel({
         <Info size={14} className="mt-0.5 shrink-0" />
         <span>
           {t("disclaimer")}{" "}
-          <Link href="/shipping" className="underline hover:text-char-600">
+          <Link href="/shipping" className="inline-block py-1.5 underline hover:text-char-600">
             {t("otherPorts")}
           </Link>
         </span>

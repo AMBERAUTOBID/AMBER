@@ -120,13 +120,26 @@ export default function InventoryGallery({
           {active + 1} / {photos.length}
         </span>
 
+        {/*
+          ⚠️ `[@media(hover:none)]:opacity-100` IS WHAT MAKES THESE EXIST ON A
+          PHONE. They reveal on hover, which is right on a desktop and means
+          "never" on a touch screen: measured on a 375px viewport 2026-08-19,
+          `hover: none` matched and both arrows sat at `opacity: 0` — 44×44px of
+          perfectly sized, permanently invisible button. `focus-visible` is no
+          help either, since it needs a keyboard.
+
+          Found while measuring tap targets, which is the irony worth recording:
+          the audit that sized them correctly could not see that they were never
+          drawn. A target list counts pixels; it does not ask whether anything
+          is painted in them.
+        */}
         {photos.length > 1 && (
           <>
             <button
               type="button"
               onClick={() => step(-1)}
               aria-label={t("media.previousPhoto")}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/85 p-2 text-char-900 opacity-0 shadow-sm transition-opacity hover:bg-white focus-visible:opacity-100 group-hover:opacity-100"
+              className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-char-900 opacity-0 shadow-sm transition-opacity hover:bg-white focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
             >
               <CaretLeft size={18} weight="bold" />
             </button>
@@ -134,7 +147,7 @@ export default function InventoryGallery({
               type="button"
               onClick={() => step(1)}
               aria-label={t("media.nextPhoto")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/85 p-2 text-char-900 opacity-0 shadow-sm transition-opacity hover:bg-white focus-visible:opacity-100 group-hover:opacity-100"
+              className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-char-900 opacity-0 shadow-sm transition-opacity hover:bg-white focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
             >
               <CaretRight size={18} weight="bold" />
             </button>

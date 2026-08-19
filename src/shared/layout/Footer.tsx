@@ -70,12 +70,20 @@ export default async function Footer() {
           <h3 className="text-sm font-semibold uppercase tracking-wider text-char-400">
             {tFooter("linksTitle")}
           </h3>
-          <ul className="mt-4 space-y-3">
+          {/* ⚠️ THE PADDING IS THE TAP TARGET, AND THE ROW GAP PAYS FOR MOST OF
+              IT. These were bare 17px-tall lines — a link exactly the height of
+              its own type, which on a phone is a coin toss between two
+              neighbours. `py-2` makes each one 36px without changing how it
+              looks, and the gap drops from 3 to 1 to buy that back: the block
+              goes 133px → 181px rather than 133px → 213px. Measured at 375px on
+              2026-08-19, where the footer is 1,150px tall, so the 48px is under
+              4% of it. */}
+          <ul className="mt-4 space-y-1">
             {links.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="text-sm text-char-300 transition-colors hover:text-amber-400"
+                  className="inline-block py-2 text-sm text-char-300 transition-colors hover:text-amber-400"
                 >
                   {link.label}
                 </Link>
@@ -120,11 +128,21 @@ export default async function Footer() {
         <Container className="flex flex-col gap-4 py-6 text-xs text-char-400">
           <p className="max-w-3xl leading-relaxed">{tFooter("disclaimer")}</p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap gap-x-5 gap-y-1">
-              <Link href="/privacy" className="transition-colors hover:text-amber-400">
+            {/* The two smallest links on the site — 16px tall — and the two a
+                regulator is most likely to check somebody can actually reach.
+                `-my-1.5` gives the padding back to the layout so the strip does
+                not grow. */}
+            <div className="-my-1.5 flex flex-wrap gap-x-5">
+              <Link
+                href="/privacy"
+                className="inline-block py-1.5 transition-colors hover:text-amber-400"
+              >
                 {tFooter("legal.privacy")}
               </Link>
-              <Link href="/terms" className="transition-colors hover:text-amber-400">
+              <Link
+                href="/terms"
+                className="inline-block py-1.5 transition-colors hover:text-amber-400"
+              >
                 {tFooter("legal.terms")}
               </Link>
             </div>
