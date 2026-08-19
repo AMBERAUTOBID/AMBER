@@ -6,6 +6,11 @@ import LotCard from "@/modules/inventory/components/LotCard";
 import LotCountdown from "@/modules/inventory/components/LotCountdown";
 import LotRail from "@/modules/inventory/components/LotRail";
 import { getAuctionSource } from "@/modules/inventory/api";
+import {
+  marqueeMakes,
+  formatMarqueeItem,
+  MARQUEE_LIMIT,
+} from "@/modules/inventory/model/marqueeMakes";
 import { ownSaleInstant } from "@/modules/inventory/model/saleInstant";
 import { isUsaBuiltVin } from "@/modules/pricing/model/costEstimate";
 import {
@@ -81,7 +86,36 @@ export default async function HomePage({
   const services = t.raw("services.items") as { title: string; desc: string }[];
   const steps = t.raw("howItWorks.steps") as { title: string; desc: string }[];
   const whyItems = t.raw("why.items") as { title: string; desc: string }[];
-  const trustItems = t.raw("trust.items") as string[];
+  /**
+   * The ticker's content: real marque counts where we have a catalogue to count,
+   * the written claims where we do not.
+   *
+   * ⚠️ THE FALLBACK IS THE STANDING RULE, NOT POLITENESS. The Apibara build must
+   * stay launchable on its own, and there the `auction_*` tables are empty — so
+   * this asks the source what it is before importing anything that reads them,
+   * exactly as `/api/catalog` does. Get that wrong and the home page throws on
+   * the aggregator, which is the one page that must never fail.
+   *
+   * ⚠️ IT COSTS NO API CALLS. The numbers come from our own mirror, not from the
+   * aggregator, so this does not touch the 30,000-a-month budget the note above
+   * `revalidate` is about. `listMakes` also caches for an hour inside the source,
+   * and this page regenerates every six.
+   */
+  const trustItems = await (async (): Promise<string[]> => {
+    const written = t.raw("trust.items") as string[];
+    if (getAuctionSource().name !== "postgres") return written;
+    try {
+      const { listMakes } = await import("@/modules/inventory/api/postgresSource");
+      const template = t.raw("trust.makeItem") as string;
+      const top = marqueeMakes(await listMakes());
+      // A mirror that answers with too few marques to fill the strip is a mirror
+      // mid-ingest; the written claims are better than three names on a loop.
+      if (top.length < MARQUEE_LIMIT) return written;
+      return top.map((m) => formatMarqueeItem(template, m.make, m.count, locale));
+    } catch {
+      return written;
+    }
+  })();
   const trustChips = t.raw("hero.trustChips") as string[];
 
   return (
@@ -119,12 +153,18 @@ export default async function HomePage({
 
         <Container className="relative pt-20 pb-36 sm:pt-28 sm:pb-44">
           <Reveal className="mx-auto max-w-2xl text-center">
-            {/* Solid ground, not a 15%-amber tint: over a bright photograph the tint
-                and the amber type underneath it both disappeared. */}
-            <span className="inline-flex items-center rounded-full bg-char-950/55 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-amber-200 ring-1 ring-amber-300/25 backdrop-blur-sm">
-              {t("hero.eyebrow")}
-            </span>
-            <h1 className="mt-5 text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">
+            {/* ⚠️ THE "COPART AND IAAI BUYING AGENTS" PILL THAT SAT HERE IS GONE,
+                on the owner's instruction 2026-08-19. It was a claim about who we
+                are, made above the headline, before the visitor had been told
+                anything — and the headline underneath already says the same thing
+                in a sentence they can read.
+
+                The message key stays in all three locales rather than being
+                deleted with it: `Home.hero.eyebrow` costs nothing to keep, and a
+                claim about dealer status is exactly the kind of copy that gets
+                asked for again once the licence question settles. Nothing else
+                reads it — checked. */}
+            <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]">
               {t("hero.title")}
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-char-200">
@@ -429,7 +469,12 @@ async function ShowcaseRail() {
   return (
     <section className="py-16 sm:py-20">
       <Container>
-        <Reveal className="flex flex-wrap items-end justify-between gap-4">
+        {/* CENTRED, on the owner's call. It read as a left-hand column with a
+            button pushed to the far right, which at 1920px put the two ends of
+            one heading nearly a metre apart. Centred, the eyebrow, the title
+            and the line under it read as one block, and "see all" sits beneath
+            them rather than opposite them. */}
+        <Reveal className="flex flex-col items-center gap-4 text-center">
           <div>
             <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-700">
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
@@ -438,7 +483,9 @@ async function ShowcaseRail() {
             <h2 className="mt-3 font-[family-name:var(--font-heading)] text-2xl font-extrabold tracking-tight text-char-900 sm:text-3xl">
               {t("title")}
             </h2>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-char-600">{t("subtitle")}</p>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-char-600">
+              {t("subtitle")}
+            </p>
           </div>
           <Link
             href="/search"
@@ -451,33 +498,26 @@ async function ShowcaseRail() {
       </Container>
 
       {/*
-        FULL BLEED, DELIBERATELY OUTSIDE THE CONTAINER.
+        EDGE TO EDGE, DELIBERATELY OUTSIDE THE CONTAINER.
 
         Inside `max-w-7xl` the row stopped dead at 1280px with white either
         side, which framed it like a picture and made a scroller look like a
         finished grid that happened to be cut off. A rail should run off the
         edge of the screen — that is what says "there is more this way".
 
-        ⚠️ THE LEFT PADDING IS THE WHOLE TRICK, and it is `100%`, never `100vw`.
-        Percentages here resolve against this block's own width, which already
-        excludes the scrollbar; `100vw` does not, and the first card would sit
-        8–17px out of line with the heading above it on every desktop that shows
-        one. `max()` keeps the ordinary gutter on anything narrower than the
-        container, so phones and small laptops are unaffected.
+        ⚠️ IT USED TO START ON THE CONTAINER'S LEFT EDGE and run off only to the
+        right, so the first card lined up under the heading. The owner asked for
+        the full width instead — at 1920px that alignment left 335px of white
+        before the first car — so both gutters are now zero and the row touches
+        both screen edges. The heading above is centred rather than left-aligned
+        precisely because there is no longer a left edge for it to agree with.
 
-        ⚠️ THE RIGHT SIDE GETS A PLAIN GUTTER, NOT THE SAME FORMULA. Matching
-        both sides re-framed the row — measured at 1920px it stopped at 1561
-        with 359px of white beyond it, which is the picture-frame look this
-        change exists to remove. The row starts on the grid and runs off the
-        screen, which is what tells a reader it continues.
+        ⚠️ NO `100vw` ANYWHERE, and that still matters. A viewport unit includes
+        the scrollbar where a percentage does not, so `100vw` on a desktop that
+        shows one adds 8–17px of horizontal scroll to the whole page — the row
+        would be wider than the document holding it.
       */}
-      <div
-        className="mt-8"
-        style={{
-          paddingLeft: "max(1.25rem, calc((100% - 80rem) / 2 + 2rem))",
-          paddingRight: "1.25rem",
-        }}
-      >
+      <div className="mt-8">
         {/* One row, scrolled sideways — see LotRail. Each card is given a fixed
             width and told not to shrink, which is what turns a flex row into a
             rail rather than fourteen slivers. */}

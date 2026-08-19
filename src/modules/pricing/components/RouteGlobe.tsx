@@ -370,25 +370,20 @@ export default function RouteGlobe({
   return (
     <div className={clsx("relative aspect-square w-full select-none", className)}>
       {/*
-        AN EDGE, SO THE SPHERE IS AN OBJECT RATHER THAN A STAIN.
+        ⚠️ THE RING AND GROUND SHADOW THAT SAT HERE ARE GONE — owner's call,
+        2026-08-19, and worth recording rather than just deleting.
 
-        Whatever colour the globe itself ends up, a pale sphere on a pale page
-        has no silhouette — the owner's report that the map "isn't clear" is
-        mostly this. A hairline ring and a soft ground shadow cost nothing, work
-        for a light globe and a dark one alike, and are the one part of this
-        that can be judged without the WebGL context being awake.
+        They were added earlier the same week to answer a different complaint:
+        a pale sphere on a pale page has no silhouette, and "the map isn't
+        clear" was mostly that. What they actually produced was a second circle
+        — a lit disc a good deal larger than the globe, so the graphic read as a
+        plate with a world sitting on it. The fix was aimed at the right problem
+        and drew the wrong thing.
 
-        `aria-hidden` and `pointer-events: none` so it never intercepts the drag
-        that spins the globe.
+        If the silhouette ever needs help again, the answer is contrast INSIDE
+        the sphere — cobe's own `dark`, `baseColor` and `glowColor` — not another
+        shape around it. A ring is a frame, and this globe is not a picture.
       */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-full"
-        style={{
-          boxShadow:
-            "inset 0 0 0 1px rgba(26,24,23,.10), 0 22px 55px -28px rgba(26,24,23,.55)",
-        }}
-      />
       <canvas
         ref={canvasRef}
         style={{
@@ -412,13 +407,31 @@ export default function RouteGlobe({
                   ? "border border-amber-300 bg-amber-50 text-amber-700"
                   : "border border-char-200 bg-white/95 text-char-600"
             )}
+            /**
+             * ⚠️ THE PICKUP SITS ABOVE ITS DOT AND THE PORTS SIT BELOW THEIRS,
+             * and that is the whole fix for labels landing on top of each other.
+             *
+             * Reported by the owner 2026-08-19 with "Montgomery, AL" printed
+             * over "Savannah, GA". Every label used to hang above its marker,
+             * which is fine until two markers are close — and two of these three
+             * are ALWAYS close, because the loading port is by definition the
+             * nearest one to the pickup. Montgomery to Savannah is ~500km, which
+             * on a globe this size is a few pixels, so the two badges occupied
+             * the same space.
+             *
+             * Splitting them by role fixes it without any collision maths: the
+             * pair that can collide can no longer be on the same side of the
+             * dot. The two PORTS never collide with each other — one is in the
+             * United States and the other in Europe.
+             */
             style={
               {
                 positionAnchor: `--cobe-${label.id}`,
-                bottom: "anchor(top)",
+                ...(label.isPickup
+                  ? { bottom: "anchor(top)", marginBottom: 6 }
+                  : { top: "anchor(bottom)", marginTop: 6 }),
                 left: "anchor(center)",
                 translate: "-50% 0",
-                marginBottom: 5,
                 opacity: `var(--cobe-visible-${label.id}, 0)`,
                 transition: "opacity 0.4s",
               } as React.CSSProperties

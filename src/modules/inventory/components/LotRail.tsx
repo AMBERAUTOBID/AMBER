@@ -78,13 +78,19 @@ export default function LotRail({
       </div>
 
       {/* Placed outside the scroller so they do not travel with it. Hidden
-          rather than disabled at the ends — see the note above. */}
+          rather than disabled at the ends — see the note above.
+
+          ⚠️ INSIDE THE ROW NOW, NOT BESIDE IT. They hung on negative offsets
+          while the rail still had a gutter to hang in; the row runs to both
+          screen edges since 2026-08-18, so `-left-3` put half an arrow off the
+          screen. Sitting over a photograph they rely on the shadow the white
+          pill already carries. */}
       {!atStart && (
         <button
           type="button"
           onClick={() => nudge(-1)}
           aria-label={labels.previous}
-          className={`${arrow} absolute -left-3 top-[38%] z-10 hidden -translate-y-1/2 sm:flex`}
+          className={`${arrow} absolute left-3 top-[38%] z-10 hidden -translate-y-1/2 sm:flex`}
         >
           <CaretLeft size={18} weight="bold" />
         </button>
@@ -94,7 +100,7 @@ export default function LotRail({
           type="button"
           onClick={() => nudge(1)}
           aria-label={labels.next}
-          className={`${arrow} absolute -right-3 top-[38%] z-10 hidden -translate-y-1/2 sm:flex`}
+          className={`${arrow} absolute right-3 top-[38%] z-10 hidden -translate-y-1/2 sm:flex`}
         >
           <CaretRight size={18} weight="bold" />
         </button>
