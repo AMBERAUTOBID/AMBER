@@ -1434,7 +1434,7 @@
       "deposit": {
         "title": "Kaip atsiųsti depozitą",
         "dollarsTitle": "Siųskite JAV dolerius",
-        "dollarsBody": "Aukščiau nurodyta suma turi ateiti tiksliai. Jei siųsite eurus, jūsų bankas juos konvertuos savo kursu, ateis kita suma ir ji nebeatitiks jūsų plano.",
+        "dollarsBody": "Siųskite JAV dolerius, ne eurus. Šie rekvizitai priima tik dolerius — pavedimas eurais atmetamas ir grąžinamas jums, o tai kainuoja kelias dienas ir jūsų banko mokesčius.",
         "referenceHint": "Įrašykite tiksliai. Tą pačią sumą moka keli klientai — pagal šį numerį atpažįstame, kad pavedimas jūsų."
       },
       "pendingExplainerNoDeposit": "Gavome jūsų užklausą. Šiam planui depozito mokėti nereikia — ją patvirtinsime ir netrukus su jumis susisieksime. Jei turite klausimų, parašykite {email}.",

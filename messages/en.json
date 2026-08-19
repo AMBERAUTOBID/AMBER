@@ -1434,7 +1434,7 @@
       "deposit": {
         "title": "How to send the deposit",
         "dollarsTitle": "Send US dollars",
-        "dollarsBody": "The amount above has to arrive exactly. If you send euros, your own bank converts them at its rate, a different figure arrives, and it no longer matches your plan.",
+        "dollarsBody": "Send US dollars, not euros. These details accept dollars only — a euro transfer is rejected and returned to you, which costs several days and your bank's fees.",
         "referenceHint": "Enter this exactly. Several clients pay the same amount, and this is how we know the transfer is yours."
       },
       "pendingExplainerNoDeposit": "We've received your request. There's no deposit to pay on this plan — we'll confirm it and be in touch shortly. Any questions, email {email}.",
