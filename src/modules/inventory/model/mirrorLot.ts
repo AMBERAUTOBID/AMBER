@@ -12,6 +12,7 @@
  * Pure and database-free so it can be tested without a connection.
  */
 import { displayImageUrl } from "./imageProxy";
+import { photoUrlForSize } from "./photoSize";
 import type { VehicleListItem } from "../api/types";
 
 const KM_PER_MILE = 1.609344;
@@ -197,8 +198,18 @@ export function mirrorRowToVehicleListItem(
 
     media: {
       thumbs_count: thumbs.length,
-      thumbs,
-      items: thumbs.map((url) => ({ type: "image", thumb: url, large: url, full: url })),
+      // ⚠️ `thumbs` IS WHAT THE CARDS DRAW, so it asks for the card variant.
+      // Measured 2026-08-20: a search page of twenty cards was loading twenty
+      // 276 KB `_hrs` files — 5.5 MB of photographs to fill boxes 400px wide.
+      thumbs: thumbs.map((url) => photoUrlForSize(url, "card")),
+      // Every slot held the SAME url, so a 64px thumbnail and the full-screen
+      // photo were the identical download. Each now asks for what it will draw.
+      items: thumbs.map((url) => ({
+        type: "image",
+        thumb: photoUrlForSize(url, "thumb"),
+        large: photoUrlForSize(url, "card"),
+        full: photoUrlForSize(url, "full"),
+      })),
     },
   };
 }

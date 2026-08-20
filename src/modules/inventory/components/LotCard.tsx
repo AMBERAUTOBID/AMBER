@@ -117,6 +117,29 @@ export default function LotCard({
           <img
             src={photo}
             alt={vehicle.title}
+            /**
+             * ⚠️ TWENTY OF THESE LOAD AT ONCE ON A SEARCH PAGE, and about six
+             * are on screen. Measured 2026-08-20: none of them were lazy, so a
+             * phone fetched every photograph in the grid before the visitor had
+             * scrolled to any of them.
+             *
+             * `decoding="async"` for the same reason from the other end: the
+             * main thread should not block decoding a JPEG for a card that is
+             * still below the fold.
+             *
+             * ⚠️ NOT `priority`/eager on the first row, deliberately. These
+             * cards are also the home page's rail, where the row starts off
+             * screen — a rule that helps search would hurt there, and the
+             * component cannot tell which page it is on.
+             */
+            loading="lazy"
+            decoding="async"
+            // The intrinsic size of the card variant we now request — see
+            // photoSize.ts. Given so the browser can reserve the box before the
+            // bytes arrive; the 4:3 wrapper already fixes the layout, so this is
+            // belt and braces rather than the fix for a jump.
+            width={960}
+            height={720}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (

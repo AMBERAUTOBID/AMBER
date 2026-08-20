@@ -166,8 +166,18 @@ export default function InventoryGallery({
               i === active ? "border-amber-500" : "border-transparent opacity-70 hover:opacity-100"
             )}
           >
+            {/* The strip scrolls sideways and is often a dozen squares long, so
+                the ones past the edge wait. They are ~5 KB each now (see
+                photoSize.ts), which makes this a small win — it was a large one
+                when each of them was a 164 KB photograph. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photo.thumb} alt="" className="h-full w-full object-cover" />
+            <img
+              src={photo.thumb}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
           </button>
         ))}
       </div>

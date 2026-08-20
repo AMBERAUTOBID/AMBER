@@ -15,6 +15,7 @@ import LotCard from "@/modules/inventory/components/LotCard";
 import MadeInUsaBadge from "@/modules/inventory/components/MadeInUsaBadge";
 import { formatOdometer } from "@/modules/inventory/model/formatOdometer";
 import { formatLotTitle } from "@/modules/inventory/model/modelTree";
+import { photoUrlForSize } from "@/modules/inventory/model/photoSize";
 import SaveLotButton from "@/modules/favorites/components/SaveLotButton";
 import { auctionDisplayName, auctionLotUrl } from "@/modules/inventory/model/auctionLotUrl";
 import { isStillUpcoming } from "@/modules/inventory/model/relatedLots";
@@ -199,7 +200,15 @@ export default async function VehicleDetailPage({
   const photos =
     detail.media?.items
       ?.filter((i) => i.type === "image" && i.large && i.thumb)
-      .map((i) => ({ thumb: i.thumb as string, large: i.large as string })) ?? [];
+      // ⚠️ THE STRIP IS 64px WIDE AND WAS DOWNLOADING 164 KB PER SQUARE.
+      // Apibara hands back `_ful` as its "thumb", which is 960×720 — a real
+      // photograph, not a thumbnail. Copart publishes `_thb` at 4.7 KB for
+      // exactly this job, so twelve of them cost 56 KB instead of 2 MB.
+      // `large` keeps what it was given: that one IS looked at.
+      .map((i) => ({
+        thumb: photoUrlForSize(i.thumb as string, "thumb"),
+        large: i.large as string,
+      })) ?? [];
 
   const saleDate = detail.auction?.full_date ?? detail.auction?.auction_at ?? null;
   /**
