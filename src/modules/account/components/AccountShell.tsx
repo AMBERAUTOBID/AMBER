@@ -3,7 +3,7 @@ import Container from "@/shared/ui/Container";
 import { Link } from "@/i18n/navigation";
 import LogoutButton from "@/modules/auth/components/LogoutButton";
 import SectionNav from "@/shared/ui/SectionNav";
-import { ACCOUNT_SECTIONS } from "../model/sections";
+import { accountSectionsFor } from "../model/sections";
 
 interface AccountShellProps {
   locale: string;
@@ -36,7 +36,7 @@ export default async function AccountShell({ locale, user, children }: AccountSh
             <div className="mt-6 border-t border-char-200/70 pt-4">
               <SectionNav
                 label={t("nav.label")}
-                items={ACCOUNT_SECTIONS.map((s) => ({
+                items={accountSectionsFor(user.role).map((s) => ({
                   href: s.href,
                   label: t(`nav.${s.key}`),
                 }))}

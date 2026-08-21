@@ -46,6 +46,10 @@ export default function UsersTable({
   planNames: Record<string, string>;
 }) {
   const t = useTranslations("Admin.users");
+  // The one label borrowed from the activity page it links to — scoped
+  // separately because t() above resolves under Admin.users, where a
+  // "activity.viewActivity" lookup renders as its own bare key name.
+  const tActivity = useTranslations("Admin.activity");
   const format = useFormatter();
   const [confirming, setConfirming] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -141,7 +145,7 @@ export default function UsersTable({
                 href={`/admin/users/${row.id}`}
                 className="mt-2 inline-flex text-xs font-semibold text-amber-700 underline-offset-4 hover:underline"
               >
-                {t("activity.viewActivity")}
+                {tActivity("viewActivity")}
               </Link>
             </div>
 

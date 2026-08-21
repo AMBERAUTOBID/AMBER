@@ -20,6 +20,18 @@ export interface AccountSection {
   href: string;
 }
 
+/**
+ * What an ADMIN sees of the account area: details only. Everything else on
+ * this list is a customer feature guarded by `requireClient`, and a nav
+ * entry that redirects on click is worse than no entry. One list filtered,
+ * not two lists — so a new section cannot be added to one and forgotten in
+ * the other.
+ */
+export function accountSectionsFor(role: "client" | "admin"): AccountSection[] {
+  if (role === "admin") return ACCOUNT_SECTIONS.filter((s) => s.key === "details");
+  return ACCOUNT_SECTIONS;
+}
+
 export const ACCOUNT_SECTIONS: AccountSection[] = [
   { key: "overview", href: "/account" },
   /**
@@ -36,5 +48,13 @@ export const ACCOUNT_SECTIONS: AccountSection[] = [
   { key: "bids", href: "/account/bids" },
   { key: "favorites", href: "/account/favorites" },
   { key: "plan", href: "/account/plan" },
+  /**
+   * The shipping details a client fills once, before bidding — who buys,
+   * where the car goes, who receives it, and how they will pay. Sits after
+   * plan because that is its place in the client's own sequence: deposit
+   * confirmed, then this, then the bidding code. The gate reads
+   * `isShippingProfileComplete`, never its own copy of the rules.
+   */
+  { key: "shipping", href: "/account/shipping" },
   { key: "details", href: "/account/details" },
 ];

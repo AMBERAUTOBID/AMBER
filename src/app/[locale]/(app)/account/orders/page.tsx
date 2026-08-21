@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Car } from "@phosphor-icons/react/dist/ssr";
 import { Link } from "@/i18n/navigation";
-import { requireUser } from "@/modules/account/model/requireUser";
+import { requireClient } from "@/modules/account/model/requireUser";
 import { listOrdersForUser } from "@/modules/orders/model/orders";
 import { orderTitle } from "@/modules/orders/model/orderSnapshot";
 import { stageProgress } from "@/modules/orders/model/stages";
@@ -33,7 +33,7 @@ export default async function AccountOrdersPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const user = await requireUser(locale, "/account/orders");
+  const user = await requireClient(locale, "/account/orders");
 
   const t = await getTranslations({ locale, namespace: "Orders" });
   const orders = await listOrdersForUser(user.id);

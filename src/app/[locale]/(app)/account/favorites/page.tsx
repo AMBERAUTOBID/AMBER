@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Heart } from "@phosphor-icons/react/dist/ssr";
-import { requireUser } from "@/modules/account/model/requireUser";
+import { requireClient } from "@/modules/account/model/requireUser";
 import { listFavorites } from "@/modules/favorites/model/favorites";
 import FavoriteCard from "@/modules/favorites/components/FavoriteCard";
 import { isPlanKey } from "@/modules/plans/model/plans";
@@ -38,7 +38,7 @@ export default async function AccountFavoritesPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const user = await requireUser(locale, "/account/favorites");
+  const user = await requireClient(locale, "/account/favorites");
 
   const t = await getTranslations({ locale, namespace: "Favorites" });
   const favorites = await listFavorites(user.id);

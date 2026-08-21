@@ -12,7 +12,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import LocalDateTime from "@/shared/time/LocalDateTime";
 import { formatInstant } from "@/shared/time/formatInstant";
-import { requireUser } from "@/modules/account/model/requireUser";
+import { requireClient } from "@/modules/account/model/requireUser";
 import { whatsappHref, CONTACT_HREF, SITE } from "@/shared/config/site";
 import { bidRequestsFor, type BidRequestRow } from "@/modules/bids/model/bidRequests";
 import { canClientWithdraw, isLiveInstruction } from "@/modules/bids/model/bidStatus";
@@ -60,7 +60,7 @@ export default async function AccountBidsPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const user = await requireUser(locale, "/account/bids");
+  const user = await requireClient(locale, "/account/bids");
 
   const t = await getTranslations({ locale, namespace: "Bids" });
   const format = await getFormatter({ locale });

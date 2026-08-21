@@ -58,7 +58,7 @@ export default async function AdminShell({ locale, user, children }: AdminShellP
                 way to answer it is often to look at what the client sees. */}
             <div className="mt-4 border-t border-char-200/70 pt-4">
               <Link
-                href="/account"
+                href="/account/details"
                 className="text-sm font-semibold text-amber-700 underline-offset-4 hover:underline"
               >
                 {t("nav.backToAccount")}

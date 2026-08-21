@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { requireUser } from "@/modules/account/model/requireUser";
+import { requireClient } from "@/modules/account/model/requireUser";
 import { planStatusFor } from "@/modules/account/model/planStatus";
 import { formatUsd } from "@/modules/plans/model/plans";
 import { Link } from "@/i18n/navigation";
@@ -29,7 +29,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   setRequestLocale(locale);
   // The gate. The layout's identical call is for the shell's benefit; this
   // one is the check. See requireUser.
-  const user = await requireUser(locale, "/account");
+  const user = await requireClient(locale, "/account");
 
   const t = await getTranslations({ locale, namespace: "Account" });
   // Tier names come from Plans.tiers, the same strings the public plans page

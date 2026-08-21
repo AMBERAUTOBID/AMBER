@@ -37,3 +37,24 @@ export async function requireUser(locale: string, returnTo?: string): Promise<Se
   }
   return user;
 }
+
+/**
+ * The gate for pages that only make sense for a CLIENT.
+ *
+ * An admin account is staff, not a customer: it holds no plan, buys no cars,
+ * and fills in no shipping details — yet until 2026-08-20 it saw the full
+ * client portal, greeting the owner with their own test plan request. Now a
+ * signed-in admin landing on a client page is sent to the console instead.
+ *
+ * What deliberately stays OPEN to admins is /account/details: passwords and
+ * signed-in devices are about the ACCOUNT, and staff need those more than
+ * anyone. That page keeps calling plain `requireUser`.
+ */
+export async function requireClient(locale: string, returnTo?: string): Promise<SessionUser> {
+  const user = await requireUser(locale, returnTo);
+  if (user.role === "admin") {
+    redirect({ href: "/admin", locale });
+    throw new Error("unreachable");
+  }
+  return user;
+}
