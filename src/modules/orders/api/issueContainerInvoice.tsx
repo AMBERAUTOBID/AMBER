@@ -136,6 +136,32 @@ const s = StyleSheet.create({
     paddingTop: 5,
   },
   footerText: { fontSize: 7.5, color: INK.char600 },
+
+  // Same draft watermark as the car invoice — see InvoiceDocument.
+  watermarkWrap: {
+    position: "absolute",
+    top: 320,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  watermark: {
+    fontSize: 46,
+    fontWeight: 700,
+    color: INK.char300,
+    opacity: 0.35,
+    letterSpacing: 3,
+    transform: "rotate(-18deg)",
+  },
+  watermarkSub: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: INK.char300,
+    opacity: 0.35,
+    letterSpacing: 2,
+    marginTop: 6,
+    transform: "rotate(-18deg)",
+  },
 });
 
 function inline(bi: Bi): string {
@@ -146,36 +172,42 @@ export type ContainerIssueResult =
   | { ok: true; id: string; number: string }
   | { ok: false; reason: "not_found" | "no_bank" | "no_storage" };
 
-export async function issueContainerInvoice(input: {
-  containerId: string;
-  adminId: string;
-  /** Same contract as issueInvoice: undefined = the client's own language. */
-  locale?: string;
-  storage: {
-    put(i: { key: string; body: Uint8Array; contentType: string }): Promise<void>;
-    remove(key: string): Promise<void>;
-  } | null;
-}): Promise<ContainerIssueResult> {
-  if (!input.storage) return { ok: false, reason: "no_storage" };
+/** Everything a render needs except the number — shared by issue and preview,
+ * same reasoning as `prepareInvoice` on the car side. */
+async function prepareContainerInvoice(
+  containerId: string,
+  localeOverride?: string
+): Promise<
+  | { ok: false; reason: "not_found" | "no_bank" }
+  | {
+      ok: true;
+      container: NonNullable<Awaited<ReturnType<typeof containerView>>>;
+      ownerName: string;
+      locale: string;
+      L: Record<string, Bi>;
+      bank: NonNullable<ReturnType<typeof wireAccount>>;
+    }
+> {
   const bank = wireAccount();
   if (!bank) return { ok: false, reason: "no_bank" };
 
-  const container = await containerView(input.containerId);
+  const container = await containerView(containerId);
   if (!container) return { ok: false, reason: "not_found" };
 
   const owner = await db()
     .select({ name: schema.users.name, locale: schema.users.locale })
     .from(schema.users)
     .innerJoin(schema.containers, eq(schema.containers.userId, schema.users.id))
-    .where(eq(schema.containers.id, input.containerId))
+    .where(eq(schema.containers.id, containerId))
     .limit(1);
   if (!owner[0]) return { ok: false, reason: "not_found" };
   const locale =
-    input.locale && (["lt", "en", "ru"] as string[]).includes(input.locale)
-      ? input.locale
+    localeOverride && (["lt", "en", "ru"] as string[]).includes(localeOverride)
+      ? localeOverride
       : owner[0].locale || "en";
 
-  const L = {
+  const L: Record<string, Bi> = {
+    draftMark: await pair(locale, "invoice.draftMark"),
     title: await pair(locale, "invoice.title"),
     invoiceNo: await pair(locale, "invoice.invoiceNo"),
     issued: await pair(locale, "invoice.issued"),
@@ -203,22 +235,31 @@ export async function issueContainerInvoice(input: {
     chargesBody: await pair(locale, "pay.chargesBody"),
   };
 
-  const issuedAt = new Date();
-  const year = issuedAt.getUTCFullYear();
-  const latest = await db()
-    .select({ number: schema.orderInvoices.number })
-    .from(schema.orderInvoices)
-    .where(like(schema.orderInvoices.number, `INV-${year}-%`))
-    .orderBy(desc(schema.orderInvoices.number))
-    .limit(1);
-  let number = nextInvoiceNumber(latest[0]?.number ?? null, year);
+  return { ok: true, container, ownerName: owner[0].name, locale, L, bank };
+}
 
+function ContainerInvoiceDoc(props: {
+  number: string;
+  issuedAt: Date;
+  container: NonNullable<Awaited<ReturnType<typeof containerView>>>;
+  ownerName: string;
+  L: Record<string, Bi>;
+  bank: NonNullable<ReturnType<typeof wireAccount>>;
+  draft?: Bi | null;
+}) {
+  const { number, issuedAt, container, ownerName, L, bank, draft } = props;
   registerInvoiceFonts();
-
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const pdf = await renderToBuffer(
+  return (
       <Document title={`${number} · ${container.reference}`} author="Smart Auto Bid LLC">
         <Page size="A4" style={s.page}>
+          {draft ? (
+            <View style={s.watermarkWrap} fixed>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.watermark}>{draft.primary}</Text>
+              {draft.secondary ? (
+                <Text hyphenationCallback={NO_HYPHENS} style={s.watermarkSub}>{draft.secondary}</Text>
+              ) : null}
+            </View>
+          ) : null}
           <View style={s.headRow}>
             {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image, not a DOM img; PDFs carry no alt */}
             <Image src={invoiceLogo()} style={s.logo} />
@@ -257,7 +298,7 @@ export async function issueContainerInvoice(input: {
             </View>
             <View style={s.party}>
               <Text hyphenationCallback={NO_HYPHENS} style={s.partyLabel}>{inline(L.buyer).toUpperCase()}</Text>
-              <Text hyphenationCallback={NO_HYPHENS} style={s.partyName}>{owner[0].name}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.partyName}>{ownerName}</Text>
             </View>
           </View>
 
@@ -330,6 +371,73 @@ export async function issueContainerInvoice(input: {
           </View>
         </Page>
       </Document>
+  );
+}
+
+/**
+ * The freight draft — same gathering, watermark instead of a number, zero
+ * writes. See `previewInvoice` on the car side for why.
+ */
+export async function previewContainerInvoice(input: {
+  containerId: string;
+  locale?: string;
+}): Promise<
+  | { ok: true; pdf: Uint8Array; reference: string }
+  | { ok: false; reason: "not_found" | "no_bank" }
+> {
+  const prep = await prepareContainerInvoice(input.containerId, input.locale);
+  if (!prep.ok) return prep;
+
+  const pdf = await renderToBuffer(
+    <ContainerInvoiceDoc
+      number={prep.L.draftMark.primary}
+      issuedAt={new Date()}
+      container={prep.container}
+      ownerName={prep.ownerName}
+      L={prep.L}
+      bank={prep.bank}
+      draft={prep.L.draftMark}
+    />
+  );
+  return { ok: true, pdf, reference: prep.container.reference };
+}
+
+export async function issueContainerInvoice(input: {
+  containerId: string;
+  adminId: string;
+  /** Same contract as issueInvoice: undefined = the client's own language. */
+  locale?: string;
+  storage: {
+    put(i: { key: string; body: Uint8Array; contentType: string }): Promise<void>;
+    remove(key: string): Promise<void>;
+  } | null;
+}): Promise<ContainerIssueResult> {
+  if (!input.storage) return { ok: false, reason: "no_storage" };
+
+  const prep = await prepareContainerInvoice(input.containerId, input.locale);
+  if (!prep.ok) return prep;
+  const { container, ownerName, locale, L, bank } = prep;
+
+  const issuedAt = new Date();
+  const year = issuedAt.getUTCFullYear();
+  const latest = await db()
+    .select({ number: schema.orderInvoices.number })
+    .from(schema.orderInvoices)
+    .where(like(schema.orderInvoices.number, `INV-${year}-%`))
+    .orderBy(desc(schema.orderInvoices.number))
+    .limit(1);
+  let number = nextInvoiceNumber(latest[0]?.number ?? null, year);
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const pdf = await renderToBuffer(
+      <ContainerInvoiceDoc
+        number={number}
+        issuedAt={issuedAt}
+        container={container}
+        ownerName={ownerName}
+        L={L}
+        bank={bank}
+      />
     );
 
     const key = `containers/${container.id}/invoices/${number}.pdf`;

@@ -2020,7 +2020,17 @@
       "failed": "Išrašyti nepavyko. Niekas neįrašyta — bandykite dar kartą.",
       "frozenNote": "Išrašyta sąskaita nebekeičiama. Klaida taisoma išrašant kitą numerį, niekada ne redaguojant.",
       "language": "Sąskaitos kalba",
-      "langAuto": "Kliento kalba"
+      "langAuto": "Kliento kalba",
+      "preview": "Juodraštis",
+      "confirmTitle": "Patikrink prieš išrašant",
+      "confirmClient": "Klientas",
+      "confirmVehicle": "Automobilis",
+      "confirmContainer": "Konteineris",
+      "confirmTotal": "Suma",
+      "confirmTotalUnknown": "— (kaštai dar nesuvesti)",
+      "confirmNote": "Išrašyta sąskaita iškart taps matoma klientui jo užsakymo puslapyje ir jos keisti nebebus galima — klaida taisoma tik nauju numeriu.",
+      "confirmCancel": "Atšaukti",
+      "confirmGo": "Tęsti ir išrašyti"
     },
     "receipt": {
       "import": "Įkelti Copart kvitą",
@@ -2230,6 +2240,7 @@
     },
     "invoice": {
       "title": "SĄSKAITA FAKTŪRA",
+      "draftMark": "JUODRAŠTIS",
       "invoiceNo": "Sąskaitos Nr.",
       "issued": "Išrašyta",
       "seller": "Pardavėjas",

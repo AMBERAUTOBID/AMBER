@@ -2020,7 +2020,17 @@
       "failed": "Issuing failed. Nothing was recorded — try again.",
       "frozenNote": "An issued invoice is frozen. A mistake is corrected by issuing the next number, never by editing.",
       "language": "Invoice language",
-      "langAuto": "Client's language"
+      "langAuto": "Client's language",
+      "preview": "Draft",
+      "confirmTitle": "Check before issuing",
+      "confirmClient": "Client",
+      "confirmVehicle": "Vehicle",
+      "confirmContainer": "Container",
+      "confirmTotal": "Amount",
+      "confirmTotalUnknown": "— (costs not entered yet)",
+      "confirmNote": "Once issued, the invoice is immediately visible to the client on their order page and can no longer be changed — a mistake is corrected only by issuing the next number.",
+      "confirmCancel": "Cancel",
+      "confirmGo": "Continue and issue"
     },
     "receipt": {
       "import": "Import Copart receipt",
@@ -2230,6 +2240,7 @@
     },
     "invoice": {
       "title": "INVOICE",
+      "draftMark": "DRAFT",
       "invoiceNo": "Invoice no.",
       "issued": "Issued",
       "seller": "Seller",

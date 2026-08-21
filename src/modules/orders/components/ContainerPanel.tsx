@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { CheckCircle, FilePdf, Package, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { CheckCircle, Eye, FilePdf, Package, WarningCircle } from "@phosphor-icons/react/dist/ssr";
 import { inputClass, labelClass } from "@/modules/auth/components/formStyles";
 import { parseAmountToCents } from "@/modules/orders/model/money";
+import IssueConfirmDialog from "./IssueConfirmDialog";
 
 /**
  * The dedicated-container corner of an admin's case file.
@@ -37,9 +38,20 @@ interface Props {
   container: ContainerInfo | null;
   /** The client's other case files not yet in any container (current first). */
   linkable: LinkableOrder[];
+  /** Who pays the freight — the confirmation dialog's first fact. */
+  clientName: string;
+  clientEmail: string;
+  clientLocale: string;
 }
 
-export default function ContainerPanel({ orderId, container, linkable }: Props) {
+export default function ContainerPanel({
+  orderId,
+  container,
+  linkable,
+  clientName,
+  clientEmail,
+  clientLocale,
+}: Props) {
   const t = useTranslations("Admin.container");
   const tInvoiceLang = useTranslations("Admin.invoice");
   const format = useFormatter();
@@ -52,6 +64,7 @@ export default function ContainerPanel({ orderId, container, linkable }: Props) 
   const [state, setState] = useState<"idle" | "busy">("idle");
   const [error, setError] = useState<string | null>(null);
   const [invoiceLocale, setInvoiceLocale] = useState("");
+  const [confirming, setConfirming] = useState(false);
 
   const money = (cents: number) =>
     (cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 }) + " USD";
@@ -174,21 +187,66 @@ export default function ContainerPanel({ orderId, container, linkable }: Props) 
             <option value="ru">RU + EN</option>
             <option value="en">EN</option>
           </select>
+          <a
+            href={`/api/admin/containers/${container.id}/invoice/preview${
+              invoiceLocale ? `?locale=${invoiceLocale}` : ""
+            }`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-char-300 px-5 py-2.5 text-sm font-semibold text-char-800 transition-colors hover:border-amber-600 hover:text-amber-700"
+          >
+            <Eye size={16} weight="bold" />
+            {tInvoiceLang("preview")}
+          </a>
           <button
             type="button"
             disabled={state === "busy"}
-            onClick={() =>
-              act(
-                `/api/admin/containers/${container.id}/invoice`,
-                true,
-                invoiceLocale ? { locale: invoiceLocale } : {}
-              )
-            }
+            onClick={() => setConfirming(true)}
             className="inline-flex items-center gap-2 rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <FilePdf size={16} weight="bold" />
             {state === "busy" ? t("issuing") : t("issue")}
           </button>
+          {confirming && (
+            <IssueConfirmDialog
+              rows={[
+                {
+                  label: tInvoiceLang("confirmClient"),
+                  value: `${clientName} · ${clientEmail}`,
+                },
+                {
+                  label: tInvoiceLang("confirmContainer"),
+                  value: `${container.reference} · ${container.containerType}`,
+                },
+                { label: tInvoiceLang("confirmTotal"), value: money(container.freightCents) },
+                {
+                  label: t("due"),
+                  value: format.dateTime(new Date(container.dueAt), { dateStyle: "medium" }),
+                },
+                {
+                  label: tInvoiceLang("language"),
+                  value:
+                    invoiceLocale === ""
+                      ? `${tInvoiceLang("langAuto")} (${clientLocale.toUpperCase()})`
+                      : invoiceLocale.toUpperCase(),
+                },
+              ]}
+              previewHref={`/api/admin/containers/${container.id}/invoice/preview${
+                invoiceLocale ? `?locale=${invoiceLocale}` : ""
+              }`}
+              busy={state === "busy"}
+              onConfirm={() =>
+                void act(
+                  `/api/admin/containers/${container.id}/invoice`,
+                  true,
+                  invoiceLocale ? { locale: invoiceLocale } : {}
+                  // Closed after the attempt either way: success reloads the
+                  // page, failure must reveal the error box behind the dialog.
+                ).then(() => setConfirming(false))
+              }
+              onClose={() => setConfirming(false)}
+            />
+          )}
           {!container.paidAt && container.invoices.length > 0 ? (
             <button
               type="button"

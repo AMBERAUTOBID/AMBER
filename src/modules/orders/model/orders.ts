@@ -389,6 +389,18 @@ export async function findOrdersByLot(
     .orderBy(desc(schema.vehicleOrders.createdAt));
 }
 
+/** The client behind a case file — for the "who are we invoicing" check. */
+export async function orderClient(
+  userId: string
+): Promise<{ name: string; email: string; locale: string } | null> {
+  const rows = await db()
+    .select({ name: schema.users.name, email: schema.users.email, locale: schema.users.locale })
+    .from(schema.users)
+    .where(eq(schema.users.id, userId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 /** One case file, for an admin — no visibility filtering. */
 export async function getOrder(id: string) {
   const rows = await db()

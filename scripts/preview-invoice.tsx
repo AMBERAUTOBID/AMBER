@@ -70,6 +70,7 @@ const COST_KINDS = [
 ] as const;
 
 const labels: InvoiceLabels = {
+  draftMark: literal("JUODRAŠTIS", "DRAFT", "ЧЕРНОВИК"),
   title: literal("SĄSKAITA FAKTŪRA", "INVOICE", "СЧЁТ-ФАКТУРА"),
   invoiceNo: literal("Sąskaitos Nr.", "Invoice no.", "Счёт №"),
   issued: literal("Išrašyta", "Issued", "Выставлен"),

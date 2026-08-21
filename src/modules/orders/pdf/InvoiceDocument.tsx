@@ -24,6 +24,8 @@ export interface Bi {
 }
 
 export interface InvoiceLabels {
+  /** `JUODRAŠTIS – ne dokumentas` — used only by the preview render. */
+  draftMark: Bi;
   title: Bi;
   invoiceNo: Bi;
   issued: Bi;
@@ -92,6 +94,13 @@ export interface InvoiceDocumentProps {
   /** Held, and deliberately NOT deducted. Null when there is none. */
   depositHeldCents: number | null;
   labels: InvoiceLabels;
+  /**
+   * Set on the admin's preview render and NOWHERE else. Prints a diagonal
+   * watermark across the page and replaces the number, so a forwarded copy
+   * can never pass for the document — the preview exists precisely so the
+   * real one is issued with confidence, not to be a second original.
+   */
+  draft?: Bi | null;
 }
 
 /**
@@ -248,6 +257,33 @@ const s = StyleSheet.create({
   },
   footerText: { fontSize: 7.5, color: INK.char600 },
   footerRight: { fontSize: 7.5, color: INK.char600, marginTop: 1 },
+
+  // Behind the content (first child renders first), light enough to read
+  // through, big enough that no crop hides it.
+  watermarkWrap: {
+    position: "absolute",
+    top: 320,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  watermark: {
+    fontSize: 46,
+    fontWeight: 700,
+    color: INK.char300,
+    opacity: 0.35,
+    letterSpacing: 3,
+    transform: "rotate(-18deg)",
+  },
+  watermarkSub: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: INK.char300,
+    opacity: 0.35,
+    letterSpacing: 2,
+    marginTop: 6,
+    transform: "rotate(-18deg)",
+  },
 });
 
 /** A heading in both languages, or one line when they would be identical. */
@@ -278,6 +314,15 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
       subject={props.vehicle.description}
     >
       <Page size="A4" style={s.page}>
+        {props.draft ? (
+          <View style={s.watermarkWrap} fixed>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.watermark}>{props.draft.primary}</Text>
+            {props.draft.secondary ? (
+              <Text hyphenationCallback={NO_HYPHENS} style={s.watermarkSub}>{props.draft.secondary}</Text>
+            ) : null}
+          </View>
+        ) : null}
+
         {/* ── header ─────────────────────────────────────────────── */}
         <View style={s.headRow}>
           {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image, not a DOM img; PDFs carry no alt */}

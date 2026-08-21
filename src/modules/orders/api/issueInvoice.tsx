@@ -73,6 +73,7 @@ async function buildLabels(locale: string): Promise<InvoiceLabels> {
   };
 
   return {
+    draftMark: pair("invoice.draftMark"),
     title: pair("invoice.title"),
     invoiceNo: pair("invoice.invoiceNo"),
     issued: pair("invoice.issued"),
@@ -121,21 +122,26 @@ function describeVehicle(order: {
   );
 }
 
-export async function issueInvoice(input: {
-  orderId: string;
-  adminId: string;
-  /** Overrides the client's account locale for THIS document — the admin's
-   * call at issue time. Undefined = the client's own language. */
-  locale?: string;
-  storage: {
-    put(i: { key: string; body: Uint8Array; contentType: string }): Promise<void>;
-    remove(key: string): Promise<void>;
-  } | null;
-}): Promise<IssueResult> {
-  const { orderId, adminId, storage } = input;
+/** Everything a render needs EXCEPT the number — shared by issue and preview,
+ * so the draft the admin approves and the document the client receives can
+ * only ever be the same gathering of the same facts. */
+interface PreparedInvoice {
+  order: typeof schema.vehicleOrders.$inferSelect;
+  groups: ReturnType<typeof invoiceGroups>;
+  total: NonNullable<ReturnType<typeof invoiceTotal>>;
+  paidCents: number;
+  buyerName: string;
+  buyerLines: string[];
+  locale: string;
+  labels: InvoiceLabels;
+  depositHeld: number;
+  bank: NonNullable<ReturnType<typeof wireAccount>>;
+}
 
-  if (!storage) return { ok: false, reason: "no_storage" };
-
+async function prepareInvoice(
+  orderId: string,
+  localeOverride?: string
+): Promise<{ ok: false; reason: Exclude<IssueRefusal, "no_storage"> } | { ok: true; prepared: PreparedInvoice }> {
   const bank = wireAccount();
   if (!bank) return { ok: false, reason: "no_bank" };
 
@@ -186,11 +192,102 @@ export async function issueInvoice(input: {
   ];
 
   const locale =
-    input.locale && (["lt", "en", "ru"] as string[]).includes(input.locale)
-      ? input.locale
+    localeOverride && (["lt", "en", "ru"] as string[]).includes(localeOverride)
+      ? localeOverride
       : ownerRow.locale || "en";
   const labels = await buildLabels(locale);
   const depositHeld = await heldForBiddingBy(order.userId);
+
+  return {
+    ok: true,
+    prepared: { order, groups, total, paidCents, buyerName, buyerLines, locale, labels, depositHeld, bank },
+  };
+}
+
+/** The InvoiceDocument props one prepared gathering yields — number and date
+ * are the caller's, because only they know whether this is real or a draft. */
+function documentProps(prepared: PreparedInvoice, number: string, issuedAt: Date) {
+  const { order, bank } = prepared;
+  return {
+    number,
+    issuedAt,
+    seller: {
+      name: "Smart Auto Bid LLC",
+      lines: ["289 Telfair Rd", "Savannah, GA 31415", "United States"],
+      email: SITE.email,
+      phone: SITE.phone.display,
+    },
+    buyer: { name: prepared.buyerName, lines: prepared.buyerLines },
+    vehicle: {
+      description: describeVehicle(order),
+      vin: order.vin,
+      lot: order.lotNumber,
+      platform: order.platform === "copart" ? "Copart" : "IAAI",
+      soldAt: order.soldAt,
+    },
+    caseReference: order.reference,
+    groups: prepared.groups,
+    total: prepared.total,
+    paidCents: prepared.paidCents,
+    bank: {
+      beneficiary: bank.beneficiary,
+      beneficiaryAddress: bank.beneficiaryAddress,
+      bankName: bank.bankName,
+      bankAddress: bank.bankAddress,
+      accountNumber: bank.accountNumber,
+      swift: bank.swift,
+      routing: bank.routing,
+    },
+    paymentReference: order.reference,
+    dueAt: paymentDueAt(order.soldAt),
+    depositHeldCents: prepared.depositHeld > 0 ? prepared.depositHeld : null,
+    labels: prepared.labels,
+  };
+}
+
+/**
+ * The admin's eyeball step: the exact document the same inputs would issue,
+ * rendered with a watermark instead of a number. Writes NOTHING — no row,
+ * no R2 object, no audit — which is the whole point: the review happens
+ * before a number exists to regret.
+ */
+export async function previewInvoice(input: {
+  orderId: string;
+  locale?: string;
+}): Promise<{ ok: true; pdf: Uint8Array; reference: string } | { ok: false; reason: Exclude<IssueRefusal, "no_storage"> }> {
+  const result = await prepareInvoice(input.orderId, input.locale);
+  if (!result.ok) return result;
+  const { prepared } = result;
+
+  const pdf = await renderToBuffer(
+    <InvoiceDocument
+      {...documentProps(prepared, prepared.labels.draftMark.primary, new Date())}
+      draft={prepared.labels.draftMark}
+    />
+  );
+  return { ok: true, pdf, reference: prepared.order.reference };
+}
+
+export async function issueInvoice(input: {
+  orderId: string;
+  adminId: string;
+  /** Overrides the client's account locale for THIS document — the admin's
+   * call at issue time. Undefined = the client's own language. */
+  locale?: string;
+  storage: {
+    put(i: { key: string; body: Uint8Array; contentType: string }): Promise<void>;
+    remove(key: string): Promise<void>;
+  } | null;
+}): Promise<IssueResult> {
+  const { orderId, adminId, storage } = input;
+
+  if (!storage) return { ok: false, reason: "no_storage" };
+
+  const result = await prepareInvoice(orderId, input.locale);
+  if (!result.ok) return result;
+  const { prepared } = result;
+  const { total, locale } = prepared;
+
   const issuedAt = new Date();
   const year = issuedAt.getUTCFullYear();
 
@@ -212,41 +309,7 @@ export async function issueInvoice(input: {
 
   for (let attempt = 0; attempt < 3; attempt++) {
     const pdf = await renderToBuffer(
-      <InvoiceDocument
-        number={number}
-        issuedAt={issuedAt}
-        seller={{
-          name: "Smart Auto Bid LLC",
-          lines: ["289 Telfair Rd", "Savannah, GA 31415", "United States"],
-          email: SITE.email,
-          phone: SITE.phone.display,
-        }}
-        buyer={{ name: buyerName, lines: buyerLines }}
-        vehicle={{
-          description: describeVehicle(order),
-          vin: order.vin,
-          lot: order.lotNumber,
-          platform: order.platform === "copart" ? "Copart" : "IAAI",
-          soldAt: order.soldAt,
-        }}
-        caseReference={order.reference}
-        groups={groups}
-        total={total}
-        paidCents={paidCents}
-        bank={{
-          beneficiary: bank.beneficiary,
-          beneficiaryAddress: bank.beneficiaryAddress,
-          bankName: bank.bankName,
-          bankAddress: bank.bankAddress,
-          accountNumber: bank.accountNumber,
-          swift: bank.swift,
-          routing: bank.routing,
-        }}
-        paymentReference={order.reference}
-        dueAt={paymentDueAt(order.soldAt)}
-        depositHeldCents={depositHeld > 0 ? depositHeld : null}
-        labels={labels}
-      />
+      <InvoiceDocument {...documentProps(prepared, number, issuedAt)} />
     );
 
     const key = `orders/${orderId}/invoices/${number}.pdf`;
@@ -260,7 +323,7 @@ export async function issueInvoice(input: {
           number,
           totalCents: total.amountCents,
           currency: total.currency,
-          paidCents,
+          paidCents: prepared.paidCents,
           r2Key: key,
           locale,
           issuedBy: adminId,

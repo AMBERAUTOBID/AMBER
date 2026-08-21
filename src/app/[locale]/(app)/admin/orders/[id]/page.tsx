@@ -12,7 +12,10 @@ import {
   listOrderFiles,
   listPayments,
   listStageEvents,
+  orderClient,
 } from "@/modules/orders/model/orders";
+import { clientCostRows, type CostLineRow } from "@/modules/orders/model/money";
+import { invoiceGroups, invoiceTotal } from "@/modules/orders/model/invoiceLines";
 import { orderTitle } from "@/modules/orders/model/orderSnapshot";
 import { ORDER_STAGES, hasReached, stageProgress } from "@/modules/orders/model/stages";
 import { signFiles } from "@/modules/orders/api/signFiles";
@@ -73,6 +76,7 @@ export default async function AdminOrderPage({
   const payoutFacts = await drawdownFactsFor(order.reference);
   const container = order.containerId ? await containerView(order.containerId) : null;
   const linkable = order.containerId ? [] : await linkableOrdersFor(order.userId);
+  const client = await orderClient(order.userId);
   const [files, events, importState, costs, payments, invoices] = await Promise.all([
     listOrderFiles(id),
     listStageEvents(id),
@@ -316,6 +320,14 @@ export default async function AdminOrderPage({
               currency: invoice.currency,
               issuedAt: invoice.issuedAt.toISOString(),
             }))}
+            clientName={client?.name ?? "—"}
+            clientEmail={client?.email ?? "—"}
+            clientLocale={client?.locale ?? "en"}
+            vehicle={orderTitle(order)}
+            caseReference={order.reference}
+            /* The same folding `issueInvoice` uses, so the sum the dialog
+               shows IS the sum the document will demand. */
+            plannedTotal={invoiceTotal(invoiceGroups(clientCostRows(costs as CostLineRow[])))}
           />
         </AdminSection>
 
@@ -346,6 +358,9 @@ export default async function AdminOrderPage({
               reference: o.reference,
               title: [o.year, o.make, o.model].filter(Boolean).join(" ") || o.reference,
             }))}
+            clientName={client?.name ?? "—"}
+            clientEmail={client?.email ?? "—"}
+            clientLocale={client?.locale ?? "en"}
           />
         </AdminSection>
       </div>

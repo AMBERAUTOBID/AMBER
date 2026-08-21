@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { FilePdf, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import { Eye, FilePdf, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import IssueConfirmDialog from "./IssueConfirmDialog";
 
 /**
  * The admin's invoice corner: what has been issued, and the one button.
@@ -11,6 +12,11 @@ import { FilePdf, WarningCircle } from "@phosphor-icons/react/dist/ssr";
  * the client will actually receive, not a re-render of it. The button POSTs
  * and reloads: issuing is rare enough that optimistic UI would only add ways
  * to show a number the database refused.
+ *
+ * Since 2026-08-21, "Išrašyti" opens the confirmation dialog first — who,
+ * what, which language, draft one click away — because issuing is instant
+ * and irreversible. The draft button renders the same PDF watermarked, with
+ * no number allocated and nothing written.
  *
  * The refusal reasons arrive as server codes and are translated here, so the
  * admin reads "no rate frozen", not HTTP 409.
@@ -27,15 +33,39 @@ export interface InvoiceRow {
 interface Props {
   orderId: string;
   invoices: InvoiceRow[];
+  /** Who receives this document — the dialog's first fact. */
+  clientName: string;
+  clientEmail: string;
+  /** The client's account language, shown when "client's language" is kept. */
+  clientLocale: string;
+  vehicle: string;
+  caseReference: string;
+  /** What the invoice will demand, from the same folding the issue uses.
+   * Null when it cannot be computed yet (no lines / two currencies). */
+  plannedTotal: { amountCents: number; currency: string } | null;
 }
 
-export default function InvoicePanel({ orderId, invoices }: Props) {
+export default function InvoicePanel({
+  orderId,
+  invoices,
+  clientName,
+  clientEmail,
+  clientLocale,
+  vehicle,
+  caseReference,
+  plannedTotal,
+}: Props) {
   const t = useTranslations("Admin.invoice");
   const format = useFormatter();
   const [state, setState] = useState<"idle" | "busy">("idle");
   /** "" = the client's own account language — the default that needs no thought. */
   const [locale, setLocale] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+
+  const previewHref = `/api/admin/orders/${orderId}/invoice/preview${
+    locale ? `?locale=${locale}` : ""
+  }`;
 
   async function issue() {
     setState("busy");
@@ -65,7 +95,11 @@ export default function InvoicePanel({ orderId, invoices }: Props) {
       setError(t("failed"));
     }
     setState("idle");
+    setConfirming(false);
   }
+
+  const languageShown =
+    locale === "" ? `${t("langAuto")} (${clientLocale.toUpperCase()})` : locale.toUpperCase();
 
   return (
     <div>
@@ -116,9 +150,18 @@ export default function InvoicePanel({ orderId, invoices }: Props) {
           <option value="ru">RU + EN</option>
           <option value="en">EN</option>
         </select>
+        <a
+          href={previewHref}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 rounded-full border border-char-300 px-5 py-2.5 text-sm font-semibold text-char-800 transition-colors hover:border-amber-600 hover:text-amber-700"
+        >
+          <Eye size={16} weight="bold" />
+          {t("preview")}
+        </a>
         <button
           type="button"
-          onClick={issue}
+          onClick={() => setConfirming(true)}
           disabled={state === "busy"}
           className="inline-flex items-center gap-2 rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
@@ -127,6 +170,28 @@ export default function InvoicePanel({ orderId, invoices }: Props) {
         </button>
         <p className="text-xs text-char-500">{t("frozenNote")}</p>
       </div>
+
+      {confirming && (
+        <IssueConfirmDialog
+          rows={[
+            { label: t("confirmClient"), value: `${clientName} · ${clientEmail}` },
+            { label: t("confirmVehicle"), value: `${vehicle} · ${caseReference}` },
+            {
+              label: t("confirmTotal"),
+              value: plannedTotal
+                ? `${(plannedTotal.amountCents / 100).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                  })} ${plannedTotal.currency}`
+                : t("confirmTotalUnknown"),
+            },
+            { label: t("language"), value: languageShown },
+          ]}
+          previewHref={previewHref}
+          busy={state === "busy"}
+          onConfirm={issue}
+          onClose={() => setConfirming(false)}
+        />
+      )}
     </div>
   );
 }
