@@ -92,6 +92,33 @@ export async function deleteAccount(
   // outright, not anonymised: an unowned favourite means nothing.
   await db().delete(schema.favorites).where(eq(schema.favorites.userId, userId));
 
+  // The shipping profile is nothing BUT personal data — name as written in
+  // documents, home address, phone, who receives their cars. The user row it
+  // hangs off is anonymised in place rather than deleted, so the cascade on
+  // shipping_profiles.user_id never fires; without this line the profile
+  // would survive erasure fully readable.
+  await db().delete(schema.shippingProfiles).where(eq(schema.shippingProfiles.userId, userId));
+
+  // The consignee snapshot on the case files is the same personal data,
+  // copied. Found missing 2026-08-20: erasure predates these columns, so
+  // until this line an erased client's name, phone and home address lived on
+  // in vehicle_orders forever — while the schema comment on userId promised
+  // "the person anonymised". The row itself stays (statutory retention, and
+  // it is the only index of the R2 documents); what goes is who received the
+  // car. Null rather than a placeholder: every consignee column is nullable
+  // and the order page already renders absence.
+  await db()
+    .update(schema.vehicleOrders)
+    .set({
+      consigneeName: null,
+      consigneeCompany: null,
+      consigneePhone: null,
+      consigneeEmail: null,
+      consigneeAddress: null,
+      consigneeCountry: null,
+    })
+    .where(eq(schema.vehicleOrders.userId, userId));
+
   // Browsing history goes the same way, for the reason given on the line
   // above: which cars a person looked at, searched for and costed is their
   // personal data with no accounting duty behind it.

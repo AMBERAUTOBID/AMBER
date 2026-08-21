@@ -10,6 +10,8 @@ import { ACTIVITY_RETENTION_DAYS } from "@/modules/activity/model/events";
 import ActivityTimeline from "@/modules/activity/components/ActivityTimeline";
 import AdminSection from "@/modules/admin/components/AdminSection";
 import { PLAN_KEYS } from "@/modules/plans/model/plans";
+import { shippingProfileFor } from "@/modules/account/model/shippingProfile";
+import { isShippingProfileComplete } from "@/modules/account/model/shippingProfileRules";
 import { UUID } from "@/shared/validation";
 
 export const metadata: Metadata = { robots: { index: false } };
@@ -48,6 +50,8 @@ export default async function AdminUserPage({
   const tPlans = await getTranslations({ locale, namespace: "Plans" });
   const format = await getFormatter({ locale });
   const timeline = await timelineFor(user.id);
+  const shipping = await shippingProfileFor(user.id);
+  const tShip = await getTranslations({ locale, namespace: "Account.shipping" });
 
   const planName =
     user.activePlanKey && (PLAN_KEYS as readonly string[]).includes(user.activePlanKey)
@@ -92,6 +96,98 @@ export default async function AdminUserPage({
           value={user.emailVerified ? t("activity.yes") : t("activity.no")}
         />
       </dl>
+
+      {/*
+        The owner fills Aivi's New Auto form FROM this block, so it renders
+        every field in the order that form asks for them — port, receiver,
+        preferences — rather than the order our own form collects them. The
+        labels are Account.shipping's own: what the client answered and what
+        the admin reads must be one set of words.
+      */}
+      <div className="mt-8">
+        <AdminSection
+          title={t("shippingProfile.heading")}
+          count={shipping ? undefined : 0}
+        >
+          {!shipping ? (
+            <p className="text-sm text-char-500">{t("shippingProfile.notFilled")}</p>
+          ) : (
+            <>
+              <p
+                className={
+                  isShippingProfileComplete(shipping)
+                    ? "mb-4 inline-block rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700"
+                    : "mb-4 inline-block rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700"
+                }
+              >
+                {isShippingProfileComplete(shipping)
+                  ? t("shippingProfile.complete")
+                  : t("shippingProfile.incomplete")}
+              </p>
+              <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+                <Fact
+                  label={
+                    shipping.buyerType === "company"
+                      ? tShip("buyer.companyName")
+                      : tShip("buyer.fullName")
+                  }
+                  value={shipping.buyerName ?? "—"}
+                />
+                {shipping.buyerType === "company" ? (
+                  <Fact label={tShip("buyer.companyCode")} value={shipping.companyCode ?? "—"} />
+                ) : null}
+                {shipping.vatCode ? (
+                  <Fact label={tShip("buyer.vatCode")} value={shipping.vatCode} />
+                ) : null}
+                <Fact label={tShip("buyer.country")} value={shipping.buyerCountry ?? "—"} />
+                <Fact label={tShip("buyer.phone")} value={shipping.buyerPhone ?? "—"} />
+                <div className="sm:col-span-2">
+                  <Fact label={tShip("buyer.address")} value={shipping.buyerAddress ?? "—"} />
+                </div>
+                <Fact label={tShip("destination.port")} value={shipping.destinationPort ?? "—"} />
+                <Fact
+                  label={tShip("prefs.rail")}
+                  value={
+                    shipping.paymentRail === "wise"
+                      ? t("shippingProfile.railWise")
+                      : shipping.paymentRail === "bank"
+                        ? t("shippingProfile.railBank")
+                        : t("shippingProfile.railUnset")
+                  }
+                />
+                <Fact
+                  label={tShip("prefs.insurance")}
+                  value={shipping.insurance ? t("shippingProfile.yes") : t("shippingProfile.no")}
+                />
+                <Fact
+                  label={tShip("prefs.shareContainer")}
+                  value={
+                    shipping.shareContainer ? t("shippingProfile.yes") : t("shippingProfile.no")
+                  }
+                />
+                <div className="sm:col-span-2">
+                  <Fact
+                    label={tShip("receiver.heading")}
+                    value={
+                      shipping.receiverSame
+                        ? tShip("receiver.same")
+                        : [
+                            shipping.receiverName,
+                            shipping.receiverCountry,
+                            shipping.receiverPhone,
+                            shipping.receiverEmail,
+                            shipping.receiverAddress,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")
+                    }
+                  />
+                </div>
+              </dl>
+            </>
+          )}
+        </AdminSection>
+      </div>
 
       <div className="mt-8">
         <AdminSection title={t("activity.heading")} count={timeline.length}>
