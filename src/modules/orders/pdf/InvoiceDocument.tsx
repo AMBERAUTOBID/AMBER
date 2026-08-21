@@ -130,21 +130,21 @@ const s = StyleSheet.create({
   headRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 8 },
   logo: { width: 30, height: 30, marginRight: 9, objectFit: "contain" },
   brand: { fontSize: 15, fontWeight: 700, color: INK.char900, letterSpacing: -0.3 },
-  brandSub: { fontSize: 7.5, color: INK.char500, marginTop: 2 },
+  brandSub: { fontSize: 8, color: INK.char600, marginTop: 2 },
   headRight: { marginLeft: "auto", alignItems: "flex-end" },
   docTitle: { fontSize: 14, fontWeight: 700, color: INK.amber600, letterSpacing: 0.4, lineHeight: 1.2 },
-  docTitleSub: { fontSize: 7.5, color: INK.char500, letterSpacing: 0.4, marginTop: 1, marginBottom: 7 },
+  docTitleSub: { fontSize: 8, color: INK.char600, letterSpacing: 0.4, marginTop: 1, marginBottom: 7 },
   metaRow: { flexDirection: "row", marginTop: 1 },
-  metaLabel: { fontSize: 7.5, color: INK.char500, width: 132, textAlign: "right", marginRight: 8 },
+  metaLabel: { fontSize: 8, color: INK.char600, width: 132, textAlign: "right", marginRight: 8 },
   metaValue: { fontSize: 9, fontWeight: 700, color: INK.char900 },
 
   rule: { height: 2, backgroundColor: INK.amber500, marginBottom: 10 },
 
   parties: { flexDirection: "row", marginBottom: 8 },
   party: { width: "50%", paddingRight: 16 },
-  partyLabel: { fontSize: 7, color: INK.char500, letterSpacing: 0.8, marginBottom: 4 },
+  partyLabel: { fontSize: 7.5, color: INK.char600, letterSpacing: 0.8, marginBottom: 4 },
   partyName: { fontSize: 10, fontWeight: 700, color: INK.char900, marginBottom: 2 },
-  partyLine: { fontSize: 8.5, color: INK.char500 },
+  partyLine: { fontSize: 9, color: INK.char700 },
 
   vehicleBox: {
     backgroundColor: INK.char50,
@@ -156,7 +156,7 @@ const s = StyleSheet.create({
   vehicleName: { fontSize: 10.5, fontWeight: 700, color: INK.char900, marginBottom: 4 },
   factRow: { flexDirection: "row", flexWrap: "wrap" },
   fact: { marginRight: 18, marginTop: 2 },
-  factLabel: { fontSize: 6.5, color: INK.char500, letterSpacing: 0.6 },
+  factLabel: { fontSize: 7.5, color: INK.char600, letterSpacing: 0.6 },
   factValue: { fontSize: 9, color: INK.char800 },
 
   tHead: {
@@ -166,7 +166,7 @@ const s = StyleSheet.create({
     paddingBottom: 4,
     marginBottom: 2,
   },
-  tHeadCell: { fontSize: 7, color: INK.char500, letterSpacing: 0.8 },
+  tHeadCell: { fontSize: 8, color: INK.char600, letterSpacing: 0.8 },
   row: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -176,16 +176,16 @@ const s = StyleSheet.create({
   },
   rowLabel: { flexGrow: 1, flexShrink: 1, paddingRight: 12 },
   rowPrimary: { fontSize: 9.5, color: INK.char900 },
-  rowSecondary: { fontSize: 7.5, color: INK.char500 },
+  rowSecondary: { fontSize: 8, color: INK.char600 },
   rowAmount: { width: 92, textAlign: "right", fontSize: 9.5, color: INK.char900 },
 
   part: { flexDirection: "row", marginTop: 3, paddingLeft: 12 },
-  partLabel: { flexGrow: 1, fontSize: 8, color: INK.char500 },
-  partAmount: { width: 78, textAlign: "right", fontSize: 8, color: INK.char500 },
+  partLabel: { flexGrow: 1, fontSize: 8.5, color: INK.char600 },
+  partAmount: { width: 78, textAlign: "right", fontSize: 8.5, color: INK.char600 },
 
   totals: { marginTop: 8, alignItems: "flex-end" },
   totalRow: { flexDirection: "row", alignItems: "baseline", marginTop: 3 },
-  totalLabel: { fontSize: 8.5, color: INK.char500, textAlign: "right", width: 190, marginRight: 10 },
+  totalLabel: { fontSize: 9, color: INK.char600, textAlign: "right", width: 190, marginRight: 10 },
   totalValue: { fontSize: 10, color: INK.char900, width: 108, textAlign: "right" },
   dueRow: {
     flexDirection: "row",
@@ -226,15 +226,15 @@ const s = StyleSheet.create({
   payGrid: { flexDirection: "row" },
   payCol: { width: "50%", paddingRight: 12 },
   bankRow: { flexDirection: "row", marginBottom: 2 },
-  bankLabel: { width: 88, fontSize: 7.5, color: INK.char500, flexShrink: 0 },
-  bankValue: { flex: 1, fontSize: 8.5, color: INK.char800 },
+  bankLabel: { width: 96, fontSize: 8, color: INK.char600, flexShrink: 0 },
+  bankValue: { flex: 1, fontSize: 9, color: INK.char900 },
   bankValueMono: { flex: 1, fontSize: 9, color: INK.char900, fontWeight: 700 },
 
   refBox: { borderWidth: 1, borderColor: INK.char800, padding: 8, marginBottom: 7 },
-  refLabel: { fontSize: 7, color: INK.char500, letterSpacing: 0.8 },
+  refLabel: { fontSize: 7.5, color: INK.char600, letterSpacing: 0.8 },
   refValue: { fontSize: 15, fontWeight: 700, color: INK.char900, letterSpacing: 1 },
-  refHint: { fontSize: 7.5, color: INK.char500, marginTop: 3 },
-  deadlineLabel: { fontSize: 7, color: INK.char500, letterSpacing: 0.8 },
+  refHint: { fontSize: 8, color: INK.char600, marginTop: 3 },
+  deadlineLabel: { fontSize: 7.5, color: INK.char600, letterSpacing: 0.8 },
   deadlineValue: { fontSize: 11, fontWeight: 700, color: INK.amber600 },
 
   footer: {
@@ -246,8 +246,8 @@ const s = StyleSheet.create({
     borderTopColor: INK.char200,
     paddingTop: 5,
   },
-  footerText: { fontSize: 6.5, color: INK.char500 },
-  footerRight: { fontSize: 6.5, color: INK.char500, marginTop: 1 },
+  footerText: { fontSize: 7.5, color: INK.char600 },
+  footerRight: { fontSize: 7.5, color: INK.char600, marginTop: 1 },
 });
 
 /** A heading in both languages, or one line when they would be identical. */
@@ -418,7 +418,7 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
               {L.depositNote.primary}
             </Text>
             {L.depositNote.secondary ? (
-              <Text style={[s.noteText, { color: INK.char500, marginTop: 2 }]}>
+              <Text style={[s.noteText, { color: INK.char600, marginTop: 2 }]}>
                 {L.depositNote.secondary}
               </Text>
             ) : null}
@@ -455,7 +455,7 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
               </View>
             ) : null}
             <Text style={[s.noteText, { fontWeight: 700 }]}>{L.chargesTitle.primary}</Text>
-            <Text style={[s.noteText, { color: INK.char500 }]}>{L.chargesBody.primary}</Text>
+            <Text style={[s.noteText, { color: INK.char600 }]}>{L.chargesBody.primary}</Text>
           </View>
         </View>
 

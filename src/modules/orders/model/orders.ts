@@ -435,6 +435,16 @@ export async function listOrdersForUser(userId: string) {
 }
 
 /** Every file on an order, oldest stage first. */
+/** Issued invoices, newest first — both the admin panel and the client page
+ * read this, so neither can show a document the other cannot see. */
+export async function listInvoices(orderId: string) {
+  return db()
+    .select()
+    .from(schema.orderInvoices)
+    .where(eq(schema.orderInvoices.orderId, orderId))
+    .orderBy(desc(schema.orderInvoices.issuedAt));
+}
+
 export async function listOrderFiles(orderId: string) {
   return db()
     .select()

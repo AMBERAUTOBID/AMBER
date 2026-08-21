@@ -89,6 +89,7 @@ export const INK = {
   char900: "#1a1817",
   char800: "#2c2a28",
   char700: "#434343",
+  char600: "#504b48",
   char500: "#666260",
   char300: "#b3afab",
   char200: "#d5d3d0",
