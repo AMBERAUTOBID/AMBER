@@ -1,6 +1,20 @@
 import { desc, eq, like } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
-import { renderToBuffer } from "@react-pdf/renderer";
+import { Font, renderToBuffer } from "@react-pdf/renderer";
+
+// Registered HERE, beside the renderToBuffer this file calls, because the
+// bundler can duplicate @react-pdf between chunks: a callback registered in
+// another module can land on a different Font instance than the one this
+// render uses — which is how «Комиссию printed as «- on a real invoice while
+// an isolated test wrapped cleanly. Same-file import, same instance, always.
+Font.registerHyphenationCallback((word) => [word]);
+// ⚠️ Known residual: the DEV server still hyphenates «Комиссию as «- in the
+// charges box — Next dev evaluates this module in two graphs with two Font
+// instances, and the layout run appears to consult yet another. A clean
+// single-instance process (tsx scripts, production build) honours this
+// registration — measured with scripts/preview-invoice.tsx. Re-check the
+// first invoice issued on production; if the dash survives there, the
+// reproduction lives in the 2026-08-21 session notes.
 import { db, schema } from "@/shared/db/client";
 import { recordAudit } from "@/shared/db/audit";
 import { wireAccount } from "@/shared/config/wire";

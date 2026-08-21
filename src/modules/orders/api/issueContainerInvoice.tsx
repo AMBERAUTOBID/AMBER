@@ -1,13 +1,16 @@
 import { desc, eq, like } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
-import { renderToBuffer, Document, Page, StyleSheet, Text, View, Image } from "@react-pdf/renderer";
+import { Font, renderToBuffer, Document, Page, StyleSheet, Text, View, Image } from "@react-pdf/renderer";
+
+// Same-file hyphenation kill as issueInvoice — see the comment there.
+Font.registerHyphenationCallback((word) => [word]);
 import { db, schema } from "@/shared/db/client";
 import { recordAudit } from "@/shared/db/audit";
 import { wireAccount } from "@/shared/config/wire";
 import { SITE } from "@/shared/config/site";
 import { containerView } from "../model/containers";
 import { invoiceNumberAfterCollision, nextInvoiceNumber } from "../model/invoiceNumber";
-import { INK, invoiceLogo, registerInvoiceFonts } from "../pdf/theme";
+import { INK, NO_HYPHENS, invoiceLogo, registerInvoiceFonts } from "../pdf/theme";
 import type { Bi } from "../pdf/InvoiceDocument";
 
 /**
@@ -220,23 +223,23 @@ export async function issueContainerInvoice(input: {
             {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image, not a DOM img; PDFs carry no alt */}
             <Image src={invoiceLogo()} style={s.logo} />
             <View>
-              <Text style={s.brand}>Smart Auto Bid LLC</Text>
-              <Text style={s.brandSub}>{SITE.email}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.brand}>Smart Auto Bid LLC</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.brandSub}>{SITE.email}</Text>
             </View>
             <View style={s.headRight}>
-              <Text style={s.docTitle}>{L.title.primary}</Text>
-              {L.title.secondary ? <Text style={s.docTitleSub}>{L.title.secondary}</Text> : null}
+              <Text hyphenationCallback={NO_HYPHENS} style={s.docTitle}>{L.title.primary}</Text>
+              {L.title.secondary ? <Text hyphenationCallback={NO_HYPHENS} style={s.docTitleSub}>{L.title.secondary}</Text> : null}
               <View style={s.metaRow}>
-                <Text style={s.metaLabel}>{inline(L.invoiceNo)}</Text>
-                <Text style={s.metaValue}>{number}</Text>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.metaLabel}>{inline(L.invoiceNo)}</Text>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.metaValue}>{number}</Text>
               </View>
               <View style={s.metaRow}>
-                <Text style={s.metaLabel}>{inline(L.issued)}</Text>
-                <Text style={s.metaValue}>{day(issuedAt)}</Text>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.metaLabel}>{inline(L.issued)}</Text>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.metaValue}>{day(issuedAt)}</Text>
               </View>
               <View style={s.metaRow}>
-                <Text style={s.metaLabel}>{inline(L.container)}</Text>
-                <Text style={s.metaValue}>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.metaLabel}>{inline(L.container)}</Text>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.metaValue}>
                   {container.reference} · {container.containerType}
                 </Text>
               </View>
@@ -246,26 +249,26 @@ export async function issueContainerInvoice(input: {
 
           <View style={s.parties}>
             <View style={s.party}>
-              <Text style={s.partyLabel}>{inline(L.seller).toUpperCase()}</Text>
-              <Text style={s.partyName}>Smart Auto Bid LLC</Text>
-              <Text style={s.partyLine}>289 Telfair Rd</Text>
-              <Text style={s.partyLine}>Savannah, GA 31415, United States</Text>
-              <Text style={s.partyLine}>{SITE.phone.display}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.partyLabel}>{inline(L.seller).toUpperCase()}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.partyName}>Smart Auto Bid LLC</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.partyLine}>289 Telfair Rd</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.partyLine}>Savannah, GA 31415, United States</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.partyLine}>{SITE.phone.display}</Text>
             </View>
             <View style={s.party}>
-              <Text style={s.partyLabel}>{inline(L.buyer).toUpperCase()}</Text>
-              <Text style={s.partyName}>{owner[0].name}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.partyLabel}>{inline(L.buyer).toUpperCase()}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.partyName}>{owner[0].name}</Text>
             </View>
           </View>
 
-          <Text style={s.carsHead}>{inline(L.cars).toUpperCase()}</Text>
+          <Text hyphenationCallback={NO_HYPHENS} style={s.carsHead}>{inline(L.cars).toUpperCase()}</Text>
           <View style={s.carsBox}>
             {container.cars.map((car) => (
               <View key={car.id} style={s.carRow}>
-                <Text style={s.carName}>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.carName}>
                   {[car.year, car.make, car.model].filter(Boolean).join(" ") || "—"}
                 </Text>
-                <Text style={s.carMeta}>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.carMeta}>
                   {car.reference} · LOT {car.lotNumber}
                   {car.vin ? ` · ${car.vin}` : ""}
                 </Text>
@@ -275,32 +278,32 @@ export async function issueContainerInvoice(input: {
 
           <View style={s.lineRow}>
             <View style={s.lineLabel}>
-              <Text style={s.linePrimary}>{L.freightLine.primary}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.linePrimary}>{L.freightLine.primary}</Text>
               {L.freightLine.secondary ? (
-                <Text style={s.lineSecondary}>{L.freightLine.secondary}</Text>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.lineSecondary}>{L.freightLine.secondary}</Text>
               ) : null}
             </View>
-            <Text style={s.lineAmount}>{money(container.freightCents)} USD</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.lineAmount}>{money(container.freightCents)} USD</Text>
           </View>
 
           <View style={s.dueRow}>
-            <Text style={s.dueLabel}>{inline(L.due)}</Text>
-            <Text style={s.dueValue}>{day(container.dueAt)}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.dueLabel}>{inline(L.due)}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.dueValue}>{day(container.dueAt)}</Text>
           </View>
 
           {/* The lever, printed where nobody can miss it. */}
           <View style={s.noteBox}>
-            <Text style={s.noteText}>{L.loadNote.primary}</Text>
-            {L.loadNote.secondary ? <Text style={s.noteSub}>{L.loadNote.secondary}</Text> : null}
-            <Text style={s.noteSub}>{inline(L.loadNoteSub)}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.noteText}>{L.loadNote.primary}</Text>
+            {L.loadNote.secondary ? <Text hyphenationCallback={NO_HYPHENS} style={s.noteSub}>{L.loadNote.secondary}</Text> : null}
+            <Text hyphenationCallback={NO_HYPHENS} style={s.noteSub}>{inline(L.loadNoteSub)}</Text>
           </View>
 
-          <Text style={s.payTitle}>{inline(L.payTitle).toUpperCase()}</Text>
+          <Text hyphenationCallback={NO_HYPHENS} style={s.payTitle}>{inline(L.payTitle).toUpperCase()}</Text>
           <View style={s.payStack}>
             <View style={s.refBox}>
-              <Text style={s.refLabel}>{inline(L.reference).toUpperCase()}</Text>
-              <Text style={s.refValue}>{container.reference}</Text>
-              <Text style={s.refHint}>{inline(L.referenceHint)}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.refLabel}>{inline(L.reference).toUpperCase()}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.refValue}>{container.reference}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.refHint}>{inline(L.referenceHint)}</Text>
             </View>
             <BankRow label={inline(L.beneficiary)} value={bank.beneficiary} />
             {bank.beneficiaryAddress ? (
@@ -314,14 +317,14 @@ export async function issueContainerInvoice(input: {
             <BankRow label={inline(L.swift)} value={bank.swift} strong />
             {bank.routing ? <BankRow label={inline(L.routing)} value={bank.routing} /> : null}
             <View style={s.noteBox}>
-              <Text style={s.noteText}>{L.chargesTitle.primary}</Text>
-              <Text style={s.noteSub}>{L.chargesBody.primary}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.noteText}>{L.chargesTitle.primary}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.noteSub}>{L.chargesBody.primary}</Text>
             </View>
           </View>
 
           <View style={s.footer} fixed>
-            <Text style={s.footerText}>{inline(L.vatNote)}</Text>
-            <Text style={s.footerText}>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.footerText}>{inline(L.vatNote)}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.footerText}>
               Smart Auto Bid LLC · {SITE.email} · {SITE.phone.display}
             </Text>
           </View>
@@ -366,8 +369,8 @@ export async function issueContainerInvoice(input: {
 function BankRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <View style={s.bankRow}>
-      <Text style={s.bankLabel}>{label}</Text>
-      <Text style={strong ? s.bankStrong : s.bankValue}>{value}</Text>
+      <Text hyphenationCallback={NO_HYPHENS} style={s.bankLabel}>{label}</Text>
+      <Text hyphenationCallback={NO_HYPHENS} style={strong ? s.bankStrong : s.bankValue}>{value}</Text>
     </View>
   );
 }

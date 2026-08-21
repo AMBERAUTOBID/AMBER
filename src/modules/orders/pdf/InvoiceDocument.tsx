@@ -1,7 +1,7 @@
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { Style } from "@react-pdf/stylesheet";
 import type { InvoiceGroup, InvoiceTotal } from "../model/invoiceLines";
-import { INK, invoiceLogo, registerInvoiceFonts } from "./theme";
+import { INK, NO_HYPHENS, invoiceLogo, registerInvoiceFonts } from "./theme";
 
 /**
  * A label in the client's language and in English, on one document.
@@ -254,8 +254,8 @@ const s = StyleSheet.create({
 function Label({ value, style, subStyle }: { value: Bi; style?: Style; subStyle?: Style }) {
   return (
     <View>
-      <Text style={style}>{value.primary}</Text>
-      {value.secondary ? <Text style={subStyle}>{value.secondary}</Text> : null}
+      <Text hyphenationCallback={NO_HYPHENS} style={style}>{value.primary}</Text>
+      {value.secondary ? <Text hyphenationCallback={NO_HYPHENS} style={subStyle}>{value.secondary}</Text> : null}
     </View>
   );
 }
@@ -283,23 +283,23 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
           {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image, not a DOM img; PDFs carry no alt */}
           <Image src={invoiceLogo()} style={s.logo} />
           <View>
-            <Text style={s.brand}>{props.seller.name}</Text>
-            <Text style={s.brandSub}>{props.seller.email}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.brand}>{props.seller.name}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.brandSub}>{props.seller.email}</Text>
           </View>
           <View style={s.headRight}>
-            <Text style={s.docTitle}>{L.title.primary}</Text>
-            {L.title.secondary ? <Text style={s.docTitleSub}>{L.title.secondary}</Text> : null}
+            <Text hyphenationCallback={NO_HYPHENS} style={s.docTitle}>{L.title.primary}</Text>
+            {L.title.secondary ? <Text hyphenationCallback={NO_HYPHENS} style={s.docTitleSub}>{L.title.secondary}</Text> : null}
             <View style={s.metaRow}>
-              <Text style={s.metaLabel}>{inlineBi(L.invoiceNo)}</Text>
-              <Text style={s.metaValue}>{props.number}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.metaLabel}>{inlineBi(L.invoiceNo)}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.metaValue}>{props.number}</Text>
             </View>
             <View style={s.metaRow}>
-              <Text style={s.metaLabel}>{inlineBi(L.issued)}</Text>
-              <Text style={s.metaValue}>{day(props.issuedAt)}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.metaLabel}>{inlineBi(L.issued)}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.metaValue}>{day(props.issuedAt)}</Text>
             </View>
             <View style={s.metaRow}>
-              <Text style={s.metaLabel}>{inlineBi(L.caseNo)}</Text>
-              <Text style={s.metaValue}>{props.caseReference}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.metaLabel}>{inlineBi(L.caseNo)}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.metaValue}>{props.caseReference}</Text>
             </View>
           </View>
         </View>
@@ -309,18 +309,18 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
         {/* ── who to whom ────────────────────────────────────────── */}
         <View style={s.parties}>
           <View style={s.party}>
-            <Text style={s.partyLabel}>{inlineBi(L.seller).toUpperCase()}</Text>
-            <Text style={s.partyName}>{props.seller.name}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.partyLabel}>{inlineBi(L.seller).toUpperCase()}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.partyName}>{props.seller.name}</Text>
             {props.seller.lines.map((line) => (
               <Text key={line} style={s.partyLine}>
                 {line}
               </Text>
             ))}
-            <Text style={s.partyLine}>{props.seller.phone}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.partyLine}>{props.seller.phone}</Text>
           </View>
           <View style={s.party}>
-            <Text style={s.partyLabel}>{inlineBi(L.buyer).toUpperCase()}</Text>
-            <Text style={s.partyName}>{props.buyer.name}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.partyLabel}>{inlineBi(L.buyer).toUpperCase()}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.partyName}>{props.buyer.name}</Text>
             {props.buyer.lines.map((line) => (
               <Text key={line} style={s.partyLine}>
                 {line}
@@ -331,24 +331,24 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
 
         {/* ── the car ────────────────────────────────────────────── */}
         <View style={s.vehicleBox}>
-          <Text style={s.vehicleName}>{props.vehicle.description}</Text>
+          <Text hyphenationCallback={NO_HYPHENS} style={s.vehicleName}>{props.vehicle.description}</Text>
           <View style={s.factRow}>
             <View style={s.fact}>
-              <Text style={s.factLabel}>{inlineBi(L.vin).toUpperCase()}</Text>
-              <Text style={s.factValue}>{props.vehicle.vin ?? "—"}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.factLabel}>{inlineBi(L.vin).toUpperCase()}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.factValue}>{props.vehicle.vin ?? "—"}</Text>
             </View>
             <View style={s.fact}>
-              <Text style={s.factLabel}>{inlineBi(L.lot).toUpperCase()}</Text>
-              <Text style={s.factValue}>{props.vehicle.lot}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.factLabel}>{inlineBi(L.lot).toUpperCase()}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.factValue}>{props.vehicle.lot}</Text>
             </View>
             <View style={s.fact}>
-              <Text style={s.factLabel}>AUCTION</Text>
-              <Text style={s.factValue}>{props.vehicle.platform}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.factLabel}>AUCTION</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.factValue}>{props.vehicle.platform}</Text>
             </View>
             {props.vehicle.soldAt ? (
               <View style={s.fact}>
-                <Text style={s.factLabel}>{inlineBi(L.sold).toUpperCase()}</Text>
-                <Text style={s.factValue}>{day(props.vehicle.soldAt)}</Text>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.factLabel}>{inlineBi(L.sold).toUpperCase()}</Text>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.factValue}>{day(props.vehicle.soldAt)}</Text>
               </View>
             ) : null}
           </View>
@@ -356,8 +356,8 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
 
         {/* ── the itemisation ────────────────────────────────────── */}
         <View style={s.tHead}>
-          <Text style={[s.tHeadCell, s.rowLabel]}>{inlineBi(L.description).toUpperCase()}</Text>
-          <Text style={[s.tHeadCell, s.rowAmount]}>{inlineBi(L.amount).toUpperCase()}</Text>
+          <Text hyphenationCallback={NO_HYPHENS} style={[s.tHeadCell, s.rowLabel]}>{inlineBi(L.description).toUpperCase()}</Text>
+          <Text hyphenationCallback={NO_HYPHENS} style={[s.tHeadCell, s.rowAmount]}>{inlineBi(L.amount).toUpperCase()}</Text>
         </View>
 
         {props.groups.map((group, i) => {
@@ -368,12 +368,12 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
                 <Label value={label} style={s.rowPrimary} subStyle={s.rowSecondary} />
                 {group.parts.map((part) => (
                   <View key={part.label} style={s.part}>
-                    <Text style={s.partLabel}>{part.label}</Text>
-                    <Text style={s.partAmount}>{money(part.amountCents)}</Text>
+                    <Text hyphenationCallback={NO_HYPHENS} style={s.partLabel}>{part.label}</Text>
+                    <Text hyphenationCallback={NO_HYPHENS} style={s.partAmount}>{money(part.amountCents)}</Text>
                   </View>
                 ))}
               </View>
-              <Text style={s.rowAmount}>{money(group.amountCents)}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.rowAmount}>{money(group.amountCents)}</Text>
             </View>
           );
         })}
@@ -381,22 +381,22 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
         {/* ── totals ─────────────────────────────────────────────── */}
         <View style={s.totals}>
           <View style={s.totalRow}>
-            <Text style={s.totalLabel}>{inlineBi(L.total)}</Text>
-            <Text style={s.totalValue}>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.totalLabel}>{inlineBi(L.total)}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.totalValue}>
               {money(total.amountCents)} {total.currency}
             </Text>
           </View>
           {props.paidCents !== 0 ? (
             <View style={s.totalRow}>
-              <Text style={s.totalLabel}>{inlineBi(L.paid)}</Text>
-              <Text style={s.totalValue}>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.totalLabel}>{inlineBi(L.paid)}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.totalValue}>
                 −{money(props.paidCents)} {total.currency}
               </Text>
             </View>
           ) : null}
           <View style={s.dueRow}>
-            <Text style={s.dueLabel}>{inlineBi(L.due)}</Text>
-            <Text style={s.dueValue}>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.dueLabel}>{inlineBi(L.due)}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.dueValue}>
               {money(dueCents)} {total.currency}
             </Text>
           </View>
@@ -413,12 +413,12 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
         */}
         {props.depositHeldCents !== null && props.depositHeldCents > 0 ? (
           <View style={s.noteBox}>
-            <Text style={s.noteText}>
-              <Text style={s.noteStrong}>{money(props.depositHeldCents)} USD — </Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={s.noteText}>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.noteStrong}>{money(props.depositHeldCents)} USD — </Text>
               {L.depositNote.primary}
             </Text>
             {L.depositNote.secondary ? (
-              <Text style={[s.noteText, { color: INK.char600, marginTop: 2 }]}>
+              <Text hyphenationCallback={NO_HYPHENS} style={[s.noteText, { color: INK.char600, marginTop: 2 }]}>
                 {L.depositNote.secondary}
               </Text>
             ) : null}
@@ -426,7 +426,7 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
         ) : null}
 
         {/* ── how to pay ─────────────────────────────────────────── */}
-        <Text style={s.payTitle}>{inlineBi(L.payTitle).toUpperCase()}</Text>
+        <Text hyphenationCallback={NO_HYPHENS} style={s.payTitle}>{inlineBi(L.payTitle).toUpperCase()}</Text>
         <View style={s.payGrid}>
           <View style={s.payCol}>
             <BankRow label={inlineBi(L.beneficiary)} value={bank.beneficiary} />
@@ -444,18 +444,18 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
 
           <View style={s.payCol}>
             <View style={s.refBox}>
-              <Text style={s.refLabel}>{inlineBi(L.reference).toUpperCase()}</Text>
-              <Text style={s.refValue}>{props.paymentReference}</Text>
-              <Text style={s.refHint}>{inlineBi(L.referenceHint)}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.refLabel}>{inlineBi(L.reference).toUpperCase()}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.refValue}>{props.paymentReference}</Text>
+              <Text hyphenationCallback={NO_HYPHENS} style={s.refHint}>{inlineBi(L.referenceHint)}</Text>
             </View>
             {props.dueAt ? (
               <View style={{ marginBottom: 8 }}>
-                <Text style={s.deadlineLabel}>{inlineBi(L.deadline).toUpperCase()}</Text>
-                <Text style={s.deadlineValue}>{day(props.dueAt)}</Text>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.deadlineLabel}>{inlineBi(L.deadline).toUpperCase()}</Text>
+                <Text hyphenationCallback={NO_HYPHENS} style={s.deadlineValue}>{day(props.dueAt)}</Text>
               </View>
             ) : null}
-            <Text style={[s.noteText, { fontWeight: 700 }]}>{L.chargesTitle.primary}</Text>
-            <Text style={[s.noteText, { color: INK.char600 }]}>{L.chargesBody.primary}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={[s.noteText, { fontWeight: 700 }]}>{L.chargesTitle.primary}</Text>
+            <Text hyphenationCallback={NO_HYPHENS} style={[s.noteText, { color: INK.char600 }]}>{L.chargesBody.primary}</Text>
           </View>
         </View>
 
@@ -465,8 +465,8 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
           on top of each other — legible in neither language.
         */}
         <View style={s.footer} fixed>
-          <Text style={s.footerText}>{inlineBi(L.vatNote)}</Text>
-          <Text style={s.footerRight}>
+          <Text hyphenationCallback={NO_HYPHENS} style={s.footerText}>{inlineBi(L.vatNote)}</Text>
+          <Text hyphenationCallback={NO_HYPHENS} style={s.footerRight}>
             {props.seller.name} · {props.seller.email} · {props.seller.phone}
           </Text>
         </View>
@@ -478,8 +478,8 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
 function BankRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
     <View style={s.bankRow}>
-      <Text style={s.bankLabel}>{label}</Text>
-      <Text style={strong ? s.bankValueMono : s.bankValue}>{value}</Text>
+      <Text hyphenationCallback={NO_HYPHENS} style={s.bankLabel}>{label}</Text>
+      <Text hyphenationCallback={NO_HYPHENS} style={strong ? s.bankValueMono : s.bankValue}>{value}</Text>
     </View>
   );
 }

@@ -54,6 +54,29 @@ function face(file: string): string {
   return `data:font/ttf;base64,${bytes.toString("base64")}`;
 }
 
+/**
+ * Passed as a PROP to every <Text> in both invoice documents, because the
+ * global route is unreliable: the renderer package ships dual ESM/CJS
+ * builds, each with its OWN FontStore singleton, and a callback registered
+ * on one instance is invisible to a layout run using the other — which is
+ * how «Комиссию printed as «- on a dev render while an isolated script
+ * wrapped cleanly. layout resolves node.props.hyphenationCallback FIRST,
+ * so the prop wins regardless of which store instance is live.
+ */
+export const NO_HYPHENS = (word: string): string[] => [word];
+
+/**
+ * AT MODULE TOP LEVEL, not inside the register function — measured, not
+ * guessed: registering during component render is TOO LATE (the layout
+ * captures the callback before component bodies run), and the per-<Text>
+ * hyphenationCallback prop is ignored by this react-pdf version entirely.
+ * A top-level call runs at import time, which is always before any render
+ * that could reach this module's documents. Without it the default
+ * hyphenator splits «Комиссию after the « and prints «- on a Russian
+ * invoice.
+ */
+Font.registerHyphenationCallback(NO_HYPHENS);
+
 let registered = false;
 
 export function registerInvoiceFonts(): void {
@@ -65,10 +88,6 @@ export function registerInvoiceFonts(): void {
       { src: face("DejaVuSans-Bold.ttf"), fontWeight: 700 },
     ],
   });
-  // DejaVu has no ligature table trouble, but react-pdf still hyphenates by
-  // default, and a hyphenated VIN or reference is a number a client cannot
-  // copy. Nothing on this document should ever break across a hyphen.
-  Font.registerHyphenationCallback((word) => [word]);
   registered = true;
 }
 
