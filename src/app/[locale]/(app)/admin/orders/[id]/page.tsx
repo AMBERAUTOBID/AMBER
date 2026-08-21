@@ -8,6 +8,7 @@ import {
   auctionImportSummary,
   getOrder,
   listCostLines,
+  listInvoices,
   listOrderFiles,
   listPayments,
   listStageEvents,
@@ -21,6 +22,12 @@ import StageEditor from "@/modules/orders/components/StageEditor";
 import FileUploader from "@/modules/orders/components/FileUploader";
 import FileStrip from "@/modules/orders/components/FileStrip";
 import MoneyEditor from "@/modules/orders/components/MoneyEditor";
+import InvoicePanel from "@/modules/orders/components/InvoicePanel";
+import ReceiptImport from "@/modules/orders/components/ReceiptImport";
+import ContainerPanel from "@/modules/orders/components/ContainerPanel";
+import PayoutVerdict from "@/modules/orders/components/PayoutVerdict";
+import { drawdownFactsFor } from "@/modules/orders/model/supplierLedger";
+import { containerView, linkableOrdersFor } from "@/modules/orders/model/containers";
 import OrderDetailsEditor from "@/modules/orders/components/OrderDetailsEditor";
 import AdminSection from "@/modules/admin/components/AdminSection";
 
@@ -60,13 +67,19 @@ export default async function AdminOrderPage({
 
   const t = await getTranslations({ locale, namespace: "AdminOrders" });
   const tOrders = await getTranslations({ locale, namespace: "Orders" });
+  const tAdminInvoice = await getTranslations({ locale, namespace: "Admin.invoice" });
+  const tContainer = await getTranslations({ locale, namespace: "Admin.container" });
 
-  const [files, events, importState, costs, payments] = await Promise.all([
+  const payoutFacts = await drawdownFactsFor(order.reference);
+  const container = order.containerId ? await containerView(order.containerId) : null;
+  const linkable = order.containerId ? [] : await linkableOrdersFor(order.userId);
+  const [files, events, importState, costs, payments, invoices] = await Promise.all([
     listOrderFiles(id),
     listStageEvents(id),
     auctionImportSummary(id),
     listCostLines(id),
     listPayments(id),
+    listInvoices(id),
   ]);
 
   const signed = await signFiles(files);
@@ -241,7 +254,30 @@ export default async function AdminOrderPage({
           />
         </AdminSection>
 
+        {/* The doctrine's verdict, where the "pay the auction" decision is
+            actually taken — the same facts the supplier ledger's guard reads. */}
+        {payoutFacts ? (
+          <div className="mt-8">
+            <PayoutVerdict
+              orderId={id}
+              facts={{
+                clientSettled: payoutFacts.clientSettled,
+                repeatClient: payoutFacts.repeatClient,
+                invoiceIssued: payoutFacts.invoiceIssued,
+                paymentDeclared: payoutFacts.paymentDeclared,
+              }}
+            />
+          </div>
+        ) : null}
+
         <AdminSection title={t("costs.heading")}>
+          {/* Copart files start from the receipt, not from typing. */}
+          {order.platform === "copart" ? (
+            <ReceiptImport
+              orderId={id}
+              alreadyPriced={costs.some((c) => c.kind === "auction_price")}
+            />
+          ) : null}
           <MoneyEditor
             orderId={id}
             locale={locale}
@@ -264,6 +300,51 @@ export default async function AdminOrderPage({
               method: p.method,
               reference: p.reference,
               visibleToClient: p.visibleToClient,
+            }))}
+          />
+        </AdminSection>
+
+        {/* Below the money editor on purpose: the lines are the source, the
+            invoice is the document derived from them. */}
+        <AdminSection title={tAdminInvoice("heading")} count={invoices.length}>
+          <InvoicePanel
+            orderId={id}
+            invoices={invoices.map((invoice) => ({
+              id: invoice.id,
+              number: invoice.number,
+              totalCents: invoice.totalCents,
+              currency: invoice.currency,
+              issuedAt: invoice.issuedAt.toISOString(),
+            }))}
+          />
+        </AdminSection>
+
+        {/* Dedicated containers: volume buyers whose freight is one
+            negotiated sum on its own invoice, due before loading. */}
+        <AdminSection title={tContainer("heading")}>
+          <ContainerPanel
+            orderId={id}
+            container={
+              container
+                ? {
+                    id: container.id,
+                    reference: container.reference,
+                    containerType: container.containerType,
+                    freightCents: container.freightCents,
+                    dueAt: container.dueAt.toISOString(),
+                    paidAt: container.paidAt?.toISOString() ?? null,
+                    invoices: container.invoices.map((invoice) => ({
+                      id: invoice.id,
+                      number: invoice.number,
+                      issuedAt: invoice.issuedAt.toISOString(),
+                    })),
+                  }
+                : null
+            }
+            linkable={linkable.map((o) => ({
+              id: o.id,
+              reference: o.reference,
+              title: [o.year, o.make, o.model].filter(Boolean).join(" ") || o.reference,
             }))}
           />
         </AdminSection>
