@@ -22,6 +22,8 @@
  * wrong.
  */
 
+import type { VehicleListItem } from "../api/types";
+
 /** The four hosts that actually appear in `auction_lot_images`. Adding one is a
  * deliberate act: it widens what our server can be pointed at. */
 export const ALLOWED_IMAGE_HOSTS = new Set([
@@ -87,4 +89,40 @@ export function shouldProxyImages(): boolean {
 /** `proxiedImageUrl` when the switch is on, the original URL when it is off. */
 export function displayImageUrl(sourceUrl: string): string {
   return shouldProxyImages() ? proxiedImageUrl(sourceUrl) : sourceUrl;
+}
+
+/**
+ * A lot whose photo URLs go through the proxy when the switch is on.
+ *
+ * Applied at the RENDER SITE, as the last transformation before the markup —
+ * never inside a data mapping. The order is load-bearing: `photoUrlForSize`
+ * recognises the CDNs' own URL shapes and returns anything else untouched, so a
+ * URL wrapped into `/api/auction-image?u=…` first would silently stop being
+ * resized — every card would fetch the full 276 KB `_hrs` file through our
+ * server, undoing the size work while tripling the proxy's bill.
+ *
+ * Wrapping at the render site also keeps stored copies clean: the favourites
+ * and bid-request snapshots persist whatever URL the lot carries, and a raw CDN
+ * URL in the database stays true if the proxy route ever moves.
+ *
+ * Video `url`s are left alone: the route relays only `image/*`, so a proxied
+ * video would 502 instead of play.
+ *
+ * Safe to apply to an item that is already wrapped — a relative
+ * `/api/auction-image` path fails `new URL` inside the allowlist check and
+ * passes through unchanged.
+ */
+export function withProxiedMedia<T extends Pick<VehicleListItem, "media">>(item: T): T {
+  if (!shouldProxyImages() || !item.media) return item;
+  const media = { ...item.media };
+  if (media.thumbs) media.thumbs = media.thumbs.map(displayImageUrl);
+  if (media.items) {
+    media.items = media.items.map((m) => ({
+      ...m,
+      thumb: m.thumb === undefined ? undefined : displayImageUrl(m.thumb),
+      large: m.large === undefined ? undefined : displayImageUrl(m.large),
+      full: m.full === undefined ? undefined : displayImageUrl(m.full),
+    }));
+  }
+  return { ...item, media };
 }

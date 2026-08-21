@@ -1,9 +1,13 @@
-import { MapPin, Gauge } from "@phosphor-icons/react/dist/ssr";
+import { MapPin, Gauge, GasPump, GearSix, Engine, Palette, FileText } from "@phosphor-icons/react/dist/ssr";
 import { Link } from "@/i18n/navigation";
 import type { VehicleListItem } from "@/modules/inventory/api";
 import { formatOdometer } from "@/modules/inventory/model/formatOdometer";
+import { engineDisplay, titleCaseSpec } from "@/modules/inventory/model/cardSpecs";
+import { normalizeTitle } from "@/modules/inventory/model/lotNormalize";
+import { platformBadgeClass } from "@/modules/inventory/model/platformBrand";
 import { formatLotTitle } from "@/modules/inventory/model/modelTree";
 import MadeInUsaBadge from "@/modules/inventory/components/MadeInUsaBadge";
+import CardPhoto from "@/modules/inventory/components/CardPhoto";
 
 /** Lots that haven't been bid on yet come back as 0, not null - printing
  * "$0" would read as a price rather than as "no bids yet". */
@@ -37,6 +41,15 @@ export default function LotCard({
     currentBid: string;
     buyNow: string;
     madeInUsa?: string;
+    /**
+     * The SAME translated bucket names the document filter shows
+     * (`Search.filters.options.title`). The card used to print the auction's
+     * raw wording — IAAI's "Clear (Florida)" beside Copart's "MD - CERT OF
+     * TITLE-SALVAGE" — and the owner read "Clear" as a category the filters
+     * don't offer. One vocabulary on filter and card ends that; the raw
+     * string still shows on the lot page, where legal nuance belongs.
+     */
+    documentTypes?: Record<string, string>;
   };
   /**
    * Whether the car was built in the United States — `null` when the VIN can't
@@ -85,10 +98,45 @@ export default function LotCard({
   const headlineKind = bid ? labels.currentBid : buyNow ? labels.buyNow : null;
   const odometerLabel = formatOdometer(vehicle.odometer);
 
+  /**
+   * The spec chips, owner-requested 2026-08-21 after seeing a competitor's
+   * cards. Icon + value, no label words — which is what lets this ship without
+   * a single new locale key. All five fields arrive IN the search response the
+   * card already has (94–99% coverage measured on 122k upcoming lots), so the
+   * row costs zero extra Apibara calls on either source; a missing field just
+   * leaves its chip out.
+   */
+  const specs = vehicle.vehicle_specs;
+  const fuel = specs?.fuel_type ? titleCaseSpec(specs.fuel_type) : null;
+  const gearbox = specs?.transmission ? titleCaseSpec(specs.transmission) : null;
+  const engine = specs?.engine?.raw ? engineDisplay(specs.engine.raw) : null;
+  const color = specs?.exterior_color ? titleCaseSpec(specs.exterior_color) : null;
+  /**
+   * The filter's word for the document, not the auction's. `normalizeTitle`
+   * folds both dialects into the six buckets the filter offers (IAAI's "Clear"
+   * IS the clean bucket); `other` falls back to the raw string because "Other"
+   * on a card says nothing while "DEALER ONLY" at least says something.
+   */
+  const docName = vehicle.sale_document?.name ?? null;
+  const docBucket = docName ? normalizeTitle(docName) : null;
+  const docLabel =
+    docBucket && docBucket !== "other"
+      ? (labels.documentTypes?.[docBucket] ?? docName)
+      : docName;
+
   return (
     // The wrapper carries the hover treatment and `group`, so hovering the
     // save button lifts the card too rather than fighting it.
-    <div className="group relative overflow-hidden rounded-2xl border border-char-200 bg-white transition-all hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-900/5">
+    //
+    // `h-full flex flex-col`: both containers this card lives in stretch their
+    // children (the home rail is a flex row, the search results a grid), but
+    // without this the card itself stopped at its content and a row of cards
+    // ended at five different heights — owner reported it on the rail
+    // 2026-08-21. The card fills the stretched slot and the body below anchors
+    // its last block to the bottom, so the variance (a Buy Now line, a
+    // countdown, a wrapped damage note) is absorbed mid-card instead of
+    // showing as a ragged bottom edge.
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-char-200 bg-white transition-all hover:-translate-y-1 hover:border-amber-300 hover:shadow-xl hover:shadow-amber-900/5">
       {saveSlot && <div className="absolute right-2.5 top-2.5 z-10">{saveSlot}</div>}
       {/*
         BY LOT NUMBER, NOT BY VIN — and that is the whole fix for a card that
@@ -110,45 +158,23 @@ export default function LotCard({
         both tried and ignored. 29 ambiguous is the price of fixing every car
         that has ever been auctioned twice; the trade is deliberate.
       */}
-      <Link href={`/vehicle/${vehicle.lot_number}`} className="block">
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-char-100">
+      <Link href={`/vehicle/${vehicle.lot_number}`} className="flex flex-1 flex-col">
+      <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-char-100">
         {photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={photo}
-            alt={vehicle.title}
-            /**
-             * ⚠️ TWENTY OF THESE LOAD AT ONCE ON A SEARCH PAGE, and about six
-             * are on screen. Measured 2026-08-20: none of them were lazy, so a
-             * phone fetched every photograph in the grid before the visitor had
-             * scrolled to any of them.
-             *
-             * `decoding="async"` for the same reason from the other end: the
-             * main thread should not block decoding a JPEG for a card that is
-             * still below the fold.
-             *
-             * ⚠️ NOT `priority`/eager on the first row, deliberately. These
-             * cards are also the home page's rail, where the row starts off
-             * screen — a rule that helps search would hurt there, and the
-             * component cannot tell which page it is on.
-             */
-            loading="lazy"
-            decoding="async"
-            // The intrinsic size of the card variant we now request — see
-            // photoSize.ts. Given so the browser can reserve the box before the
-            // bytes arrive; the 4:3 wrapper already fixes the layout, so this is
-            // belt and braces rather than the fix for a jump.
-            width={960}
-            height={720}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+          // The img itself lives in a small client component so a DEAD photo
+          // (upstream 404 — they exist in the catalogue) collapses into the
+          // same "no photo" state below instead of the browser's broken-image
+          // glyph. The lazy-loading and sizing rationale moved with it.
+          <CardPhoto src={photo} alt={vehicle.title} noPhotoLabel={labels.noPhoto} />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-char-500">
             {labels.noPhoto}
           </div>
         )}
         <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5">
-          <span className="rounded-full bg-char-900/80 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-sm ${platformBadgeClass(vehicle.platform, "photo")}`}
+          >
             {vehicle.platform}
           </span>
           {/* Only when the VIN actually says so. `usaMade === null` means the
@@ -159,10 +185,33 @@ export default function LotCard({
           )}
         </div>
       </div>
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         {/* Both sources shout the make and model in upper case, and both keep
             the auctions catch-all buckets in it. See formatLotTitle. */}
         <h3 className="line-clamp-1 font-bold text-char-900">{formatLotTitle(vehicle.title)}</h3>
+        {/* Three chips, never four: fuel + gearbox + litres always fit one
+            line at the card's 17rem; colour made the row wrap on half the
+            cards and now lives on its own line below — the owner asked for
+            one detail per line after seeing the ragged mix, 2026-08-21. */}
+        {(fuel || gearbox || engine) && (
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-char-500">
+            {fuel && (
+              <span className="inline-flex items-center gap-1">
+                <GasPump size={13} /> {fuel}
+              </span>
+            )}
+            {gearbox && (
+              <span className="inline-flex items-center gap-1">
+                <GearSix size={13} /> {gearbox}
+              </span>
+            )}
+            {engine && (
+              <span className="inline-flex items-center gap-1">
+                <Engine size={13} /> {engine}
+              </span>
+            )}
+          </div>
+        )}
         <div className="mt-1 flex items-baseline gap-2">
           <p className="text-lg font-bold text-amber-600">{headline ?? labels.priceNA}</p>
           {headlineKind && (
@@ -176,11 +225,24 @@ export default function LotCard({
             {labels.buyNow} <span className="text-amber-600">{buyNow}</span>
           </p>
         )}
-        {countdownSlot && <div className="mt-1.5">{countdownSlot}</div>}
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-char-500">
+        {/* min-height because LotCountdown deliberately renders nothing until
+            the client clock starts: without the reservation every card grew a
+            line a beat after first paint, which read as the row jumping. */}
+        {countdownSlot && <div className="mt-1.5 min-h-5">{countdownSlot}</div>}
+        {/* `mt-auto`: the detail block sits on the card's bottom edge, so
+            equal-height cards read as aligned rows rather than equal boxes
+            with ragged interiors. ONE detail per line, owner's call
+            2026-08-21: location and odometer used to share a wrapping row,
+            which laid the same facts out differently on every other card. */}
+        <div className="mt-auto flex flex-col gap-y-1 pt-2 text-xs text-char-500">
+          {color && (
+            <span className="inline-flex items-center gap-1">
+              <Palette size={13} className="shrink-0" /> {color}
+            </span>
+          )}
           {vehicle.location?.display && (
             <span className="inline-flex items-center gap-1">
-              <MapPin size={13} /> {vehicle.location.display}
+              <MapPin size={13} className="shrink-0" /> {vehicle.location.display}
             </span>
           )}
           {/* Miles with kilometres beside them: the auctions publish miles, the
@@ -189,7 +251,15 @@ export default function LotCard({
               searchable lots read one or the other. */}
           {odometerLabel && (
             <span className="inline-flex items-center gap-1">
-              <Gauge size={13} /> {odometerLabel}
+              <Gauge size={13} className="shrink-0" /> {odometerLabel}
+            </span>
+          )}
+          {/* The sale document decides more purchases than any spec — salvage
+              and clean title are different products. */}
+          {docLabel && (
+            <span className="flex min-w-0 items-center gap-1">
+              <FileText size={13} className="shrink-0" />
+              <span className="truncate">{docLabel}</span>
             </span>
           )}
         </div>

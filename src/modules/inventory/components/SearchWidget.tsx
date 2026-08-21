@@ -460,17 +460,20 @@ export default function SearchWidget({
       </AnimatePresence>
 
       <div className="mt-4 flex flex-wrap items-center gap-2.5 border-t border-char-100 pt-4">
+        {/* The auctions' own logo colours, matching the card and lot-page
+            badges — see platformBrand.ts, where the white-text contrast on
+            both was measured, not assumed. */}
         <AuctionToggle
           checked={copartOn}
           onChange={setCopartOn}
           label={labels.copartToggle}
-          activeClass="border-amber-500 bg-amber-600 text-white"
+          activeClass="border-[#005DAA] bg-[#005DAA] text-white"
         />
         <AuctionToggle
           checked={iaaiOn}
           onChange={setIaaiOn}
           label={labels.iaaiToggle}
-          activeClass="border-char-800 bg-char-800 text-white"
+          activeClass="border-[#C8102E] bg-[#C8102E] text-white"
         />
       </div>
     </div>

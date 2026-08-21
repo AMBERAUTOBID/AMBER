@@ -11,7 +11,6 @@
  *
  * Pure and database-free so it can be tested without a connection.
  */
-import { displayImageUrl } from "./imageProxy";
 import { photoUrlForSize } from "./photoSize";
 import type { VehicleListItem } from "../api/types";
 
@@ -142,13 +141,14 @@ export function mirrorRowToVehicleListItem(
 ): VehicleListItem {
   const odometer = mirrorOdometer(row);
   const pricing = mirrorPricing(row, now);
+  // Raw CDN URLs, deliberately: the proxy wrap (`withProxiedMedia`) happens at
+  // the render site, AFTER `photoUrlForSize` — a wrapped URL is one the size
+  // rewrite no longer recognises. It also keeps the favourites and bid-request
+  // snapshots storing the CDN's own URL rather than our route's.
   const thumbs = images
     .slice()
     .sort((a, b) => a.position - b.position)
-    // Hotlinked to the auction CDN unless IMAGE_PROXY is on — see imageProxy.ts.
-    // The switch exists because a Referer check on their side blanks every photo
-    // on the site at once, and the fix should not need a deploy.
-    .map((i) => displayImageUrl(i.sourceUrl));
+    .map((i) => i.sourceUrl);
 
   return {
     platform: row.platform as VehicleListItem["platform"],

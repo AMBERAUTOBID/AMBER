@@ -74,7 +74,10 @@ export interface VehicleListItem {
     last_sold_price_usd?: number | null;
     estimated_cost?: { from?: number; to?: number; text?: string };
   };
-  /** `send_from` is the US departure port the auction branch feeds into. */
+  /** ⚠️ `send_from` is NOT auction data — it is the AGGREGATOR'S own
+   * export-routing note (they run a shipping business). Verified 2026-08-21 on
+   * lot 45501928: iaai.com shows no port, their API says "Norfolk". Do not
+   * present it to visitors as a fact about the lot. */
   location?: { display?: string; send_from?: string | null; state?: string | null };
   seller?: { name?: string; type?: string };
   condition?: {

@@ -50,6 +50,7 @@ import type {
 } from "./types";
 import { isStillUpcoming } from "../model/relatedLots";
 import { shouldRescueMisspelling } from "../model/searchQuery";
+import { interleavePage } from "../model/platformInterleave";
 import {
   mirrorRowToVehicleListItem,
   BUY_NOW_MARGIN_HOURS,
@@ -902,28 +903,48 @@ async function runSearch(
       (await auctionDb().select({ total: count() }).from(t).where(condition))[0].total;
 
     /**
-     * The slice `[offset, offset + perPage)` of the three segments concatenated.
+     * The slice `[from, from + want)` of the given segments concatenated.
      *
      * A segment's size is asked for only when it cannot be deduced: a page that
      * fills inside one segment asks nothing at all, and a short-but-non-empty
      * page reveals where that segment ended for free. Only a page landing
      * wholly beyond a segment pays for a count — the deep-paging case.
+     *
+     * Parameterised rather than closing over the page, because the platform
+     * interleave below reads two independent slices of it per page.
      */
-    const collect = async (conditions: (typeof biddable)[]) => {
+    const collect = async (conditions: (typeof biddable)[], from: number, want: number) => {
       // The DB row, not the display shape: `mirrorRowToVehicleListItem` and the
       // image lookup both need `id`, which MirrorLotRow deliberately lacks.
       const rows: (typeof t.$inferSelect)[] = [];
       let consumed = 0; // combined size of the segments already walked past
       for (const condition of conditions) {
-        const want = perPage - rows.length;
-        if (want <= 0) break;
-        const from = Math.max(0, offset + rows.length - consumed);
-        const got = await segment(condition, want, from);
+        const need = want - rows.length;
+        if (need <= 0) break;
+        const at = Math.max(0, from + rows.length - consumed);
+        const got = await segment(condition, need, at);
         rows.push(...got);
-        if (got.length === want) break;
-        consumed += got.length > 0 || from === 0 ? from + got.length : await sizeOf(condition);
+        if (got.length === need) break;
+        consumed += got.length > 0 || at === 0 ? at + got.length : await sizeOf(condition);
       }
       return rows;
+    };
+
+    /**
+     * One platform's own view of the same three segments — the stream the
+     * default order interleaves. See platformInterleave.ts for why the default
+     * page mixes the auctions at all: sale blocks are platform-pure, so pure
+     * deadline order fed visitors a wall of one auction (owner, 2026-08-21).
+     * Interleaving applies ONLY when the visitor has not chosen a platform and
+     * not chosen a sort — an explicit choice means the pure order is the ask.
+     */
+    const streamFor = (platform: "iaai" | "copart") => {
+      const p = eq(t.platform, platform);
+      const segments = [and(biddable, p)!, and(imminent, p)!, and(relisted, p)!];
+      return {
+        fetch: (from: number, want: number) => collect(segments, from, want),
+        size: async () => sizeOf(and(where, p)!),
+      };
     };
 
     // An explicit sort is one ordered scan over the whole filtered set — see
@@ -935,6 +956,10 @@ async function runSearch(
     // prints, and the aggregator's API structurally cannot provide it: its
     // `meta` carries no total, which is why "Search Results (256,934)" was
     // impossible before owning the rows.
+    const platformChosen = Array.isArray(params.platform)
+      ? params.platform.length > 0
+      : Boolean(params.platform);
+
     const [pageRows, [{ total: n }]] = await Promise.all([
       explicitSort
         ? auctionDb()
@@ -944,7 +969,9 @@ async function runSearch(
             .orderBy(...explicitSort(t))
             .limit(perPage)
             .offset(offset)
-        : collect([biddable, imminent, relisted]),
+        : platformChosen
+          ? collect([biddable, imminent, relisted], offset, perPage)
+          : interleavePage(streamFor("iaai"), streamFor("copart"), offset, perPage),
       auctionDb().select({ total: count() }).from(t).where(where),
     ]);
 

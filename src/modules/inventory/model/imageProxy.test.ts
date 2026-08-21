@@ -1,5 +1,12 @@
-import { describe, expect, it } from "vitest";
-import { isProxyableImageUrl, proxiedImageUrl, ALLOWED_IMAGE_HOSTS } from "./imageProxy";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  isProxyableImageUrl,
+  proxiedImageUrl,
+  displayImageUrl,
+  withProxiedMedia,
+  ALLOWED_IMAGE_HOSTS,
+} from "./imageProxy";
+import { photoUrlForSize } from "./photoSize";
 
 /**
  * This is a security boundary, not a formatting helper. Everything it accepts,
@@ -82,5 +89,76 @@ describe("proxiedImageUrl", () => {
     // A widening list is the failure mode here — each entry is another place our
     // server can be pointed at, so growth should be noticed.
     expect(ALLOWED_IMAGE_HOSTS.size).toBe(4);
+  });
+});
+
+describe("withProxiedMedia", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  const lot = () => ({
+    media: {
+      thumbs: ["https://cs.copart.com/v1/AUTH_x/lpp/0809/a_ful.jpg"],
+      items: [
+        {
+          type: "image",
+          thumb: "https://cs.copart.com/v1/AUTH_x/lpp/0809/a_thb.jpg",
+          large: "https://cs.copart.com/v1/AUTH_x/lpp/0809/a_ful.jpg",
+          full: "https://cs.copart.com/v1/AUTH_x/lpp/0809/a_hrs.jpg",
+        },
+        { type: "video", url: "https://vis.iaai.com/videos/engine.mp4" },
+      ],
+    },
+  });
+
+  it("is the identity while the switch is off", () => {
+    const l = lot();
+    expect(withProxiedMedia(l)).toBe(l);
+  });
+
+  it("wraps every photo slot when the switch is on", () => {
+    vi.stubEnv("IMAGE_PROXY", "on");
+    const out = withProxiedMedia(lot());
+    expect(out.media.thumbs[0].startsWith("/api/auction-image?u=")).toBe(true);
+    const img = out.media.items[0];
+    for (const key of ["thumb", "large", "full"] as const) {
+      expect(img[key]!.startsWith("/api/auction-image?u=")).toBe(true);
+    }
+  });
+
+  it("leaves a video url alone — the route relays only image/*", () => {
+    vi.stubEnv("IMAGE_PROXY", "on");
+    const out = withProxiedMedia(lot());
+    expect(out.media.items[1].url).toBe("https://vis.iaai.com/videos/engine.mp4");
+  });
+
+  it("does not wrap an already-wrapped item twice", () => {
+    // The related rail can hand it a mirror row whose URLs were wrapped by an
+    // earlier render-site pass; a second application must change nothing.
+    vi.stubEnv("IMAGE_PROXY", "on");
+    const once = withProxiedMedia(lot());
+    const twice = withProxiedMedia(once);
+    expect(twice.media.thumbs[0]).toBe(once.media.thumbs[0]);
+    expect(twice.media.items[0].thumb).toBe(once.media.items[0].thumb);
+  });
+
+  it("does not mutate its input", () => {
+    vi.stubEnv("IMAGE_PROXY", "on");
+    const l = lot();
+    withProxiedMedia(l);
+    expect(l.media.thumbs[0].startsWith("https://")).toBe(true);
+    expect(l.media.items[0].thumb!.startsWith("https://")).toBe(true);
+  });
+
+  it("composes AFTER the size rewrite, never before", () => {
+    // The order every render site must keep. Wrapped first, the size rewrite
+    // no longer recognises the URL and silently serves the full-size file —
+    // which is exactly the regression the 2026-08-20 size work exists to stop.
+    vi.stubEnv("IMAGE_PROXY", "on");
+    const src = "https://cs.copart.com/v1/AUTH_x/lpp/0809/a_hrs.jpg";
+    const wrappedFirst = displayImageUrl(src);
+    expect(photoUrlForSize(wrappedFirst, "card")).toBe(wrappedFirst);
+    expect(displayImageUrl(photoUrlForSize(src, "card"))).toContain(
+      encodeURIComponent("a_ful.jpg")
+    );
   });
 });
