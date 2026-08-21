@@ -67,6 +67,9 @@ export default function PaymentInstructions({
     account: string;
     swift: string;
     routing: string;
+    senderEu: string;
+    senderUs: string;
+    copy: string;
     noDetails: string;
     paidTitle: string;
     paidBody: string;

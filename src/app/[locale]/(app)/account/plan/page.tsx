@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { Check } from "@phosphor-icons/react/dist/ssr";
-import { requireUser } from "@/modules/account/model/requireUser";
+import { requireClient } from "@/modules/account/model/requireUser";
 import { planStatusFor } from "@/modules/account/model/planStatus";
 import CancelPlanRequest from "@/modules/account/components/CancelPlanRequest";
 import RequestRefund from "@/modules/account/components/RequestRefund";
@@ -38,7 +38,7 @@ export default async function AccountPlanPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const user = await requireUser(locale, "/account/plan");
+  const user = await requireClient(locale, "/account/plan");
 
   const t = await getTranslations({ locale, namespace: "Account.plan" });
   // Feature lines are generated from the plan table and live in the Plans
@@ -204,6 +204,9 @@ export default async function AccountPlanPage({
                 account: tPay("account"),
                 swift: tPay("swift"),
                 routing: tPay("routing"),
+                senderEu: tPay("senderEu"),
+                senderUs: tPay("senderUs"),
+                copy: tPay("copy"),
               }}
             />
           )}

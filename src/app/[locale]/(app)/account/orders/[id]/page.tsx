@@ -1,17 +1,25 @@
 import type { Metadata } from "next";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { CheckCircle, Circle, DownloadSimple, FileText } from "@phosphor-icons/react/dist/ssr";
+import {
+  CheckCircle,
+  Circle,
+  DownloadSimple,
+  FilePdf,
+  FileText,
+} from "@phosphor-icons/react/dist/ssr";
 import { Link } from "@/i18n/navigation";
 import { UUID } from "@/shared/validation";
-import { requireUser } from "@/modules/account/model/requireUser";
+import { requireClient } from "@/modules/account/model/requireUser";
 import {
   getOrderForUser,
   listCostLines,
   listPayments,
+  listInvoices,
   listVisibleOrderFiles,
   listVisibleStageEvents,
 } from "@/modules/orders/model/orders";
+import { containerView } from "@/modules/orders/model/containers";
 import { orderTitle } from "@/modules/orders/model/orderSnapshot";
 import { ORDER_STAGES, hasReached, stageProgress } from "@/modules/orders/model/stages";
 import {
@@ -53,7 +61,7 @@ export default async function ClientOrderPage({
 }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
-  const user = await requireUser(locale, `/account/orders/${id}`);
+  const user = await requireClient(locale, `/account/orders/${id}`);
 
   if (!UUID.test(id)) notFound();
   const order = await getOrderForUser(id, user.id);
@@ -81,13 +89,15 @@ export default async function ClientOrderPage({
    * client can find, their bank statement is the counter-record, and there is
    * no admin control that sets the flag in the first place.
    */
-  const [files, events, costLines, payments] = await Promise.all([
+  const [files, events, costLines, payments, invoices] = await Promise.all([
     listVisibleOrderFiles(id),
     listVisibleStageEvents(id),
     listCostLines(id),
     listPayments(id),
+    listInvoices(id),
   ]);
 
+  const container = order.containerId ? await containerView(order.containerId) : null;
   const signed = await signFiles(files);
   const byStage = new Map<string, typeof signed>();
   for (const file of signed) {
@@ -254,6 +264,82 @@ export default async function ClientOrderPage({
         </ol>
       </section>
 
+      {/* ── issued invoices ──────────────────────────────────────────────
+          Right above the payment panel: the document says what is owed, the
+          panel says where to send it. Only rendered once one exists — an
+          empty "Invoices (0)" section on a fresh file promises paperwork
+          before anyone has priced the car. */}
+      {invoices.length > 0 && (
+        <section className="mt-8 rounded-2xl border border-char-200/70 bg-white p-6 dark:bg-char-100/5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-char-500">
+            {t("invoice.heading")}
+          </h2>
+          <ul className="mt-3 divide-y divide-char-100">
+            {invoices.map((invoice) => (
+              <li key={invoice.id} className="flex flex-wrap items-center gap-3 py-3">
+                <FilePdf size={20} className="shrink-0 text-amber-700" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-char-900">{invoice.number}</p>
+                  <p className="text-xs text-char-500">
+                    {t("invoice.issuedOn", {
+                      date: format.dateTime(invoice.issuedAt, { dateStyle: "long" }),
+                    })}
+                  </p>
+                </div>
+                <span className="ml-auto text-sm font-semibold text-char-900">
+                  {formatMoney(invoice.totalCents, invoice.currency as "USD" | "EUR", locale)}
+                </span>
+                <a
+                  href={`/api/orders/${order.id}/invoices/${invoice.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-char-200 px-4 py-2 text-sm font-semibold text-char-800 transition-colors hover:border-amber-600 hover:text-amber-700"
+                >
+                  <DownloadSimple size={16} weight="bold" />
+                  {t("invoice.download")}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ── the dedicated container's freight, when there is one ────────
+          A separate box because it is a separate debt with its own deadline:
+          the cars are paid at once, the container 1–2 weeks before loading. */}
+      {container && container.invoices.length > 0 && (
+        <section className="mt-8 rounded-2xl border border-char-200/70 bg-white p-6 dark:bg-char-100/5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-char-500">
+            {t("invoice.freightHeading")} · {container.reference}
+          </h2>
+          <ul className="mt-3 divide-y divide-char-100">
+            {container.invoices.map((invoice) => (
+              <li key={invoice.id} className="flex flex-wrap items-center gap-3 py-3">
+                <FilePdf size={20} className="shrink-0 text-amber-700" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-char-900">{invoice.number}</p>
+                  <p className="text-xs text-char-500">
+                    {container.paidAt
+                      ? t("invoice.freightPaid")
+                      : t("invoice.freightDue", {
+                          date: format.dateTime(container.dueAt, { dateStyle: "long" }),
+                        })}
+                  </p>
+                </div>
+                <span className="ml-auto text-sm font-semibold text-char-900">
+                  {formatMoney(container.freightCents, "USD", locale)}
+                </span>
+                <a
+                  href={`/api/containers/${container.id}/invoices/${invoice.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-char-200 px-4 py-2 text-sm font-semibold text-char-800 transition-colors hover:border-amber-600 hover:text-amber-700"
+                >
+                  <DownloadSimple size={16} weight="bold" />
+                  {t("invoice.download")}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* ── how to pay ───────────────────────────────────────────────────
           ABOVE the itemisation, deliberately. A client who opens this page
           owing money wants two things — the number and where to send it — and
@@ -297,6 +383,9 @@ export default async function ClientOrderPage({
             account: t("pay.account"),
             swift: t("pay.swift"),
             routing: t("pay.routing"),
+            senderEu: t("pay.senderEu"),
+            senderUs: t("pay.senderUs"),
+            copy: t("pay.copy"),
             noDetails: t("pay.noDetails"),
             paidTitle: t("pay.paidTitle"),
             paidBody: t("pay.paidBody"),
