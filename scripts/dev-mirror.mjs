@@ -91,9 +91,13 @@ console.log(`  (.env.local is NOT modified)\n`);
 // server at all.
 spawn(process.execPath, ["node_modules/next/dist/bin/next", "dev", "--port", port], {
   stdio: "inherit",
+  // File first, real environment second — the same precedence Next itself
+  // gives .env.local: an explicitly set process variable must not be
+  // overwritten by a blank line in a file. Found the hard way: the file's
+  // empty WIRE_*= entries were erasing test values injected by the shim.
   env: {
-    ...process.env,
     ...env,
+    ...process.env,
     DATABASE_URL: appDb,
     DATABASE_URL_AUCTION: auctionDb,
     SEARCH_SOURCE: "postgres",
