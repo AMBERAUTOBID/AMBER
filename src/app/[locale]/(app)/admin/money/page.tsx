@@ -8,6 +8,7 @@ import { formatInstant } from "@/shared/time/formatInstant";
 import { currentAdmin } from "@/modules/admin/model/currentAdmin";
 import AdminSection from "@/modules/admin/components/AdminSection";
 import SupplierBalancePanel from "@/modules/orders/components/SupplierBalancePanel";
+import StatementImport from "@/modules/orders/components/StatementImport";
 import { supplierLedgerView } from "@/modules/orders/model/supplierLedger";
 import { listMoneyQueueRows, paymentDeclarations } from "@/modules/orders/model/orders";
 import { listUnpaidContainers } from "@/modules/orders/model/containers";
@@ -224,6 +225,14 @@ export default async function AdminMoneyPage({
             </div>
           </AdminSection>
         )}
+
+        {/* The bank-statement tool: upload the CSV, book what matches. Last,
+            because it is how rows LEAVE the queues above, not a queue itself
+            — and it records nothing of its own: every booking goes through
+            the case file's or the container's existing endpoint. */}
+        <AdminSection title={t("statement.heading")}>
+          <StatementImport />
+        </AdminSection>
       </div>
     </div>
   );
