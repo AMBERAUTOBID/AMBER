@@ -4,6 +4,7 @@
     "description": "SmartAutoBid bids and buys vehicles for you at Copart and IAAI auctions in the USA, then handles documentation and ocean freight all the way to your door — in Europe, the Middle East, and beyond."
   },
   "Nav": {
+    "skipToContent": "Skip to content",
     "home": "Home",
     "search": "Search",
     "offers": "Our Offers",
@@ -507,8 +508,16 @@
       "no": "No",
       "odometer": "Odometer",
       "airbags": "Airbags",
-      "vehicleGrade": "Condition score",
-      "catalyticConverter": "Catalytic converter"
+      "vehicleGrade": "IAAI Vehicle Score",
+      "catalyticConverter": "Catalytic converter",
+      "scoreInfo": {
+        "intro": "IAAI automatically scores a vehicle's condition on a 0–50 scale from photos and inspection data.",
+        "scaleHigh": "a vehicle with little damage",
+        "scaleLow": "non-repairable",
+        "factors": "Scored on: body panels, whether the vehicle drives, airbags and additional damage.",
+        "copartNote": "Copart lots do not carry this score.",
+        "source": "How IAAI scores it"
+      }
     },
     "vehicle": {
       "title": "Vehicle",

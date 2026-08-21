@@ -4,6 +4,7 @@
     "description": "SmartAutoBid jūsų vardu dalyvauja varžytynėse ir perka automobilius „Copart“ ir „IAAI“ aukcionuose JAV, sutvarko visus dokumentus ir organizuoja jūrų transportą iki jūsų durų — į Europą, Artimuosius Rytus ir kitas šalis."
   },
   "Nav": {
+    "skipToContent": "Peršokti į turinį",
     "home": "Pradžia",
     "search": "Paieška",
     "offers": "Mūsų automobiliai",
@@ -507,8 +508,16 @@
       "no": "Ne",
       "odometer": "Rida",
       "airbags": "Oro pagalvės",
-      "vehicleGrade": "Būklės įvertis",
-      "catalyticConverter": "Katalizatorius"
+      "vehicleGrade": "IAAI būklės įvertinimas",
+      "catalyticConverter": "Katalizatorius",
+      "scoreInfo": {
+        "intro": "„IAAI“ automatiškai vertina automobilio būklę 0–50 balų skalėje pagal nuotraukas ir apžiūros duomenis.",
+        "scaleHigh": "mažai pažeistas automobilis",
+        "scaleLow": "neremontuotinas",
+        "factors": "Vertinama: kėbulo panelės, ar automobilis važiuoja, oro pagalvės ir papildoma žala.",
+        "copartNote": "„Copart“ aukciono lotams šis įvertis neteikiamas.",
+        "source": "IAAI paaiškinimas"
+      }
     },
     "vehicle": {
       "title": "Transporto priemonė",

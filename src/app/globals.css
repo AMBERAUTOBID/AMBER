@@ -105,6 +105,43 @@ body {
   font-family: var(--font-sans);
 }
 
+/* One branded keyboard-focus ring for everything the mouse never needs.
+   `:focus-visible` (not `:focus`) so pointer clicks stay clean — only
+   keyboard and assistive tech see it. amber-500 measures ≥3:1 against BOTH
+   grounds this site actually has (white cards and the char-900 footer), which
+   is the WCAG bar for a non-text indicator — the text-contrast work of
+   2026-08-18 needed amber-600, but that 4.5:1 bar is for glyphs, not rings.
+   Form fields opt out with `outline-none` and keep their own amber
+   border + ring treatment, which was already visible. */
+:focus-visible {
+  outline: 2px solid var(--color-amber-500);
+  outline-offset: 2px;
+}
+
+/* Loading-skeleton shimmer: a light band sweeping across each placeholder,
+   owner-requested 2026-08-21 with one condition — it must not cost speed. It
+   doesn't: pure CSS on elements already being painted, zero JS, zero
+   requests, and `background-position` animates on the compositor. The
+   reduced-motion block below already stills it for those who ask. */
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--color-char-100) 40%,
+    var(--color-char-50) 50%,
+    var(--color-char-100) 60%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  from {
+    background-position-x: 200%;
+  }
+  to {
+    background-position-x: -100%;
+  }
+}
+
 h1,
 h2,
 h3,
