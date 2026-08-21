@@ -21,7 +21,13 @@
 import { getTranslations } from "next-intl/server";
 import { SITE, siteUrl } from "@/shared/config/site";
 import { formatUsd, isPlanKey } from "../model/plans";
-import { deliver, deliverQuietly } from "./deliver";
+import {
+  renderEmail,
+  send,
+  sendQuietly,
+  type EmailBlock,
+  type EmailDocument,
+} from "@/shared/mail";
 
 interface RefundRequestMail {
   user: { name: string; email: string; locale: string };
@@ -34,7 +40,7 @@ interface RefundRequestMail {
 }
 
 export async function sendRefundRequestEmails(mail: RefundRequestMail): Promise<void> {
-  await deliverQuietly("refund request", () =>
+  await sendQuietly("refund request", () =>
     Promise.all([sendAdminNotification(mail), sendClientCopy(mail)]).then(() => undefined)
   );
 }
@@ -60,12 +66,56 @@ async function sendAdminNotification({
     "Nothing has moved yet. Their plan keeps working until you mark it refunded.",
   ].join("\n");
 
-  await deliver({
+  await send({
     to: process.env.CONTACT_EMAIL_TO || SITE.email,
     replyTo: user.email,
     subject: `Refund requested: ${formatUsd(heldCents)} — ${user.name}`,
     text: body,
   });
+}
+
+/** The already-translated strings the client's copy is assembled from. */
+export interface RefundRequestCopy {
+  subject: string;
+  greeting: string;
+  received: string;
+  /**
+   * Null when the client holds money but no tier — an admin override can leave
+   * them that way, and "your Gold plan stays active" with no plan name in it
+   * reads as a bug in our software.
+   */
+  stillActive: string | null;
+  nextStep: string;
+  signature: string;
+}
+
+/**
+ * Builds the client's document, and takes no translator so anything can call
+ * it — the preview harness included, so the preview cannot drift from what a
+ * client actually receives.
+ */
+export function refundRequestDocument(copy: RefundRequestCopy, locale: string): EmailDocument {
+  const blocks: EmailBlock[] = [
+    { kind: "paragraph", text: copy.greeting },
+    { kind: "paragraph", text: copy.received },
+  ];
+
+  // A panel rather than a paragraph: this is the sentence that stops somebody
+  // abandoning a live bid, and it has to survive a skim.
+  if (copy.stillActive) blocks.push({ kind: "panel", text: copy.stillActive });
+
+  blocks.push({ kind: "paragraph", text: copy.nextStep });
+
+  return {
+    locale,
+    preheader: copy.received,
+    heading: copy.subject,
+    // Nobody asks for their money back while pleased with the service. The
+    // muted palette is the difference between an acknowledgement and a cheer.
+    tone: "neutral",
+    blocks,
+    footer: { note: copy.signature },
+  };
 }
 
 async function sendClientCopy({ user, planKey, heldCents }: RefundRequestMail): Promise<void> {
@@ -75,19 +125,18 @@ async function sendClientCopy({ user, planKey, heldCents }: RefundRequestMail): 
   // raw key rather than sending mail addressed to a broken string.
   const planName = planKey && isPlanKey(planKey) ? tPlans(`tiers.${planKey}.name`) : (planKey ?? "");
 
-  const body = [
-    t("greeting", { name: user.name }),
-    "",
-    t("received", { amount: formatUsd(heldCents) }),
-    "",
-    // Only when there is a plan to keep working. An admin override can leave
-    // someone holding money with no tier, and "your Gold plan stays active"
-    // with no plan name in it reads as a bug in our software.
-    ...(planName ? [t("stillActive", { plan: planName }), ""] : []),
-    t("nextStep", { email: SITE.email }),
-    "",
-    t("signature", { site: SITE.name }),
-  ].join("\n");
+  const subject = t("subject");
 
-  await deliver({ to: user.email, subject: t("subject"), text: body });
+  const copy: RefundRequestCopy = {
+    subject,
+    greeting: t("greeting", { name: user.name }),
+    received: t("received", { amount: formatUsd(heldCents) }),
+    stillActive: planName ? t("stillActive", { plan: planName }) : null,
+    nextStep: t("nextStep", { email: SITE.email }),
+    signature: t("signature", { site: SITE.name }),
+  };
+
+  const { html, text } = renderEmail(refundRequestDocument(copy, user.locale));
+
+  await send({ to: user.email, subject, text, html });
 }

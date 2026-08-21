@@ -20,6 +20,19 @@ const PHONE_DIGITS = PHONE_E164.replace(/\D/g, "");
 const TELEGRAM_HANDLE = "SmartAutoBid";
 const EMAIL = "info@smartautobid.com";
 
+/**
+ * Money has its own inbox.
+ *
+ * A separate Google Workspace user, not an alias — invoices, payment requests
+ * and the bank confirmations clients send back all land here instead of
+ * competing with sales enquiries in `info@`.
+ *
+ * It is already named in three admin hints in `messages/*.json`, which is the
+ * seven-copies problem starting over: the address belongs here, and anything
+ * that renders or sends from it should read it from here.
+ */
+const BILLING_EMAIL = "billing@smartautobid.com";
+
 /** Canonical origin. No `www`, no trailing slash — it is concatenated with
  * paths that carry their own leading slash. Also the registrar-chosen primary:
  * smartautobid.lt redirects here rather than serving its own copy. */
@@ -31,6 +44,8 @@ export const SITE = {
   /** Bare host, for display in places a full URL would look wrong. */
   domain: URL_ORIGIN.replace(/^https?:\/\//, ""),
   email: EMAIL,
+  /** Invoices, payment requests, and the confirmations clients send back. */
+  billingEmail: BILLING_EMAIL,
   phone: {
     /** Formatted for reading. */
     display: "+1 (912) 561-2347",
