@@ -10,7 +10,14 @@ import AdminSection from "@/modules/admin/components/AdminSection";
 import SupplierBalancePanel from "@/modules/orders/components/SupplierBalancePanel";
 import { supplierLedgerView } from "@/modules/orders/model/supplierLedger";
 import { listMoneyQueueRows, paymentDeclarations } from "@/modules/orders/model/orders";
-import { buildMoneyQueue, type MoneyQueueRow } from "@/modules/orders/model/moneyQueue";
+import { listUnpaidContainers } from "@/modules/orders/model/containers";
+import {
+  buildContainerQueue,
+  buildMoneyQueue,
+  FREIGHT_URGENT_WITHIN_HOURS,
+  type ContainerQueueInput,
+  type MoneyQueueRow,
+} from "@/modules/orders/model/moneyQueue";
 import { URGENT_WITHIN_HOURS } from "@/modules/orders/model/payment";
 import { formatMoney } from "@/modules/orders/model/money";
 import { orderTitle } from "@/modules/orders/model/orderSnapshot";
@@ -63,9 +70,10 @@ export default async function AdminMoneyPage({
   const format = await getFormatter({ locale });
 
   const supplier = await supplierLedgerView();
-  const [{ rows, truncated }, declarations] = await Promise.all([
+  const [{ rows, truncated }, declarations, unpaidContainers] = await Promise.all([
     listMoneyQueueRows(),
     paymentDeclarations(),
+    listUnpaidContainers(),
   ]);
 
   // One `now` for the whole page. Reading the clock per row would let two
@@ -75,10 +83,16 @@ export default async function AdminMoneyPage({
     rows.map((row) => ({ ...row, declaredAt: declarations.get(row.reference) ?? null })),
     now
   );
+  const containers = buildContainerQueue(unpaidContainers.rows);
 
   const { totals } = queue;
+  // Containers count too: "all clear" over an unpaid freight deadline would
+  // be exactly the silent omission this page exists to prevent.
   const nothingOutstanding =
-    queue.notInvoiced.length === 0 && queue.declared.length === 0 && queue.owed.length === 0;
+    queue.notInvoiced.length === 0 &&
+    queue.declared.length === 0 &&
+    queue.owed.length === 0 &&
+    containers.rows.length === 0;
 
   return (
     <div className="max-w-3xl">
@@ -123,7 +137,7 @@ export default async function AdminMoneyPage({
         </p>
       )}
 
-      {truncated && (
+      {(truncated || unpaidContainers.truncated) && (
         <p className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-char-800">
           <Warning size={17} weight="fill" className="mt-0.5 shrink-0 text-amber-600" />
           {t("truncated")}
@@ -180,6 +194,32 @@ export default async function AdminMoneyPage({
             <div className="space-y-3">
               {queue.owed.map((row) => (
                 <Row key={row.id} row={row} locale={locale} t={t} format={format} now={now} />
+              ))}
+            </div>
+          </AdminSection>
+        )}
+
+        {/* Freight runs on a different clock — weeks, not hours — and its
+            lever is "the container does not load", not a late fee, so it is
+            its own list rather than rows in the chase above. The reasoning
+            lives with `buildContainerQueue`. */}
+        {containers.rows.length > 0 && (
+          <AdminSection title={t("containersHeading")} count={containers.rows.length}>
+            <p className="-mt-2 mb-3 text-sm text-char-600">
+              {t("containersHint", {
+                amount: formatMoney(containers.totalCents, "USD", locale),
+              })}
+            </p>
+            <div className="space-y-3">
+              {containers.rows.map((row) => (
+                <ContainerRow
+                  key={row.id}
+                  row={row}
+                  locale={locale}
+                  t={t}
+                  format={format}
+                  now={now}
+                />
               ))}
             </div>
           </AdminSection>
@@ -294,6 +334,92 @@ function Row({
           </span>
         )}
       </div>
+    </Link>
+  );
+}
+
+/**
+ * One unpaid container, in the same visual grammar as an order row: the
+ * amount, then the deadline, then how you recognise it. It links to the case
+ * file hosting the container panel, because that is the only page where the
+ * freight can be invoiced or marked paid — this page records nothing, same
+ * rule as every other row on it.
+ */
+function ContainerRow({
+  row,
+  locale,
+  t,
+  format,
+  now,
+}: {
+  row: ContainerQueueInput;
+  locale: string;
+  t: (key: string, values?: Record<string, string | number | Date>) => string;
+  format: Awaited<ReturnType<typeof getFormatter>>;
+  now: Date;
+}) {
+  const msLeft = row.dueAt.getTime() - now.getTime();
+  const overdue = msLeft <= 0;
+  const urgent = !overdue && msLeft < FREIGHT_URGENT_WITHIN_HOURS * 3_600_000;
+
+  const className = `flex flex-col gap-3 rounded-2xl border bg-white p-4 transition-colors hover:border-amber-400 sm:flex-row sm:items-center sm:justify-between ${
+    overdue ? "border-red-300" : "border-char-200/70"
+  }`;
+
+  const body = (
+    <>
+      <div className="min-w-0">
+        <p className="text-xl font-extrabold tabular-nums tracking-tight text-char-900">
+          {formatMoney(row.freightCents, "USD", locale)}
+        </p>
+
+        <p
+          className={`mt-1 flex flex-wrap items-center gap-x-1.5 text-sm font-semibold ${
+            overdue ? "text-red-700" : urgent ? "text-amber-800" : "text-char-600"
+          }`}
+        >
+          <Clock size={14} weight={overdue || urgent ? "fill" : "regular"} />
+          <span>
+            {overdue ? t("overdueBy") : t("dueIn")} {format.relativeTime(row.dueAt, now)}
+          </span>
+          <span className="font-normal text-char-500">
+            <LocalDateTime
+              iso={row.dueAt.toISOString()}
+              locale={locale}
+              fallback={formatInstant(row.dueAt.toISOString(), locale, "UTC")}
+            />
+          </span>
+        </p>
+
+        <p className="mt-1.5 truncate text-sm text-char-700">
+          {row.containerType} · {t("containerCars", { count: row.carCount })} — {row.clientName}
+        </p>
+        <p className="truncate font-[family-name:var(--font-mono)] text-xs text-char-500">
+          {row.reference} · {row.clientEmail}
+        </p>
+      </div>
+
+      {/* No invoice means the client has nothing to pay against — the same
+          "our failure first" logic as the un-invoiced order list, worn as a
+          badge because freight has only one figure and one document. */}
+      {!row.invoiceIssued && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+            <Warning size={13} weight="fill" />
+            {t("noFreightInvoice")}
+          </span>
+        </div>
+      )}
+    </>
+  );
+
+  // A container whose every order vanished has no page to open. The no-delete
+  // rule makes this unreachable; a dead link on a money page keeps it handled.
+  if (!row.firstOrderId) return <div className={className}>{body}</div>;
+
+  return (
+    <Link href={`/admin/orders/${row.firstOrderId}`} className={className}>
+      {body}
     </Link>
   );
 }

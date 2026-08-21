@@ -249,3 +249,79 @@ export function buildMoneyQueue(inputs: MoneyQueueInput[], now: Date): MoneyQueu
 
   return { notInvoiced, declared, owed, totals };
 }
+
+/* ── Container freight ──────────────────────────────────────────────────── */
+
+/**
+ * When the freight deadline turns amber.
+ *
+ * Deliberately NOT `URGENT_WITHIN_HOURS` (6 h) — that constant is tuned to the
+ * order's 24-hour clock, where six hours is a quarter of the runway. Freight is
+ * due one to two weeks ahead and arrives by wire, which takes 1–6 working
+ * days: at six hours out the money has either left or the loading date is
+ * already lost. Two days is the last moment a chase can still change anything.
+ */
+export const FREIGHT_URGENT_WITHIN_HOURS = 48;
+
+/**
+ * One unpaid dedicated container, as the database reports it.
+ *
+ * No `orderMoney` reconciliation happens here and none is needed: the freight
+ * sum is a single frozen USD figure on the container row itself — negotiated
+ * once, never itemised, never part-paid in practice — so the only questions a
+ * row can answer are "how much", "by when", and "was the invoice ever sent".
+ */
+export interface ContainerQueueInput {
+  id: string;
+  reference: string;
+  containerType: string;
+  freightCents: number;
+  dueAt: Date;
+  paidAt: Date | null;
+  clientName: string;
+  clientEmail: string;
+  carCount: number;
+  /**
+   * The case file whose page hosts the container panel — the only place the
+   * freight can be invoiced or marked paid, so it is where the row must link.
+   * Null only if every linked order somehow vanished, which the no-delete rule
+   * forbids; handled anyway because a dead link on a money page is worse.
+   */
+  firstOrderId: string | null;
+  /** Whether a freight invoice has ever been issued for this container. */
+  invoiceIssued: boolean;
+}
+
+export interface ContainerQueue {
+  rows: ContainerQueueInput[];
+  /** Always USD — `containers.freightCents` has no currency column. */
+  totalCents: number;
+}
+
+/**
+ * Unpaid containers, soonest deadline first.
+ *
+ * ── WHY THIS IS ITS OWN LIST AND NOT ROWS IN `owed` ─────────────────────
+ * The order queues chase money for a car already bought — the auction's clock,
+ * hours-scale, and the failure mode is late fees. Freight is the opposite
+ * deal: the money must arrive BEFORE we commit to the shipping line, the
+ * clock is weeks-scale, and the lever is "the container does not load", not a
+ * penalty. Mixing the two would rank a freight row by a countdown calibrated
+ * to a different kind of deadline, and the mutually-exclusive bucket counts
+ * of `buildMoneyQueue` would stop adding up to the number of unsettled files.
+ */
+export function buildContainerQueue(inputs: ContainerQueueInput[]): ContainerQueue {
+  const rows = inputs
+    .filter((row) => row.paidAt === null)
+    .sort((a, b) => {
+      const left = a.dueAt.getTime();
+      const right = b.dueAt.getTime();
+      if (left !== right) return left - right;
+      return a.reference.localeCompare(b.reference);
+    });
+
+  return {
+    rows,
+    totalCents: rows.reduce((sum, row) => sum + row.freightCents, 0),
+  };
+}

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildMoneyQueue, moneyQueueRow, type MoneyQueueInput } from "./moneyQueue";
+import {
+  buildContainerQueue,
+  buildMoneyQueue,
+  moneyQueueRow,
+  type ContainerQueueInput,
+  type MoneyQueueInput,
+} from "./moneyQueue";
 
 const SOLD = new Date("2026-08-15T18:00:00Z");
 const hoursAfterSale = (h: number) => new Date(SOLD.getTime() + h * 3_600_000);
@@ -246,5 +252,62 @@ describe("the queue", () => {
     expect(queue.totals.usdCents).toBe(1_000_000);
     expect(queue.totals.eurCents).toBe(200_000);
     expect(queue.totals.orders).toBe(2);
+  });
+});
+
+describe("the container freight queue", () => {
+  let cntSeq = 0;
+  function container(overrides: Partial<ContainerQueueInput> = {}): ContainerQueueInput {
+    cntSeq += 1;
+    return {
+      id: `cnt-${cntSeq}`,
+      reference: `CNT-2026-${String(cntSeq).padStart(4, "0")}`,
+      containerType: "40ft",
+      freightCents: 320_000,
+      dueAt: new Date("2026-09-01T12:00:00Z"),
+      paidAt: null,
+      clientName: "Volume Buyer",
+      clientEmail: "volume@example.com",
+      carCount: 4,
+      firstOrderId: `order-${cntSeq}`,
+      invoiceIssued: true,
+      ...overrides,
+    };
+  }
+
+  it("drops paid containers entirely — a queue lists only unresolved work", () => {
+    const queue = buildContainerQueue([
+      container({ paidAt: new Date("2026-08-20T10:00:00Z") }),
+      container(),
+    ]);
+    expect(queue.rows).toHaveLength(1);
+    expect(queue.rows[0]!.paidAt).toBeNull();
+  });
+
+  it("orders by deadline, soonest first, reference as the tiebreak", () => {
+    const later = container({ dueAt: new Date("2026-09-10T12:00:00Z") });
+    const soonB = container({ dueAt: new Date("2026-09-01T12:00:00Z"), reference: "CNT-2026-0202" });
+    const soonA = container({ dueAt: new Date("2026-09-01T12:00:00Z"), reference: "CNT-2026-0101" });
+    const queue = buildContainerQueue([later, soonB, soonA]);
+    expect(queue.rows.map((r) => r.reference)).toEqual([
+      "CNT-2026-0101",
+      "CNT-2026-0202",
+      later.reference,
+    ]);
+  });
+
+  it("totals only what is actually unpaid", () => {
+    const queue = buildContainerQueue([
+      container({ freightCents: 320_000 }),
+      container({ freightCents: 280_000 }),
+      container({ freightCents: 999_999, paidAt: new Date("2026-08-20T10:00:00Z") }),
+    ]);
+    expect(queue.totalCents).toBe(600_000);
+  });
+
+  it("is empty-in, empty-out — the all-clear state must be reachable", () => {
+    const queue = buildContainerQueue([]);
+    expect(queue.rows).toHaveLength(0);
+    expect(queue.totalCents).toBe(0);
   });
 });

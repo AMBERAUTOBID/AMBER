@@ -2262,7 +2262,11 @@
     "overdueBy": "Terminas buvo",
     "noDeadline": "Pardavimo data neįrašyta, todėl termino nėra.",
     "saidSent": "Pranešė {when}",
-    "partPaid": "Sumokėta dalis"
+    "partPaid": "Sumokėta dalis",
+    "containersHeading": "Konteinerių frachtas",
+    "containersHint": "Iš viso {amount}. Frachtas mokamas prieš pakrovimą — neapmokėtas konteineris nepajuda.",
+    "containerCars": "{count, plural, one {# automobilis} few {# automobiliai} other {# automobilių}}",
+    "noFreightInvoice": "Sąskaita neišrašyta"
   },
   "AdminOrders": {
     "heading": "Automobiliai",

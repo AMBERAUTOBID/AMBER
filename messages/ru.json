@@ -2263,7 +2263,11 @@
     "overdueBy": "Срок был",
     "noDeadline": "Дата продажи не записана, поэтому срока нет.",
     "saidSent": "Сообщил {when}",
-    "partPaid": "Оплачено частично"
+    "partPaid": "Оплачено частично",
+    "containersHeading": "Фрахт контейнеров",
+    "containersHint": "Всего {amount}. Фрахт оплачивается до погрузки — неоплаченный контейнер не поедет.",
+    "containerCars": "{count, plural, one {# автомобиль} few {# автомобиля} many {# автомобилей} other {# автомобиля}}",
+    "noFreightInvoice": "Счёт не выставлен"
   },
   "AdminOrders": {
     "heading": "Автомобили",

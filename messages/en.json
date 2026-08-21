@@ -2262,7 +2262,11 @@
     "overdueBy": "Was due",
     "noDeadline": "No sale date recorded, so no deadline.",
     "saidSent": "Said sent {when}",
-    "partPaid": "Part paid"
+    "partPaid": "Part paid",
+    "containersHeading": "Container freight",
+    "containersHint": "{amount} in total. Freight is paid before loading — an unpaid container does not move.",
+    "containerCars": "{count, plural, one {# car} other {# cars}}",
+    "noFreightInvoice": "Not invoiced"
   },
   "AdminOrders": {
     "heading": "Vehicles",

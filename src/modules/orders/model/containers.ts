@@ -1,5 +1,6 @@
-import { and, desc, eq, inArray, isNull, like } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, like, sql } from "drizzle-orm";
 import { db, schema } from "@/shared/db/client";
+import type { ContainerQueueInput } from "./moneyQueue";
 
 /**
  * Dedicated containers — creation, linking, and the questions pages ask.
@@ -184,6 +185,97 @@ export async function createContainer(input: {
     }
   }
   throw new Error("container reference allocation failed three times");
+}
+
+/**
+ * Bounded like every list, but the bound is a formality: a container holds
+ * several cars and takes weeks to fill, so hundreds of simultaneously unpaid
+ * ones would mean the business has changed shape and this page is the least
+ * of it. The caller is still told when it happens — the money page must never
+ * silently omit a debt.
+ */
+export const CONTAINER_QUEUE_LIMIT = 200;
+
+/**
+ * Every unpaid dedicated container, for the admin money list.
+ *
+ * One query, same discipline as `listMoneyQueueRows`: the car count and the
+ * link target come from a grouped subquery rather than a fetch per container.
+ * `firstOrderId` is the lowest case reference's order — an arbitrary but
+ * stable choice of which case file page to open, since the container panel
+ * renders on every linked order.
+ *
+ * Ordered by deadline **ascending** so truncation could only ever drop the
+ * least urgent rows, mirroring the money queue's oldest-first rule.
+ */
+export async function listUnpaidContainers(limit = CONTAINER_QUEUE_LIMIT): Promise<{
+  rows: ContainerQueueInput[];
+  truncated: boolean;
+}> {
+  const cars = db()
+    .select({
+      containerId: schema.vehicleOrders.containerId,
+      count: sql<string>`count(*)`.as("car_count"),
+      firstOrderId:
+        sql<string>`(array_agg(${schema.vehicleOrders.id} order by ${schema.vehicleOrders.reference}))[1]`.as(
+          "first_order_id"
+        ),
+    })
+    .from(schema.vehicleOrders)
+    .where(isNotNull(schema.vehicleOrders.containerId))
+    .groupBy(schema.vehicleOrders.containerId)
+    .as("cars");
+
+  const invoices = db()
+    .select({
+      containerId: schema.orderInvoices.containerId,
+      count: sql<string>`count(*)`.as("invoice_count"),
+    })
+    .from(schema.orderInvoices)
+    .where(isNotNull(schema.orderInvoices.containerId))
+    .groupBy(schema.orderInvoices.containerId)
+    .as("invoices");
+
+  const rows = await db()
+    .select({
+      id: schema.containers.id,
+      reference: schema.containers.reference,
+      containerType: schema.containers.containerType,
+      freightCents: schema.containers.freightCents,
+      dueAt: schema.containers.dueAt,
+      paidAt: schema.containers.paidAt,
+      clientName: schema.users.name,
+      clientEmail: schema.users.email,
+      carCount: cars.count,
+      firstOrderId: cars.firstOrderId,
+      invoiceCount: invoices.count,
+    })
+    .from(schema.containers)
+    .innerJoin(schema.users, eq(schema.users.id, schema.containers.userId))
+    .leftJoin(cars, eq(cars.containerId, schema.containers.id))
+    .leftJoin(invoices, eq(invoices.containerId, schema.containers.id))
+    .where(isNull(schema.containers.paidAt))
+    .orderBy(asc(schema.containers.dueAt))
+    .limit(limit + 1);
+
+  // count() comes back as a bigint the driver hands over as a string —
+  // coerced here, the same boundary rule as the money queue.
+  return {
+    truncated: rows.length > limit,
+    rows: rows.slice(0, limit).map((row) => ({
+      id: row.id,
+      reference: row.reference,
+      containerType: row.containerType,
+      freightCents: row.freightCents,
+      dueAt: row.dueAt,
+      paidAt: row.paidAt,
+      clientName: row.clientName,
+      clientEmail: row.clientEmail,
+      carCount: Number(row.carCount ?? 0),
+      firstOrderId: row.firstOrderId ?? null,
+      invoiceIssued: Number(row.invoiceCount ?? 0) > 0,
+    })),
+  };
 }
 
 export async function markContainerPaid(containerId: string): Promise<boolean> {
