@@ -16,6 +16,10 @@ import MadeInUsaBadge from "@/modules/inventory/components/MadeInUsaBadge";
 import { formatOdometer } from "@/modules/inventory/model/formatOdometer";
 import { formatLotTitle } from "@/modules/inventory/model/modelTree";
 import { photoUrlForSize } from "@/modules/inventory/model/photoSize";
+import { displayImageUrl, withProxiedMedia } from "@/modules/inventory/model/imageProxy";
+import { platformBadgeClass } from "@/modules/inventory/model/platformBrand";
+import VehicleScoreBadge from "@/modules/inventory/components/VehicleScoreBadge";
+import { fullGalleryUrls } from "@/modules/inventory/api/apicarsGallery";
 import SaveLotButton from "@/modules/favorites/components/SaveLotButton";
 import { auctionDisplayName, auctionLotUrl } from "@/modules/inventory/model/auctionLotUrl";
 import { isStillUpcoming } from "@/modules/inventory/model/relatedLots";
@@ -197,7 +201,7 @@ export default async function VehicleDetailPage({
   const deepSpecs = extractLotDeepSpecs(detail);
   const { engineVideoUrl, view360Url } = extractMediaExtras(detail);
 
-  const photos =
+  let photos =
     detail.media?.items
       ?.filter((i) => i.type === "image" && i.large && i.thumb)
       // ⚠️ THE STRIP IS 64px WIDE AND WAS DOWNLOADING 164 KB PER SQUARE.
@@ -205,10 +209,31 @@ export default async function VehicleDetailPage({
       // photograph, not a thumbnail. Copart publishes `_thb` at 4.7 KB for
       // exactly this job, so twelve of them cost 56 KB instead of 2 MB.
       // `large` keeps what it was given: that one IS looked at.
+      // `displayImageUrl` LAST, outside the size rewrite: photoUrlForSize does
+      // not recognise a URL already wrapped into /api/auction-image?u=… — see
+      // withProxiedMedia's note in imageProxy.ts.
       .map((i) => ({
-        thumb: photoUrlForSize(i.thumb as string, "thumb"),
-        large: i.large as string,
+        thumb: displayImageUrl(photoUrlForSize(i.thumb as string, "thumb")),
+        large: displayImageUrl(i.large as string),
       })) ?? [];
+
+  // THE ONE-PHOTO RESCUE, owner-reported 2026-08-21: the aggregator's Copart
+  // galleries are a lottery (this page showed 1 photo while copart.com had
+  // 12), but apicars' per-lot endpoint returns the full set. Ask it only when
+  // our own sources came up short — the call is billed per lot and cached a
+  // day; see apicarsGallery.ts. A competitor's lot page never has one photo,
+  // and after this neither does ours whenever the vendor has more.
+  if (photos.length <= 2 && detail.lot_number) {
+    const gallery = await fullGalleryUrls(String(detail.lot_number));
+    if (gallery && gallery.length > photos.length) {
+      photos = gallery.map((u) => ({
+        thumb: displayImageUrl(photoUrlForSize(u, "thumb")),
+        // The vendor publishes `_hrs` — exactly the full-quality main photo
+        // the lot page wants (see photoSize.ts on why `full` keeps `_hrs`).
+        large: displayImageUrl(u),
+      }));
+    }
+  }
 
   const saleDate = detail.auction?.full_date ?? detail.auction?.auction_at ?? null;
   /**
@@ -349,7 +374,7 @@ export default async function VehicleDetailPage({
                   href={auctionUrl}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-char-900 px-2.5 py-1 text-white transition-colors hover:bg-amber-600"
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-white transition-colors hover:bg-amber-600 ${platformBadgeClass(detail.platform)}`}
                   title={t("viewOnAuction", { auction: auctionName ?? detail.platform })}
                 >
                   {detail.platform}
@@ -367,7 +392,7 @@ export default async function VehicleDetailPage({
                 )}
               </>
             ) : (
-              <span className="rounded-full bg-char-900 px-2.5 py-1 text-white">
+              <span className={`rounded-full px-2.5 py-1 text-white ${platformBadgeClass(detail.platform)}`}>
                 {detail.platform}
               </span>
             )}
@@ -578,9 +603,29 @@ export default async function VehicleDetailPage({
                     hint={deepSpecs?.odometerBrand}
                   />
                   <Spec label={t("condition.airbags")} value={detail.vehicle_specs?.airbags} />
+                  {/* IAAI's own 0–50 score, named as theirs (Copart lots have
+                      no such field and the row simply doesn't render). The
+                      value opens an explainer in the visitor's language — see
+                      VehicleScoreBadge for the measured facts behind it. */}
                   <Spec
                     label={t("condition.vehicleGrade")}
-                    value={deepSpecs?.vehicleGrade}
+                    value={
+                      deepSpecs?.vehicleGrade ? (
+                        <VehicleScoreBadge
+                          raw={deepSpecs.vehicleGrade}
+                          labels={{
+                            title: t("condition.vehicleGrade"),
+                            intro: t("condition.scoreInfo.intro"),
+                            scaleHigh: t("condition.scoreInfo.scaleHigh"),
+                            scaleLow: t("condition.scoreInfo.scaleLow"),
+                            factors: t("condition.scoreInfo.factors"),
+                            copartNote: t("condition.scoreInfo.copartNote"),
+                            source: t("condition.scoreInfo.source"),
+                            close: t("media.close"),
+                          }}
+                        />
+                      ) : undefined
+                    }
                   />
                   <Spec
                     label={t("condition.catalyticConverter")}
@@ -619,12 +664,14 @@ export default async function VehicleDetailPage({
                   <Spec label={t("sale.titleBrand")} value={deepSpecs?.titleBrand} />
                   <Spec label={t("sale.auctionDate")} value={auctionDateSpec} />
                   <Spec label={t("sale.branch")} value={deepSpecs?.branchAddress} />
-                  {/* The US port the branch feeds into - this is the leg our
-                      ocean-freight estimate is actually priced from. */}
-                  <Spec
-                    label={t("sale.departurePort")}
-                    value={detail.location?.send_from ?? undefined}
-                  />
+                  {/* `location.send_from` is deliberately NOT shown. It looked
+                      like auction data and is not: the owner checked lot
+                      45501928 on iaai.com (no port anywhere) while the
+                      aggregator's API stamps `send_from: "Norfolk"` — THEIR
+                      OWN export-routing note, since they run a shipping
+                      business too. Printing a third party's logistics plan on
+                      our lot page promised a departure port we never chose;
+                      our freight runs through mapGeo's own loading ports. */}
                   <Spec
                     label={t("sale.bidIncrement")}
                     value={
@@ -1095,7 +1142,9 @@ async function SimilarUpcoming({
   // than a full one.
   const upcoming = (related?.data.upcoming ?? [])
     .filter((v) => v.vin !== excludeVin && isStillUpcoming(v))
-    .slice(0, 6);
+    .slice(0, 6)
+    // Render-site proxy wrap, after the choosing — see withProxiedMedia.
+    .map(withProxiedMedia);
   if (upcoming.length === 0) return null;
 
   return (
@@ -1119,6 +1168,7 @@ async function SimilarUpcoming({
               currentBid: t("pricing.currentBid"),
               buyNow: t("pricing.buyNow"),
               madeInUsa: tSearch("results.madeInUsa"),
+              documentTypes: tSearch.raw("filters.options.title") as Record<string, string>,
             }}
             usaMade={isUsaBuiltVin(v.vin)}
             countdownSlot={(() => {

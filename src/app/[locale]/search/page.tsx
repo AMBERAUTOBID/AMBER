@@ -7,6 +7,7 @@ import SearchWidget from "@/modules/inventory/components/SearchWidget";
 import LotCard from "@/modules/inventory/components/LotCard";
 import LotCountdown from "@/modules/inventory/components/LotCountdown";
 import { ownSaleInstant } from "@/modules/inventory/model/saleInstant";
+import { withProxiedMedia } from "@/modules/inventory/model/imageProxy";
 import { isUsaBuiltVin } from "@/modules/pricing/model/costEstimate";
 import { Link } from "@/i18n/navigation";
 import FilterPanel, { countActiveFilters } from "@/modules/inventory/components/FilterPanel";
@@ -314,7 +315,10 @@ export default async function SearchPage({
               full-width column the page has always had. */}
           <div className={facets ? "grid gap-6 lg:grid-cols-[16rem_1fr]" : ""}>
             {facets && (
-              <div className="lg:sticky lg:top-6 lg:self-start">
+              /* The offsets clear the sticky header (73px, and 118px once the
+                 xl action strip appears) — this was `top-6`, which pinned the
+                 panel's first rows UNDER the translucent header glass. */
+              <div className="lg:sticky lg:top-[85px] lg:self-start xl:top-[130px]">
                 {/* Collapsed below lg, where the panel sits above the results
                     rather than beside them and pushes every car off the
                     screen. The panel itself is unchanged and still a server
@@ -457,7 +461,13 @@ export default async function SearchPage({
               so there the row simply never renders (facets are also absent,
               which is the same condition). */}
           {results && typeof results.meta.total === "number" && (
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            /* Sticky on desktop so the count and the sort order stay at hand
+               through twenty cards of scrolling — the sidebar already worked
+               this way, the row that controls it did not. Same glass treatment
+               as the header it docks under; offsets match the header's two
+               heights (73px, 118px with the xl strip). Mobile keeps the row
+               in flow: vertical room is the scarce thing there. */
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 lg:sticky lg:top-[73px] lg:z-30 lg:-mx-2 lg:bg-background/95 lg:px-2 lg:py-2.5 lg:backdrop-blur-sm xl:top-[118px]">
               <p className="text-sm text-char-500">
                 {t("results.count", { count: results.meta.total.toLocaleString() })}
               </p>
@@ -487,7 +497,10 @@ export default async function SearchPage({
               {results.data.map((v) => (
                 <LotCard
                   key={`${v.platform}-${v.vin}`}
-                  vehicle={v}
+                  // Wrapped HERE rather than in the source: the render site is
+                  // the one place that runs after every size rewrite, whichever
+                  // source answered. See withProxiedMedia.
+                  vehicle={withProxiedMedia(v)}
                   labels={{
                     noPhoto: t("results.noPhoto"),
                     priceNA: t("results.priceNA"),
@@ -495,6 +508,9 @@ export default async function SearchPage({
                     currentBid: t("results.currentBid"),
                     buyNow: t("results.buyNow"),
                     madeInUsa: t("results.madeInUsa"),
+                    // The document filter's own bucket names, so the card and
+                    // the filter never disagree about what "Clear" is.
+                    documentTypes: t.raw("filters.options.title") as Record<string, string>,
                   }}
                   // The same VIN rule the duty calculation uses, imported
                   // rather than restated — see LotCard's note on `usaMade`.

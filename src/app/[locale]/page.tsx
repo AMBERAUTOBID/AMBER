@@ -12,6 +12,7 @@ import {
   MARQUEE_LIMIT,
 } from "@/modules/inventory/model/marqueeMakes";
 import { ownSaleInstant } from "@/modules/inventory/model/saleInstant";
+import { withProxiedMedia } from "@/modules/inventory/model/imageProxy";
 import { isUsaBuiltVin } from "@/modules/pricing/model/costEstimate";
 import {
   SHOWCASE_QUERIES,
@@ -454,7 +455,9 @@ async function ShowcaseRail() {
 
   // `spread`: one car per marque per round, so the row opens Porsche, Ferrari,
   // Lamborghini… rather than four Porsches. See pickShowcase.
-  const lots = pickShowcase(pages, { limit: SHOWCASE_LIMIT, spread: true });
+  // Proxy wrap at the render site, after pickShowcase has done its choosing —
+  // see withProxiedMedia for why this never happens inside a data mapping.
+  const lots = pickShowcase(pages, { limit: SHOWCASE_LIMIT, spread: true }).map(withProxiedMedia);
   // An empty rail renders nothing at all rather than a heading over a gap.
   // Better a shorter page than a section that promises cars and shows none.
   if (lots.length === 0) return null;
@@ -534,6 +537,7 @@ async function ShowcaseRail() {
                 currentBid: tSearch("results.currentBid"),
                 buyNow: tSearch("results.buyNow"),
                 madeInUsa: tSearch("results.madeInUsa"),
+                documentTypes: tSearch.raw("filters.options.title") as Record<string, string>,
               }}
               // The same VIN rule the duty waiver uses, imported rather than
               // restated — see the note on LotCard's `usaMade`.
