@@ -1438,7 +1438,8 @@
       "bids": "My bids",
       "favorites": "Favourites",
       "plan": "Plan",
-      "details": "My details"
+      "details": "My details",
+      "shipping": "Shipping details"
     },
     "plan": {
       "title": "Your plan",
@@ -1519,6 +1520,71 @@
       "deleteYes": "Delete my account",
       "deleteNo": "Cancel",
       "deleting": "Deleting…"
+    },
+    "shipping": {
+      "title": "Shipping details",
+      "lede": "Fill this in once. When you win a car, we place the shipping order the same hour — nothing to chase at midnight.",
+      "gateOpen": "One step left before your bidding code",
+      "gateDone": "Shipping details complete — we can issue your bidding code",
+      "steps": {
+        "plan": "Plan confirmed",
+        "shipping": "Shipping details",
+        "code": "Bidding code"
+      },
+      "buyer": {
+        "heading": "Who is buying",
+        "exactly": "Exactly as written in your documents — this name goes on customs paperwork and the bill of lading.",
+        "person": "Private person",
+        "company": "Company",
+        "fullName": "Full name",
+        "companyName": "Company name",
+        "companyCode": "Company registration code",
+        "vatCode": "VAT number (if registered)",
+        "country": "Country",
+        "phone": "Phone",
+        "phoneHint": "With country code — the terminal will call this number.",
+        "address": "Address",
+        "addressPlaceholder": "Street, house, city, postal code"
+      },
+      "destination": {
+        "heading": "Where the car goes",
+        "note": "The port changes the shipping price — the calculator already prices all three.",
+        "port": "Destination port",
+        "portUnset": "Choose a port"
+      },
+      "receiver": {
+        "heading": "Who receives the car",
+        "note": "The person or company that officially collects the car at the port.",
+        "same": "Same as the buyer",
+        "other": "Somebody else",
+        "name": "Receiver name or company",
+        "nameHint": "Goes on the shipping documents — must match their documents.",
+        "country": "Country",
+        "phone": "Phone",
+        "email": "Email (optional)",
+        "address": "Address"
+      },
+      "prefs": {
+        "heading": "Preferences",
+        "note": "Defaults for every car — you can change them per vehicle later.",
+        "insurance": "Full cargo insurance",
+        "insuranceNote": "1% of the cargo value. Without it, damage or loss at sea is not compensated.",
+        "shareContainer": "Share a container",
+        "shareContainerNote": "Your car ships alongside others — the cheapest option. Off means a dedicated container.",
+        "rail": "How you will pay after a win",
+        "railWhy": "When you win, roughly the full amount is due within 24 hours. This choice decides whether the money arrives in time.",
+        "railWise": "Wise",
+        "railWiseNote": "Arrives in minutes. Best if you already have a Wise account.",
+        "railBank": "Bank transfer (express)",
+        "railBankNote": "Ask your bank for an express or urgent transfer — an ordinary one takes 1–6 days."
+      },
+      "save": "Save",
+      "saving": "Saving…",
+      "savedComplete": "Saved — everything is in place.",
+      "savedDraft": "Saved as a draft — {count} field(s) still missing.",
+      "saveFailed": "Could not save. Check your connection and try again.",
+      "missingCount": "{count} required field(s) left",
+      "allDone": "All required fields are filled."
     }
   },
   "Favorites": {
@@ -1921,6 +1987,108 @@
           "bypass_reissued": "Maintenance bypass reissued"
         }
       }
+    },
+    "shippingProfile": {
+      "heading": "Shipping details",
+      "notFilled": "Not filled in yet — the bidding code waits on this.",
+      "complete": "Complete",
+      "incomplete": "Incomplete",
+      "railWise": "Wise",
+      "railBank": "Bank transfer (express)",
+      "railUnset": "Not chosen",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "invoice": {
+      "heading": "Invoices",
+      "issue": "Issue invoice",
+      "issuing": "Issuing…",
+      "issuedOn": "Issued {date}",
+      "empty": "None issued yet.",
+      "needTotal": "Cannot issue: the file has no priced cost lines yet.",
+      "needOneCurrency": "Cannot issue: cost lines span two currencies and no rate is frozen.",
+      "needBank": "Cannot issue: bank details (WIRE_*) are not configured.",
+      "failed": "Issuing failed. Nothing was recorded — try again.",
+      "frozenNote": "An issued invoice is frozen. A mistake is corrected by issuing the next number, never by editing.",
+      "language": "Invoice language",
+      "langAuto": "Client's language"
+    },
+    "receipt": {
+      "import": "Import Copart receipt",
+      "importing": "Reading…",
+      "hint": "The Sales Receipt / Bill of Sale PDF. Cost lines are created from it, the document is filed, and the sale date is set.",
+      "wrongPlatform": "This is an IAAI case file — the importer reads Copart receipts only. Enter the lines manually.",
+      "wrongCar": "This receipt belongs to a DIFFERENT car — the lot or VIN does not match this file.",
+      "unreadable": "Could not read the receipt reliably. Enter the lines manually.",
+      "alreadyPriced": "This file already has an auction price line. Delete the cost lines first if you mean to re-import.",
+      "failed": "Import failed. Nothing was recorded — try again."
+    },
+    "supplier": {
+      "heading": "Aivi credit balance",
+      "balanceLabel": "our ledger's balance",
+      "runway": "enough for about {cars} more car(s) at ~{avg} each",
+      "alertEmpty": "Balance exhausted — instant payment is gone until a top-up lands.",
+      "kind": "Type",
+      "kinds": {
+        "top_up": "Top-up",
+        "drawdown": "Drawdown",
+        "adjustment": "Adjustment"
+      },
+      "amount": "Amount (USD)",
+      "reference": "Case no.",
+      "referenceHint": "Which car this paid for — required for the financing check.",
+      "occurredAt": "Date",
+      "directionLabel": "Direction",
+      "directionCredit": "Increases balance",
+      "directionDebit": "Decreases balance",
+      "note": "Note",
+      "notePlaceholder": "Wise transfer ref, or why the adjustment exists",
+      "save": "Record",
+      "saveFinanced": "Record as financed",
+      "saving": "Recording…",
+      "badAmount": "Enter the amount like 6 548.00.",
+      "orderNotFound": "No case file with that number.",
+      "failed": "Could not record. Nothing was written — try again.",
+      "overrideTitle": "This client has NOT paid — recording this finances them.",
+      "overrideBody": "The rule has two open doors: a repeat client is paid for immediately, and a first-timer is paid for once the invoice is out AND they have sent their bank's payment confirmation. Neither applies here. If you proceed anyway, write why — the reason stays on the row forever.",
+      "overridePlaceholder": "Why this client is being financed",
+      "overrideExplain": "The client on this case has not settled. To proceed, confirm the financing below.",
+      "financedBadge": "FINANCED",
+      "empty": "No movements recorded yet. Start with a top-up when money is sent to Aivi.",
+      "reconcileHint": "Weekly: compare this balance to Aivi's portal. A difference is booked as an adjustment with a note — it is the early warning of a billing error."
+    },
+    "container": {
+      "heading": "Dedicated container",
+      "none": "This client's car can join a dedicated container — for volume buyers who fill their own box.",
+      "create": "Create container",
+      "creating": "Creating…",
+      "carsLabel": "Cars going into it",
+      "sum": "Negotiated freight (USD)",
+      "sumHint": "Loading + ocean, the number agreed on the call. Frozen once created.",
+      "due": "Freight due by",
+      "dueHint": "1–2 weeks before planned loading.",
+      "typeLabel": "Container",
+      "note": "Note",
+      "issue": "Issue freight invoice",
+      "issuing": "Issuing…",
+      "markPaid": "Mark freight paid",
+      "paidOn": "Freight paid {date}",
+      "dueOn": "Due {date}",
+      "failed": "Failed. Nothing was recorded — try again.",
+      "needBank": "Cannot issue: bank details (WIRE_*) are not configured.",
+      "badInput": "Check the amount and the due date.",
+      "mixedOwners": "Selected cars belong to different clients."
+    },
+    "payout": {
+      "clearRepeat": "Clear to pay the auction — repeat client.",
+      "clearSettled": "Clear to pay the auction — the client has settled.",
+      "clearConfirmed": "Clear to pay the auction — invoice out, bank confirmation received.",
+      "waitInvoice": "NOT clear to pay: first-time client, no invoice issued yet.",
+      "waitConfirmation": "NOT clear to pay: waiting for the client's bank payment confirmation.",
+      "recordConfirmation": "Bank confirmation received",
+      "recording": "Recording…",
+      "recordHint": "Press when the confirmation lands in billing@ — it opens the payment gate, same as the client's own button.",
+      "failed": "Could not record — try again."
     }
   },
   "Orders": {
@@ -2015,7 +2183,10 @@
       "declareAction": "I've sent the transfer",
       "declareSending": "Sending…",
       "declareDone": "Thank you — we'll watch for your transfer. Wires take one to three business days; the amount above changes when it lands.",
-      "declareFailed": "That didn't send. Try again, or message us."
+      "declareFailed": "That didn't send. Try again, or message us.",
+      "senderEu": "Sending from Europe",
+      "senderUs": "Sending from the USA",
+      "copy": "Copy"
     },
     "costs": {
       "heading": "Costs",
@@ -2047,6 +2218,31 @@
         "cash": "Cash",
         "other": "Other"
       }
+    },
+    "invoice": {
+      "title": "INVOICE",
+      "invoiceNo": "Invoice no.",
+      "issued": "Issued",
+      "seller": "Seller",
+      "buyer": "Buyer",
+      "sold": "Sold",
+      "description": "Description",
+      "amount": "Amount",
+      "depositNote": "Your deposit remains held and is NOT deducted from this invoice. Please transfer the full amount shown above.",
+      "vatNote": "Smart Auto Bid LLC is a US company. No VAT is charged.",
+      "heading": "Invoices",
+      "download": "Download PDF",
+      "issuedOn": "Issued {date}",
+      "none": "No invoice has been issued yet.",
+      "container": "Container",
+      "carsInContainer": "Cars in this container",
+      "freightLine": "Loading and ocean freight — dedicated container",
+      "loadNote": "The container is loaded only after this invoice is paid.",
+      "loadNoteSub": "Plan the transfer so the money arrives before the loading date.",
+      "freightDueLabel": "Pay by",
+      "freightHeading": "Container freight",
+      "freightPaid": "Paid",
+      "freightDue": "Pay by {date}"
     }
   },
   "AdminMoney": {

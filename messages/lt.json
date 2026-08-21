@@ -1438,7 +1438,8 @@
       "bids": "Mano statymai",
       "favorites": "Išsaugoti",
       "plan": "Planas",
-      "details": "Mano duomenys"
+      "details": "Mano duomenys",
+      "shipping": "Vežimo duomenys"
     },
     "plan": {
       "title": "Jūsų planas",
@@ -1519,6 +1520,71 @@
       "deleteYes": "Ištrinti paskyrą",
       "deleteNo": "Atšaukti",
       "deleting": "Trinama…"
+    },
+    "shipping": {
+      "title": "Vežimo duomenys",
+      "lede": "Užpildote vieną kartą. Kai laimėsite automobilį, pervežimo užsakymą pateiksime tą pačią valandą — nieko nereikės ieškoti naktį.",
+      "gateOpen": "Liko vienas žingsnis iki statymo kodo",
+      "gateDone": "Vežimo duomenys užpildyti — galime išduoti statymo kodą",
+      "steps": {
+        "plan": "Planas patvirtintas",
+        "shipping": "Vežimo duomenys",
+        "code": "Statymo kodas"
+      },
+      "buyer": {
+        "heading": "Kas perka",
+        "exactly": "Tiksliai kaip dokumente — šis vardas keliaus į muitinės ir laivo dokumentus.",
+        "person": "Fizinis asmuo",
+        "company": "Įmonė",
+        "fullName": "Vardas ir pavardė",
+        "companyName": "Įmonės pavadinimas",
+        "companyCode": "Įmonės kodas",
+        "vatCode": "PVM kodas (jei registruotas)",
+        "country": "Šalis",
+        "phone": "Telefonas",
+        "phoneHint": "Su šalies kodu — šiuo numeriu skambins terminalas.",
+        "address": "Adresas",
+        "addressPlaceholder": "Gatvė, namas, miestas, pašto kodas"
+      },
+      "destination": {
+        "heading": "Kur vežame",
+        "note": "Uostas keičia vežimo kainą — skaičiuotuvas visus tris jau įkainoja.",
+        "port": "Paskirties uostas",
+        "portUnset": "Pasirinkite uostą"
+      },
+      "receiver": {
+        "heading": "Kas atsiima automobilį",
+        "note": "Asmuo arba įmonė, kuri oficialiai atsiima automobilį uoste.",
+        "same": "Tas pats, kas perka",
+        "other": "Kitas asmuo ar įmonė",
+        "name": "Gavėjo vardas arba įmonė",
+        "nameHint": "Įrašomas į pervežimo dokumentus — turi sutapti su jo dokumentais.",
+        "country": "Šalis",
+        "phone": "Telefonas",
+        "email": "El. paštas (nebūtina)",
+        "address": "Adresas"
+      },
+      "prefs": {
+        "heading": "Nuostatos",
+        "note": "Numatytosios kiekvienam automobiliui — vėliau galėsite keisti prie konkrečios mašinos.",
+        "insurance": "Pilnas krovinio draudimas",
+        "insuranceNote": "1 % krovinio vertės. Be jo apgadinimas ar praradimas jūroje nekompensuojamas.",
+        "shareContainer": "Dalintis konteineriu",
+        "shareContainerNote": "Automobilis plaukia kartu su kitais — pigiausias būdas. Išjungus — atskiras konteineris.",
+        "rail": "Kaip atsiskaitysite laimėję",
+        "railWhy": "Laimėjus visa suma mokėtina maždaug per 24 valandas. Šis pasirinkimas lemia, ar pinigai spės.",
+        "railWise": "Wise",
+        "railWiseNote": "Pasiekia per minutes. Geriausia, jei jau turite Wise sąskaitą.",
+        "railBank": "Banko pavedimas (skubus)",
+        "railBankNote": "Prašykite banko skubaus pavedimo — paprastas užtrunka 1–6 d. d."
+      },
+      "save": "Išsaugoti",
+      "saving": "Saugoma…",
+      "savedComplete": "Išsaugota — viskas užpildyta.",
+      "savedDraft": "Išsaugota kaip juodraštis — trūksta laukų: {count}.",
+      "saveFailed": "Nepavyko išsaugoti. Patikrinkite ryšį ir bandykite dar kartą.",
+      "missingCount": "Liko privalomų laukų: {count}",
+      "allDone": "Visi privalomi laukai užpildyti."
     }
   },
   "Favorites": {
@@ -1921,6 +1987,108 @@
           "bypass_reissued": "Apėjimo raktas išduotas iš naujo"
         }
       }
+    },
+    "shippingProfile": {
+      "heading": "Vežimo duomenys",
+      "notFilled": "Dar neužpildyta — statymo kodas laukia šito.",
+      "complete": "Užpildyta",
+      "incomplete": "Neužpildyta",
+      "railWise": "Wise",
+      "railBank": "Banko pavedimas (skubus)",
+      "railUnset": "Nepasirinkta",
+      "yes": "Taip",
+      "no": "Ne"
+    },
+    "invoice": {
+      "heading": "Sąskaitos",
+      "issue": "Išrašyti sąskaitą",
+      "issuing": "Išrašoma…",
+      "issuedOn": "Išrašyta {date}",
+      "empty": "Dar neišrašyta nė viena.",
+      "needTotal": "Negalima išrašyti: byla dar neturi įkainotų kaštų eilučių.",
+      "needOneCurrency": "Negalima išrašyti: kaštai dviem valiutomis, o kursas neužfiksuotas.",
+      "needBank": "Negalima išrašyti: banko rekvizitai (WIRE_*) nesukonfigūruoti.",
+      "failed": "Išrašyti nepavyko. Niekas neįrašyta — bandykite dar kartą.",
+      "frozenNote": "Išrašyta sąskaita nebekeičiama. Klaida taisoma išrašant kitą numerį, niekada ne redaguojant.",
+      "language": "Sąskaitos kalba",
+      "langAuto": "Kliento kalba"
+    },
+    "receipt": {
+      "import": "Įkelti Copart kvitą",
+      "importing": "Skaitoma…",
+      "hint": "Sales Receipt / Bill of Sale PDF. Iš jo sukuriamos kaštų eilutės, dokumentas įsegamas į bylą, nustatoma pardavimo data.",
+      "wrongPlatform": "Tai IAAI byla — importas skaito tik Copart kvitus. Suveskite eilutes ranka.",
+      "wrongCar": "Šis kvitas priklauso KITAM automobiliui — lotas arba VIN nesutampa su šia byla.",
+      "unreadable": "Nepavyko patikimai perskaityti kvito. Suveskite eilutes ranka.",
+      "alreadyPriced": "Byla jau turi aukciono kainos eilutę. Jei tikrai norite importuoti iš naujo — pirma ištrinkite kaštų eilutes.",
+      "failed": "Importuoti nepavyko. Niekas neįrašyta — bandykite dar kartą."
+    },
+    "supplier": {
+      "heading": "Aivi kredito balansas",
+      "balanceLabel": "mūsų žurnalo likutis",
+      "runway": "užtenka maždaug {cars} mašinai (-oms) po ~{avg}",
+      "alertEmpty": "Balansas išsemtas — momentinio atsiskaitymo nebėra, kol neatkeliaus papildymas.",
+      "kind": "Tipas",
+      "kinds": {
+        "top_up": "Papildymas",
+        "drawdown": "Nurašymas",
+        "adjustment": "Koregavimas"
+      },
+      "amount": "Suma (USD)",
+      "reference": "Bylos Nr.",
+      "referenceHint": "Už kurią mašiną sumokėta — būtina finansavimo patikrai.",
+      "occurredAt": "Data",
+      "directionLabel": "Kryptis",
+      "directionCredit": "Didina likutį",
+      "directionDebit": "Mažina likutį",
+      "note": "Pastaba",
+      "notePlaceholder": "Wise pavedimo nuoroda arba kodėl koreguojama",
+      "save": "Įrašyti",
+      "saveFinanced": "Įrašyti kaip finansavimą",
+      "saving": "Įrašoma…",
+      "badAmount": "Įveskite sumą, pvz. 6 548.00.",
+      "orderNotFound": "Bylos tokiu numeriu nėra.",
+      "failed": "Nepavyko įrašyti. Niekas neįrašyta — bandykite dar kartą.",
+      "overrideTitle": "Šis klientas dar NESUMOKĖJO — įrašydami jį finansuojate.",
+      "overrideBody": "Taisyklė turi dvejas atviras duris: už kartotinį klientą mokame iš karto, o už pirmakartį — kai sąskaita išsiųsta IR jis atsiuntė savo banko mokėjimo patvirtinimą. Nė viena čia netinka. Jei vis tiek tęsiate — parašykite kodėl. Priežastis liks prie įrašo visam laikui.",
+      "overridePlaceholder": "Kodėl šis klientas finansuojamas",
+      "overrideExplain": "Šios bylos klientas dar neatsiskaitė. Norėdami tęsti, patvirtinkite finansavimą žemiau.",
+      "financedBadge": "FINANSUOTA",
+      "empty": "Judėjimų dar nėra. Pradėkite nuo papildymo, kai pinigai išsiųsti Aivi.",
+      "reconcileHint": "Kas savaitę: palyginkite šį likutį su Aivi portalu. Skirtumas įrašomas kaip koregavimas su pastaba — tai ankstyvas signalas apie sąskaitų klaidą."
+    },
+    "container": {
+      "heading": "Atskiras konteineris",
+      "none": "Šio kliento mašina gali keliauti atskirame konteineryje — stambiems pirkėjams, kurie pildo savo dėžę.",
+      "create": "Sukurti konteinerį",
+      "creating": "Kuriama…",
+      "carsLabel": "Mašinos, kurios važiuoja jame",
+      "sum": "Sutartas frachtas (USD)",
+      "sumHint": "Krovimas + jūra, skambutyje sutarta suma. Sukūrus — užfiksuota.",
+      "due": "Frachtas apmokamas iki",
+      "dueHint": "1–2 savaitės iki planuojamo krovimo.",
+      "typeLabel": "Konteineris",
+      "note": "Pastaba",
+      "issue": "Išrašyti frachto sąskaitą",
+      "issuing": "Išrašoma…",
+      "markPaid": "Žymėti frachtą apmokėtu",
+      "paidOn": "Frachtas apmokėtas {date}",
+      "dueOn": "Terminas {date}",
+      "failed": "Nepavyko. Niekas neįrašyta — bandykite dar kartą.",
+      "needBank": "Negalima išrašyti: banko rekvizitai (WIRE_*) nesukonfigūruoti.",
+      "badInput": "Patikrinkite sumą ir terminą.",
+      "mixedOwners": "Pažymėtos mašinos priklauso skirtingiems klientams."
+    },
+    "payout": {
+      "clearRepeat": "Galima mokėti aukcionui — kartotinis klientas.",
+      "clearSettled": "Galima mokėti aukcionui — klientas atsiskaitęs.",
+      "clearConfirmed": "Galima mokėti aukcionui — sąskaita išsiųsta, banko patvirtinimas gautas.",
+      "waitInvoice": "DAR negalima mokėti: pirmakartis, sąskaita dar neišrašyta.",
+      "waitConfirmation": "DAR negalima mokėti: laukiam kliento banko mokėjimo patvirtinimo.",
+      "recordConfirmation": "Banko patvirtinimas gautas",
+      "recording": "Įrašoma…",
+      "recordHint": "Spauskite, kai patvirtinimas atkeliauja į billing@ — tai atidaro mokėjimo vartus, kaip ir kliento paties mygtukas.",
+      "failed": "Nepavyko įrašyti — bandykite dar kartą."
     }
   },
   "Orders": {
@@ -2015,7 +2183,10 @@
       "declareAction": "Pavedimą atlikau",
       "declareSending": "Siunčiame…",
       "declareDone": "Ačiū — ieškosime jūsų pavedimo. Pinigai keliauja 1–3 darbo dienas; kai gausime, suma viršuje pasikeis.",
-      "declareFailed": "Nepavyko išsiųsti. Bandykite dar kartą arba parašykite mums."
+      "declareFailed": "Nepavyko išsiųsti. Bandykite dar kartą arba parašykite mums.",
+      "senderEu": "Siunčiu iš Europos",
+      "senderUs": "Siunčiu iš JAV",
+      "copy": "Kopijuoti"
     },
     "costs": {
       "heading": "Kaina",
@@ -2047,6 +2218,31 @@
         "cash": "Grynais",
         "other": "Kita"
       }
+    },
+    "invoice": {
+      "title": "SĄSKAITA FAKTŪRA",
+      "invoiceNo": "Sąskaitos Nr.",
+      "issued": "Išrašyta",
+      "seller": "Pardavėjas",
+      "buyer": "Pirkėjas",
+      "sold": "Parduota",
+      "description": "Paaiškinimas",
+      "amount": "Suma",
+      "depositNote": "Jūsų depozitas lieka saugomas ir į šią sumą NEĮSKAIČIUOTAS. Perveskite visą aukščiau nurodytą sumą.",
+      "vatNote": "Smart Auto Bid LLC — JAV bendrovė. PVM neskaičiuojamas.",
+      "heading": "Sąskaitos",
+      "download": "Atsisiųsti PDF",
+      "issuedOn": "Išrašyta {date}",
+      "none": "Sąskaita dar neišrašyta.",
+      "container": "Konteineris",
+      "carsInContainer": "Automobiliai šiame konteineryje",
+      "freightLine": "Krovimas ir jūrų frachtas — atskiras konteineris",
+      "loadNote": "Konteineris pakraunamas tik apmokėjus šią sąskaitą.",
+      "loadNoteSub": "Suplanuokite pavedimą taip, kad pinigai atkeliautų iki krovimo datos.",
+      "freightDueLabel": "Apmokėti iki",
+      "freightHeading": "Konteinerio frachtas",
+      "freightPaid": "Apmokėta",
+      "freightDue": "Apmokėti iki {date}"
     }
   },
   "AdminMoney": {
