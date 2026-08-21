@@ -184,6 +184,109 @@ export const deposits = pgTable(
 );
 
 /**
+ * The shipping details a client fills in ONCE, before they ever bid.
+ *
+ * ── WHY THIS EXISTS ─────────────────────────────────────────────────────
+ * When a client wins, Aivi's shipping order asks for a consignee and a cargo
+ * receiver — and those are DROPDOWNS in their portal, which means the person
+ * must be registered in Aivi's address book before the order can be submitted
+ * at all. A lot won at 23:40 with no receiver on file is a shipping order
+ * that cannot be placed while Copart's storage clock runs. So the data is
+ * collected at the only moment the client actually wants something from us:
+ * after the deposit, BEFORE the bidding code is issued. The code is the
+ * carrot; this form is the gate.
+ *
+ * ── PROFILE IS SOURCE, ORDER IS SNAPSHOT ────────────────────────────────
+ * `vehicleOrders` carries its own consignee columns and keeps them. At case
+ * file creation these fields are COPIED there, never read live — a client
+ * who moves house six months later must not retroactively change what a
+ * bill of lading said. Same rule, same reason as the vehicle snapshot.
+ *
+ * ── WHAT IS DELIBERATELY ABSENT ─────────────────────────────────────────
+ * No personal code, no passport upload, no IBAN — the ARCHITECTURE.md §6a
+ * line, restated on `vehicleOrders.consigneeName`, still holds. Customs
+ * needs identity documents five to eight weeks after the win and customs is
+ * the client's own affair; collecting passports at signup would mean holding
+ * identity documents for hundreds of people who never win a car. If Aivi's
+ * receiver registration turns out to require an ID copy (asked 2026-08-19,
+ * unanswered), that becomes a separate security design task — not columns
+ * quietly added here.
+ *
+ * The address is ONE free-text block, exactly like `consigneeAddress` and
+ * for the same measured reason: Lithuanian, Georgian, Dutch and Emirati
+ * addresses genuinely disagree in shape, and this text's job is to read
+ * correctly to a customs officer, not to parse.
+ */
+export const shippingProfiles = pgTable("shipping_profiles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  /**
+   * One profile per user. Cascade, unlike the orders it feeds: the profile
+   * is nothing BUT personal data, so when an account is erased the profile
+   * must go with it — the anonymised order snapshots are what survive, and
+   * they are the only part retention law asks for.
+   */
+  userId: uuid("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // ── who buys ──────────────────────────────────────────────────────────
+  /** TS-level enum on text, like every enum here — no CHECK, no migration. */
+  buyerType: text("buyer_type", { enum: ["person", "company"] })
+    .notNull()
+    .default("person"),
+  /**
+   * Exactly as written in their documents — this string ends up on customs
+   * paperwork and the bill of lading, where "Tomas J." is not a person.
+   */
+  buyerName: text("buyer_name").notNull(),
+  /** Company registration code; null for a private person. */
+  companyCode: text("company_code"),
+  /** EU VAT number, when the buyer is a VAT-registered company. */
+  vatCode: text("vat_code"),
+  buyerCountry: text("buyer_country").notNull(),
+  buyerPhone: text("buyer_phone").notNull(),
+  /** One block, copied verbatim — see the header comment. */
+  buyerAddress: text("buyer_address").notNull(),
+
+  // ── where the car goes ────────────────────────────────────────────────
+  /** A value the calculator also prices — the profile, the cost estimate
+   * and the Aivi order form must all mean the same place. */
+  destinationPort: text("destination_port").notNull(),
+
+  // ── who receives it, when that is somebody else ───────────────────────
+  /**
+   * The common case is `true` and the receiver fields stay null. When
+   * false, these become the consignee snapshot instead of the buyer — the
+   * brother, the buyer's own company, the dealer they resell through.
+   */
+  receiverSame: boolean("receiver_same").notNull().default(true),
+  receiverName: text("receiver_name"),
+  receiverPhone: text("receiver_phone"),
+  receiverEmail: text("receiver_email"),
+  receiverAddress: text("receiver_address"),
+  receiverCountry: text("receiver_country"),
+
+  // ── standing preferences, editable per car later ──────────────────────
+  /** Aivi's full-coverage insurance, 1% of cargo value. Default on: the
+   * client who skipped it finds out what it was for when the ship rolls. */
+  insurance: boolean("insurance").notNull().default(true),
+  /** Shared container (cheaper, slower) vs a dedicated one. */
+  shareContainer: boolean("share_container").notNull().default(true),
+  /**
+   * How this client will pay the big stage-2 invoice. Asked HERE, once,
+   * because the invoice moment is 23:40 after a win — every decision left
+   * to that hour costs a day. Null means not chosen yet, which blocks
+   * completeness; the form forces the choice while there is still time to
+   * open a Wise account.
+   */
+  paymentRail: text("payment_rail", { enum: ["wise", "bank"] }),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * Cars a client has saved. One row per (user, lot).
  *
  * **Deliberately denormalised.** Everything needed to draw the card is copied
@@ -1082,6 +1185,14 @@ export const vehicleOrders = pgTable(
     consigneeCountry: text("consignee_country"),
 
     // ── shipping, one value each per order ──────────────────────────────────
+    /**
+     * The DEDICATED container this car ships in, when its owner bought one —
+     * see `containers`. Distinct from `containerNumber` below, which is the
+     * shipping line's physical box number and exists for shared loads too.
+     * Set null: unlinking a car from a cancelled container plan must not
+     * delete the car.
+     */
+    containerId: uuid("container_id").references(() => containers.id, { onDelete: "set null" }),
     containerNumber: text("container_number"),
     billOfLading: text("bill_of_lading"),
     vesselName: text("vessel_name"),
@@ -1197,6 +1308,173 @@ export const orderStageEvents = pgTable(
     uniqueIndex("order_stage_events_order_stage_idx").on(t.orderId, t.stage),
     index("order_stage_events_order_idx").on(t.orderId, t.happenedAt),
   ]
+);
+
+/**
+ * Money sitting at the supplier — the shadow ledger for Aivi's credit balance.
+ *
+ * ── WHY A SHADOW OF SOMEBODY ELSE'S NUMBER ──────────────────────────────
+ * The owner keeps ~$50k on Aivi's credit balance so paying for a won car is
+ * instant instead of an ACH day. Aivi's portal shows ONE number with no
+ * history we control; this table is our own account of how that number came
+ * to be — every top-up, every drawdown tied to its case file. The weekly
+ * ritual is mechanical: compare our balance to their portal, and a
+ * divergence is the early warning of a billing error. Their own invoices
+ * already carry fees that "are not always there"; this is where such a fee
+ * would surface as a delta instead of passing silently.
+ *
+ * ── THE GUARD THIS TABLE CARRIES ────────────────────────────────────────
+ * Paying the auction used to mean actually wiring our money — friction that
+ * quietly enforced "first-time buyers are never financed". On a standing
+ * balance the same act is one click, so the rule moves into software:
+ * a drawdown against an order whose client has not settled requires an
+ * explicit override with a reason, recorded on the row. Not forbidden —
+ * the owner finances trusted repeat clients deliberately — but never again
+ * by accident. `overrideReason` non-null IS the record that it was chosen.
+ *
+ * Rows are never edited or deleted: a mistake is corrected by an
+ * `adjustment` row saying what and why, the same discipline as invoices.
+ * USD only — the entire chain with Aivi runs in dollars by standing rule.
+ */
+export const supplierLedger = pgTable(
+  "supplier_ledger",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /**
+     * top_up     — our money arrived at the supplier (+)
+     * drawdown   — the supplier paid an auction for a case file (−)
+     * adjustment — reconciliation delta or correction, signed via kind's
+     *              own amount staying positive and `direction`
+     */
+    kind: text("kind", { enum: ["top_up", "drawdown", "adjustment"] }).notNull(),
+    /** Always positive; `direction` carries the sign so a negative amount
+     * can never sneak in through a form and flip a row's meaning. */
+    amountCents: integer("amount_cents").notNull(),
+    direction: text("direction", { enum: ["credit", "debit"] }).notNull(),
+    /**
+     * The case file a drawdown paid for. Restrict, not cascade: a ledger row
+     * is the money trail, and money trails outlive everything (the same
+     * argument as `order_invoices.orderId`). Null for top-ups and
+     * adjustments, which belong to the relationship, not to one car.
+     */
+    orderId: uuid("order_id").references(() => vehicleOrders.id, { onDelete: "restrict" }),
+    /** Free text: "Wise transfer ref 123", "portal shows 44,150 — booking the
+     * \$25 delta", or the override justification on a financed drawdown. */
+    note: text("note"),
+    /**
+     * Set ONLY when this drawdown paid for a car whose client had not
+     * settled at the time — the financed-by-choice marker. Null everywhere
+     * else. A non-null value here is an auditable decision, not a smell.
+     */
+    overrideReason: text("override_reason"),
+    /** When the money actually moved, as the admin knows it — may precede
+     * the moment somebody got around to recording it. */
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("supplier_ledger_order_id_idx").on(t.orderId)]
+);
+
+/**
+ * A dedicated container for one big client — their cars, their box.
+ *
+ * ── WHY A CONTAINER IS AN ENTITY AND NOT A COST LINE ────────────────────
+ * The owner's design for volume buyers (2026-08-20): the cars are invoiced
+ * individually WITHOUT ocean freight, payable at once; the freight for the
+ * whole container is ONE negotiated sum on its own invoice, due 1–2 weeks
+ * BEFORE loading — so the client never pays cars and freight in the same
+ * breath, and our money arrives before we commit to the shipping line.
+ * A per-car cost line cannot carry a per-container price without inventing
+ * a split nobody agreed to; this row is where the real number lives.
+ *
+ * `freightCents` is the phone deal, FROZEN the day the call ends — two
+ * months later there must be one memory, not two. Changing the deal is a
+ * new agreement: update the sum before the invoice is issued, or issue the
+ * next invoice number after it, never edit a document a client holds.
+ *
+ * Shared-container clients never get one of these — their freight stays an
+ * ordinary cost line on the case file, exactly as before.
+ */
+export const containers = pgTable(
+  "containers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** `CNT-2026-0001` — the payment reference for the freight transfer,
+     * same shape and allocation discipline as the case reference. */
+    reference: text("reference").notNull().unique(),
+    /** The client whose cars fill it. Restrict — money history outlives
+     * accounts, the same rule as everywhere money is involved. */
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    /** 40ft, 20ft — a label for documents, not an enum: shipping lines have
+     * more box types than any list we would maintain. */
+    containerType: text("container_type").notNull().default("40ft"),
+    /** The negotiated loading + ocean sum, USD. The client always pays US —
+     * a supplier never appears on any client-facing document. */
+    freightCents: integer("freight_cents").notNull(),
+    /** When the freight must be paid: 1–2 weeks before planned loading,
+     * entered by the admin because loading plans shift. */
+    dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+    /** Set when the freight money arrived. The lever this whole design
+     * turns on: no payment, no loading — and the invoice says so. */
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    note: text("note"),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  }
+);
+
+/**
+ * An invoice we ISSUED — the immutable record of a document a client holds.
+ *
+ * ── WHY A TABLE WHEN THE PDF IS IN R2 ───────────────────────────────────
+ * The bytes in the bucket are the document; this row is the ledger line that
+ * says it exists, what it demanded, and when. Accounting wants a gapless
+ * numbered series; a bucket listing cannot promise one, and cost lines keep
+ * changing after issue — which is precisely why the row snapshots the total
+ * at the moment of issue instead of pointing back at them.
+ *
+ * ── ISSUED MEANS FROZEN ─────────────────────────────────────────────────
+ * No update path, no delete path, deliberately. A client is holding this
+ * document; silently changing our copy is how two parties end up in a
+ * dispute holding two different "originals". A mistake is corrected by
+ * issuing the NEXT number — the wrong document stays on record as the thing
+ * that was actually sent. `orderId` is restrict for the same reason the
+ * order's own userId is: an issued invoice outlives everything.
+ */
+export const orderInvoices = pgTable(
+  "order_invoices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /**
+     * EXACTLY ONE of orderId / containerId is set — enforced in code, since
+     * this column pair predates Postgres CHECKs here. A car's invoice hangs
+     * off its case file; a dedicated container's freight invoice hangs off
+     * the container. One table, one gapless INV series for the accountant —
+     * that is the whole reason freight invoices live here instead of in a
+     * table of their own.
+     */
+    orderId: uuid("order_id").references(() => vehicleOrders.id, { onDelete: "restrict" }),
+    containerId: uuid("container_id").references(() => containers.id, { onDelete: "restrict" }),
+    /** `INV-2026-0001` — its own series, NOT the case reference: one case
+     * can produce several documents (a correction, a late storage charge). */
+    number: text("number").notNull().unique(),
+    /** What the document demands, frozen at issue. The cost lines will keep
+     * moving; this number is what the client was actually told. */
+    totalCents: integer("total_cents").notNull(),
+    currency: text("currency", { enum: ["USD", "EUR"] }).notNull(),
+    /** Payments already recorded when it was issued — the PDF printed them. */
+    paidCents: integer("paid_cents").notNull().default(0),
+    /** Where the exact bytes the client received live. */
+    r2Key: text("r2_key").notNull(),
+    /** The locale the primary labels were rendered in (`lt`, `en`, `ru`). */
+    locale: text("locale").notNull(),
+    issuedBy: uuid("issued_by").references(() => users.id, { onDelete: "set null" }),
+    issuedAt: timestamp("issued_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("order_invoices_order_id_idx").on(t.orderId)]
 );
 
 /**
