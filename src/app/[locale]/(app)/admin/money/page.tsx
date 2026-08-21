@@ -7,6 +7,8 @@ import LocalDateTime from "@/shared/time/LocalDateTime";
 import { formatInstant } from "@/shared/time/formatInstant";
 import { currentAdmin } from "@/modules/admin/model/currentAdmin";
 import AdminSection from "@/modules/admin/components/AdminSection";
+import SupplierBalancePanel from "@/modules/orders/components/SupplierBalancePanel";
+import { supplierLedgerView } from "@/modules/orders/model/supplierLedger";
 import { listMoneyQueueRows, paymentDeclarations } from "@/modules/orders/model/orders";
 import { buildMoneyQueue, type MoneyQueueRow } from "@/modules/orders/model/moneyQueue";
 import { URGENT_WITHIN_HOURS } from "@/modules/orders/model/payment";
@@ -57,8 +59,10 @@ export default async function AdminMoneyPage({
   if (!user) notFound();
 
   const t = await getTranslations({ locale, namespace: "AdminMoney" });
+  const tSupplier = await getTranslations({ locale, namespace: "Admin.supplier" });
   const format = await getFormatter({ locale });
 
+  const supplier = await supplierLedgerView();
   const [{ rows, truncated }, declarations] = await Promise.all([
     listMoneyQueueRows(),
     paymentDeclarations(),
@@ -127,6 +131,25 @@ export default async function AdminMoneyPage({
       )}
 
       <div className="mt-8">
+        {/* The supplier's money first: without balance there is no instant
+            payment, and every queue below assumes there is. */}
+        <AdminSection title={tSupplier("heading")}>
+          <SupplierBalancePanel
+            balanceCents={supplier.balanceCents}
+            recentDrawdownsCents={supplier.recentDrawdownsCents}
+            entries={supplier.entries.map((e) => ({
+              id: e.id,
+              kind: e.kind,
+              direction: e.direction,
+              amountCents: e.amountCents,
+              orderReference: e.orderReference,
+              note: e.note,
+              overrideReason: e.overrideReason,
+              occurredAt: e.occurredAt.toISOString(),
+            }))}
+          />
+        </AdminSection>
+
         {/* First, because it is the only list where the delay is ours. A client
             cannot pay a figure nobody has sent them, and their deadline runs
             regardless. */}
