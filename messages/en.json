@@ -2415,6 +2415,7 @@
       "delete": "Delete",
       "rate": "Rate: 1 USD = ? EUR",
       "rateHint": "Enter the rate you actually got. It is fixed on the file and does not change.",
+      "rateCalcHint": "For information only — saved nowhere and never shown to the client. We work in dollars.",
       "visibleToClient": "Visible to the client"
     },
     "payments": {

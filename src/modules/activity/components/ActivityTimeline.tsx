@@ -108,6 +108,13 @@ export default async function ActivityTimeline({
               <p className="mt-0.5 text-sm text-char-700">{entry.label}</p>
             )}
 
+            {/* WHICH car, auction-side: platform + lot number out of the
+                dedupe key. The label names the model; this is what an admin
+                pastes into Copart/IAAI or BidManager to find the exact lot.
+                Free — the key was stored when the client browsed, so showing
+                it costs zero vendor calls. */}
+            <LotIdentity kind={entry.kind} subjectKey={entry.subjectKey} />
+
             <ActivityDetail entry={entry} />
 
             {entry.firstAt && (
@@ -137,6 +144,22 @@ export default async function ActivityTimeline({
  * investigation, and belongs in the database rather than on a screen somebody
  * reads at speed.
  */
+/**
+ * `iaai:45683178` → `IAAI · 45683178`, only on lot events and only when the
+ * key actually has that shape — a malformed key prints nothing rather than
+ * half a guess.
+ */
+function LotIdentity({ kind, subjectKey }: { kind: string; subjectKey: string | null }) {
+  if (!kind.startsWith("lot.") || !subjectKey) return null;
+  const match = subjectKey.match(/^([a-z]+):(.+)$/);
+  if (!match) return null;
+  return (
+    <p className="mt-0.5 font-[family-name:var(--font-mono)] text-xs text-char-500">
+      {match[1].toUpperCase()} · {match[2].toUpperCase()}
+    </p>
+  );
+}
+
 function ActivityDetail({ entry }: { entry: TimelineEntry }) {
   const detail = entry.detail as { port?: unknown } | null;
   const port = typeof detail?.port === "string" ? detail.port : null;

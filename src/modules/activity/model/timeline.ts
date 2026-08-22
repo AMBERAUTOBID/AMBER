@@ -35,6 +35,10 @@ export interface TimelineEntry {
   kind: string;
   /** The subject — a car, a search. Empty for events that are their own. */
   label: string;
+  /** The dedupe key behind the label — `iaai:45683178` for a lot. Shown for
+   * lot events because the label alone cannot say WHICH car on the auction
+   * side; null for audit rows, which have no subject key at all. */
+  subjectKey: string | null;
   /** Hits collapsed into this entry. Always 1 for audit rows. */
   count: number;
   detail: unknown;
@@ -61,6 +65,7 @@ export function mergeTimeline(activity: ActivityRow[], audit: AuditRow[]): Timel
       source: "activity" as const,
       kind: row.kind as string,
       label: row.label,
+      subjectKey: row.subjectKey,
       count: row.count,
       detail: row.detail,
       byOther: false,
@@ -72,6 +77,7 @@ export function mergeTimeline(activity: ActivityRow[], audit: AuditRow[]): Timel
       source: "audit" as const,
       kind: row.action,
       label: "",
+      subjectKey: null,
       count: 1,
       detail: row.detail,
       byOther: row.byOther,

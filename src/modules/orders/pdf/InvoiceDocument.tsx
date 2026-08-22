@@ -402,7 +402,13 @@ export function InvoiceDocument(props: InvoiceDocumentProps) {
         {/* ── the itemisation ────────────────────────────────────── */}
         <View style={s.tHead}>
           <Text hyphenationCallback={NO_HYPHENS} style={[s.tHeadCell, s.rowLabel]}>{inlineBi(L.description).toUpperCase()}</Text>
-          <Text hyphenationCallback={NO_HYPHENS} style={[s.tHeadCell, s.rowAmount]}>{inlineBi(L.amount).toUpperCase()}</Text>
+          {/* The currency in the column header, once — the owner's call
+              (2026-08-22): bare line amounts left "is this dollars?" open,
+              and USD is the whole payment design. The ISO code rather than
+              "$", which Canada and Australia also write. */}
+          <Text hyphenationCallback={NO_HYPHENS} style={[s.tHeadCell, s.rowAmount]}>
+            {inlineBi(L.amount).toUpperCase()} ({total.currency})
+          </Text>
         </View>
 
         {props.groups.map((group, i) => {

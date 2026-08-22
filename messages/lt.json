@@ -2415,6 +2415,7 @@
       "delete": "Ištrinti",
       "rate": "Kursas: 1 USD = ? EUR",
       "rateHint": "Įveskite kursą, kurį realiai gavote. Jis užfiksuojamas ir nebesikeičia.",
+      "rateCalcHint": "Tik informacijai — niekur neišsaugoma ir klientui nerodoma. Dirbame doleriais.",
       "visibleToClient": "Matoma klientui"
     },
     "payments": {

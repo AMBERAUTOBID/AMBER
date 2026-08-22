@@ -74,6 +74,19 @@ export default function MoneyEditor({
   const [busy, setBusy] = useState(false);
   const money = orderMoney(costs, payments, rateMicros);
 
+  /**
+   * Whether the euro is actually IN this file — euro lines, euro payments,
+   * or a rate somebody already froze. Only then does the persistent rate
+   * matter, because only then does reconciliation need it. Everywhere else
+   * the owner's rule holds (2026-08-22): we do not work in euros, and the
+   * rate field is an admin's pocket calculator, never a saved fact — a saved
+   * rate silently flips the client's whole quote into EUR.
+   */
+  const euroInPlay =
+    rateMicros !== null ||
+    costs.some((line) => line.currency === "EUR") ||
+    payments.some((payment) => payment.currency === "EUR");
+
   async function send(payload: Record<string, unknown>) {
     setBusy(true);
     try {
@@ -92,15 +105,24 @@ export default function MoneyEditor({
   return (
     <div className="space-y-6">
       {/* ── the rate ─────────────────────────────────────────────────── */}
-      <RateField
-        current={rateMicros}
-        setAt={rateSetAt}
-        label={t("rate")}
-        hint={t("rateHint")}
-        save={t("save")}
-        busy={busy}
-        onSave={(micros) => send({ action: "setRate", usdToEurMicros: micros })}
-      />
+      {euroInPlay ? (
+        <RateField
+          current={rateMicros}
+          setAt={rateSetAt}
+          label={t("rate")}
+          hint={t("rateHint")}
+          save={t("save")}
+          busy={busy}
+          onSave={(micros) => send({ action: "setRate", usdToEurMicros: micros })}
+        />
+      ) : (
+        <RateCalculator
+          label={t("rate")}
+          hint={t("rateCalcHint")}
+          totalUsdCents={money.cost.usdOnly}
+          locale={locale}
+        />
+      )}
 
       {/* ── cost lines ───────────────────────────────────────────────── */}
       <div>
@@ -159,31 +181,63 @@ export default function MoneyEditor({
       </div>
 
       {/* ── totals, exactly as the client will see them ──────────────── */}
+      {/* Split on `euroInPlay`, not on "is totalEur non-null": an empty
+          payment list sums to a zero that `combine()` happily calls EUR, so a
+          pure-dollar file used to print "Sumokėta 0,00 €" and then demand an
+          exchange rate it had no use for — caught by the owner on a real
+          screen 2026-08-22. A file with no euro in it talks dollars, full
+          stop; the euro branch keeps the old behaviour exactly. */}
       <dl className="space-y-1 rounded-xl bg-char-50 p-4 text-sm">
-        <Line
-          label={tOrders("total")}
-          value={
-            money.cost.totalEur !== null
-              ? formatMoney(money.cost.totalEur, "EUR", locale)
-              : formatMoney(money.cost.usdOnly, "USD", locale)
-          }
-        />
-        <Line
-          label={tOrders("paid")}
-          value={
-            money.paid.totalEur !== null
-              ? formatMoney(money.paid.totalEur, "EUR", locale)
-              : formatMoney(money.paid.usdOnly, "USD", locale)
-          }
-        />
-        {money.settled ? (
-          <p className="pt-1 font-semibold text-green-800">{tOrders("settled")}</p>
-        ) : money.balanceEur !== null ? (
-          <Line label={tOrders("balance")} value={formatMoney(money.balanceEur, "EUR", locale)} strong />
+        {euroInPlay ? (
+          <>
+            <Line
+              label={tOrders("total")}
+              value={
+                money.cost.totalEur !== null
+                  ? formatMoney(money.cost.totalEur, "EUR", locale)
+                  : formatMoney(money.cost.usdOnly, "USD", locale)
+              }
+            />
+            <Line
+              label={tOrders("paid")}
+              value={
+                money.paid.totalEur !== null
+                  ? formatMoney(money.paid.totalEur, "EUR", locale)
+                  : formatMoney(money.paid.usdOnly, "USD", locale)
+              }
+            />
+            {money.settled ? (
+              <p className="pt-1 font-semibold text-green-800">{tOrders("settled")}</p>
+            ) : money.balanceEur !== null ? (
+              <Line
+                label={tOrders("balance")}
+                value={formatMoney(money.balanceEur, "EUR", locale)}
+                strong
+              />
+            ) : (
+              // The honest state: a mixed-currency file with no rate cannot be
+              // totalled, and saying so beats printing a partial sum.
+              <p className="pt-1 text-xs text-amber-700">{t("rateHint")}</p>
+            )}
+          </>
         ) : (
-          // The honest state: a mixed-currency file with no rate cannot be
-          // totalled, and saying so beats printing a partial sum.
-          <p className="pt-1 text-xs text-amber-700">{t("rateHint")}</p>
+          <>
+            <Line label={tOrders("total")} value={formatMoney(money.cost.usdOnly, "USD", locale)} />
+            <Line label={tOrders("paid")} value={formatMoney(money.paid.usdOnly, "USD", locale)} />
+            {money.settled ? (
+              <p className="pt-1 font-semibold text-green-800">{tOrders("settled")}</p>
+            ) : (
+              <Line
+                label={tOrders("balance")}
+                value={formatMoney(
+                  money.balanceUsd ?? money.cost.usdOnly - money.paid.usdOnly,
+                  "USD",
+                  locale
+                )}
+                strong
+              />
+            )}
+          </>
         )}
       </dl>
 
@@ -238,6 +292,53 @@ function Line({ label, value, strong }: { label: string; value: string; strong?:
     <div className="flex justify-between gap-4">
       <dt className={strong ? "font-semibold text-char-900" : "text-char-600"}>{label}</dt>
       <dd className={strong ? "font-semibold text-char-900" : "text-char-900"}>{value}</dd>
+    </div>
+  );
+}
+
+/**
+ * The euro as extra information, never as a fact.
+ *
+ * Types a rate, sees what the file's USD total would be in euros, and
+ * NOTHING is sent anywhere — no state on the order, no currency flip on the
+ * client's page, gone on reload. The persistent `RateField` still exists,
+ * but only appears once the file genuinely holds euros.
+ */
+function RateCalculator({
+  label,
+  hint,
+  totalUsdCents,
+  locale,
+}: {
+  label: string;
+  hint: string;
+  totalUsdCents: number;
+  locale: string;
+}) {
+  const [value, setValue] = useState("");
+  const parsed = parseRateToMicros(value);
+  const eurCents =
+    parsed !== null && totalUsdCents > 0 ? Math.round((totalUsdCents * parsed) / 1_000_000) : null;
+
+  return (
+    <div className="rounded-xl border border-char-200 bg-char-50 p-4">
+      <label className="block text-sm">
+        <span className="text-char-600">{label}</span>
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          inputMode="decimal"
+          placeholder="0.9250"
+          className="mt-1 w-40 rounded-xl border border-char-200 bg-white px-3 py-2 text-sm"
+        />
+      </label>
+      {value && parsed === null && <p className="mt-1 text-xs text-red-700">0.1 – 10</p>}
+      {eurCents !== null && (
+        <p className="mt-2 text-sm font-semibold text-char-900">
+          {formatMoney(totalUsdCents, "USD", locale)} ≈ {formatMoney(eurCents, "EUR", locale)}
+        </p>
+      )}
+      <p className="mt-1 text-xs text-char-500">{hint}</p>
     </div>
   );
 }
